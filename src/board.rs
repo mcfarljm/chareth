@@ -1,0 +1,55 @@
+pub const FILE_A: i32 = 0;
+pub const FILE_B: i32 = 1;
+pub const FILE_C: i32 = 2;
+pub const FILE_D: i32 = 3;
+pub const FILE_E: i32 = 4;
+pub const FILE_F: i32 = 5;
+pub const FILE_G: i32 = 6;
+pub const FILE_H: i32 = 7;
+
+pub const RANK_1: i32 = 0;
+pub const RANK_2: i32 = 1;
+pub const RANK_3: i32 = 2;
+pub const RANK_4: i32 = 3;
+pub const RANK_5: i32 = 4;
+pub const RANK_6: i32 = 5;
+pub const RANK_7: i32 = 6;
+pub const RANK_8: i32 = 7;
+
+pub fn fr_to_sq(file: i32, rank: i32) -> usize {
+    (21 + file + rank * 10) as usize
+}
+
+pub fn ranks() -> std::ops::Range<i32> {
+    (RANK_1..RANK_8 + 1)
+}
+
+pub fn files() -> std::ops::Range<i32> {
+    (FILE_A..FILE_H + 1)
+}
+
+pub const SQUARE_120_TO_64: [usize; 120] = [
+    65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+    65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+    65,  0,  1,  2,  3,  4,  5,  6,  7, 65,
+    65,  8,  9, 10, 11, 12, 13, 14, 15, 65,
+    65, 16, 17, 18, 19, 20, 21, 22, 23, 65,
+    65, 24, 25, 26, 27, 28, 29, 30, 31, 65,
+    65, 32, 33, 34, 35, 36, 37, 38, 39, 65,
+    65, 40, 41, 42, 43, 44, 45, 46, 47, 65,
+    65, 48, 49, 50, 51, 52, 53, 54, 55, 65,
+    65, 56, 57, 58, 59, 60, 61, 62, 63, 65,
+    65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
+    65, 65, 65, 65, 65, 65, 65, 65, 65, 65
+];
+
+pub const SQUARE_64_TO_120: [usize; 64] = [
+    21, 22, 23, 24, 25, 26, 27, 28,
+    31, 32, 33, 34, 35, 36, 37, 38,
+    41, 42, 43, 44, 45, 46, 47, 48,
+    51, 52, 53, 54, 55, 56, 57, 58,
+    61, 62, 63, 64, 65, 66, 67, 68,
+    71, 72, 73, 74, 75, 76, 77, 78,
+    81, 82, 83, 84, 85, 86, 87, 88,
+    91, 92, 93, 94, 95, 96, 97, 98
+];
