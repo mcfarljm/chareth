@@ -1,10 +1,11 @@
 mod board;
 mod bitboard;
 
-use board::{Board};
+use board::{Board,START_FEN};
 
 fn main() {
-    println!("Hello, world!");
+    let board = Board::from_fen(START_FEN);
+    let s = board.to_string();
 
-    let board = Board::new();
+    println!("{}", s);
 }

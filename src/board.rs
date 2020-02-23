@@ -20,6 +20,8 @@ pub const RANK_6: i32 = 5;
 pub const RANK_7: i32 = 6;
 pub const RANK_8: i32 = 7;
 
+pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
 pub fn fr_to_sq(file: i32, rank: i32) -> usize {
     (21 + file + rank * 10) as usize
 }
@@ -46,14 +48,14 @@ pub struct Board {
     king_sq: [i32; 2],
 
     side: i32,
-    en_pas: i32,
+    en_pas: usize,
     fifty_move: i32,
 
     ply: i32,
     hist_ply: i32,
 
-    castle_perm: i32,
-    position_key: u64,
+    castle_perm: u8,
+    position_hash: u64,
 
     hash_keys: HashKeys,
 }
@@ -63,7 +65,7 @@ impl Board {
         let hash_keys = HashKeys::new();
         
         let mut board = Board{
-            pieces: [Position::Offboard as i32; BOARD_SQ_NUM],
+            pieces: [Pieces::Empty as i32; BOARD_SQ_NUM],
 
             pawns: [0; 3],
 
@@ -76,14 +78,14 @@ impl Board {
             king_sq: [Position::None as i32; 2],
 
             side: Color::Both as i32,
-            en_pas: Position::None as i32,
+            en_pas: Position::None as usize,
             fifty_move: 0,
 
             ply: 0,
             hist_ply: 0,
 
             castle_perm: 0,
-            position_key: 0,
+            position_hash: 0,
 
             hash_keys: hash_keys,
         };
@@ -95,8 +97,100 @@ impl Board {
         board
     }
 
+    pub fn from_fen(fen: &str) -> Board {
+        let mut board = Board::new();
 
-    pub fn position_hash(&self) -> u64 {
+        let mut rank = RANK_8;
+        let mut file = FILE_A;
+        let mut piece = Pieces::Empty as i32;
+        let mut count = 0;
+        let mut i = 0;
+        let mut sq120: usize;
+
+        let mut fen_iter = fen.chars();
+        let mut c;
+
+        while rank >= RANK_1 {
+            c = fen_iter.next().unwrap();
+            count = 1;
+            match c {
+                'p' => piece = Pieces::BP as i32,
+                'r' => piece = Pieces::BR as i32,
+                'n' => piece = Pieces::BN as i32,
+                'b' => piece = Pieces::BB as i32,
+                'k' => piece = Pieces::BK as i32,
+                'q' => piece = Pieces::BQ as i32,
+
+                'P' => piece = Pieces::WP as i32,
+                'R' => piece = Pieces::WR as i32,
+                'N' => piece = Pieces::WN as i32,
+                'B' => piece = Pieces::WB as i32,
+                'K' => piece = Pieces::WK as i32,
+                'Q' => piece = Pieces::WQ as i32,
+
+                '1'..='8' => {
+                    piece = Pieces::Empty as i32;
+                    count = c.to_digit(10).unwrap();
+                }, 
+
+                '/' | ' ' => {
+                    rank -= 1;
+                    file = FILE_A;
+                    continue;
+                },
+                
+                _ => panic!("FEN error"),
+            }
+
+            for i in 0..count {
+                if piece != Pieces::Empty as i32 {
+                    sq120 = fr_to_sq(file, rank);
+                    board.pieces[sq120] = piece;
+                    file += 1;
+                }
+            }
+        }
+
+        c = fen_iter.next().unwrap();
+        board.side = match c {
+            'w' => Color::White as i32,
+            'b' => Color::Black as i32,
+            _ => panic!("unexpected FEN side color character"),
+        };
+
+        // Castling permissions:
+        fen_iter.next();
+        c = fen_iter.next().unwrap();
+        for i in 0..4 {
+            match c {
+                'K' => board.castle_perm |= Castling::WK as u8,
+                'Q' => board.castle_perm |= Castling::WQ as u8,
+                'k' => board.castle_perm |= Castling::BK as u8,
+                'q' => board.castle_perm |= Castling::BQ as u8,
+                '-' => (),
+                ' ' => break,
+                _ => panic!("unexpected FEN castling permission character"),
+            }
+            c = fen_iter.next().unwrap();
+        }
+
+        // En passant
+        c = fen_iter.next().unwrap();
+        if c != '-' {
+            file = c as i32 - 'a' as i32;
+            c = fen_iter.next().unwrap();
+            rank = c as i32 - '1' as i32;
+            assert!(file >= FILE_A && file <= FILE_H);
+            assert!(rank >= RANK_1 && rank <= RANK_8);
+            board.en_pas = fr_to_sq(file, rank);
+        }
+
+        board.position_hash = board.get_position_hash();
+
+        board
+    }
+
+    pub fn get_position_hash(&self) -> u64 {
         let mut hash: u64 = 0;
 
         let mut piece;
@@ -120,7 +214,47 @@ impl Board {
         
         hash
     }
+
+    pub fn to_string(&self) -> String {
+        let piece_chars = ".PNBRQKpnbrqk";
+        let side_chars = "wb-";
+        let rank_chars = "12345678";
+        let file_chars = "abcdefgh";
+
+        let mut s = String::new();
+
+        let mut sq;
+        let mut piece;
+        for rank in ranks().rev() {
+            s.push_str(&format!("{}     ", rank+1));
+            for file in files() {
+                sq = fr_to_sq(file, rank);
+                piece = self.pieces[sq];
+                s.push_str(&format!("{:3}", piece_chars.chars().nth(piece as usize).unwrap()))
+            }
+            s.push('\n');
+        }
+        // s.push('\n');
+        s.push_str(&"\n      ");
+
+        for file in files() {
+            s.push_str(&format!("{:3}", file_chars.chars().nth(file as usize).unwrap()));
+        }
+
+        s.push('\n');
+        s.push_str(&format!("side: {}\n", side_chars.chars().nth(self.side as usize).unwrap()));
+        s.push_str(&format!("enPas: {}\n", self.en_pas));
+
+        s.push_str(&format!("castle: {}{}{}{}\n",
+                            if self.castle_perm & Castling::WK as u8 != 0 {'K'} else {'-'},
+                            if self.castle_perm & Castling::WQ as u8 != 0 {'Q'} else {'-'},
+                            if self.castle_perm & Castling::BK as u8 != 0 {'k'} else {'-'},
+                            if self.castle_perm & Castling::BQ as u8 != 0 {'q'} else {'-'}));
+
+        s
+    }
 }
+
 struct HashKeys {
     piece_keys: [[u64; 120]; 13],
     side_key: u64,
@@ -174,6 +308,10 @@ pub enum Color {
     Both
 }
 
+pub enum Castling {
+    WK = 1, WQ = 2, BK = 4, BQ = 8
+}
+
 pub const SQUARE_120_TO_64: [usize; BOARD_SQ_NUM] = [
     65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
     65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
@@ -199,3 +337,28 @@ pub const SQUARE_64_TO_120: [usize; 64] = [
     81, 82, 83, 84, 85, 86, 87, 88,
     91, 92, 93, 94, 95, 96, 97, 98
 ];
+
+
+#[cfg(test)]
+mod tests {
+    use crate::board::*;
+    
+    #[test]
+    fn init_board_string() {
+        let board = Board::from_fen(START_FEN);
+        let s = "8     r  n  b  q  k  b  n  r  \n\
+                 7     p  p  p  p  p  p  p  p  \n\
+                 6     .  .  .  .  .  .  .  .  \n\
+                 5     .  .  .  .  .  .  .  .  \n\
+                 4     .  .  .  .  .  .  .  .  \n\
+                 3     .  .  .  .  .  .  .  .  \n\
+                 2     P  P  P  P  P  P  P  P  \n\
+                 1     R  N  B  Q  K  B  N  R  \n\
+                 \n      \
+                       a  b  c  d  e  f  g  h  \n\
+                 side: w\n\
+                 enPas: 99\n\
+                 castle: KQkq\n";
+        assert_eq!(board.to_string(), s);
+    }
+}
