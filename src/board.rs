@@ -1,3 +1,5 @@
+const BOARD_SQ_NUM: usize = 120;
+
 pub const FILE_A: i32 = 0;
 pub const FILE_B: i32 = 1;
 pub const FILE_C: i32 = 2;
@@ -28,7 +30,88 @@ pub fn files() -> std::ops::Range<i32> {
     (FILE_A..FILE_H + 1)
 }
 
-pub const SQUARE_120_TO_64: [usize; 120] = [
+pub struct Board {
+    pieces: [i32; BOARD_SQ_NUM],
+
+    pawns: [u64; 3],
+
+    piece_count: [i32; 13],
+
+    num_big_piece: [i32; 3],
+    num_major_piece: [i32; 3],
+    num_minor_piece: [i32; 3],
+
+    king_sq: [i32; 2],
+
+    side: i32,
+    en_pas: i32,
+    fifty_move: i32,
+
+    ply: i32,
+    hist_ply: i32,
+
+    castle_perm: i32,
+    position_key: u64,
+}
+
+impl Board {
+    pub fn new() -> Board {
+        let mut board = Board{
+            pieces: [Position::Offboard as i32; BOARD_SQ_NUM],
+
+            pawns: [0; 3],
+
+            piece_count: [0; 13],
+
+            num_big_piece: [0; 3],
+            num_major_piece: [0; 3],
+            num_minor_piece: [0; 3],
+
+            king_sq: [Position::None as i32; 2],
+
+            side: Color::Both as i32,
+            en_pas: Position::None as i32,
+            fifty_move: 0,
+
+            ply: 0,
+            hist_ply: 0,
+
+            castle_perm: 0,
+            position_key: 0,
+        };
+
+        for i in 0..64 {
+            board.pieces[SQUARE_64_TO_120[i]] = Pieces::Empty as i32;
+        }
+
+        board
+    }
+}
+
+pub enum Position {
+    A1 = 21, B1, C1, D1, E1, F1, G1, H1,
+    A2 = 31, B2, C2, D2, E2, F2, G2, H2,
+    A3 = 41, B3, C3, D3, E3, F3, G3, H3,
+    A4 = 51, B4, C4, D4, E4, F4, G4, H4,
+    A5 = 61, B5, C5, D5, E5, F5, G5, H5,
+    A6 = 71, B6, C6, D6, E6, F6, G6, H6,
+    A7 = 81, B7, C7, D7, E7, F7, G7, H7,
+    A8 = 91, B8, C8, D8, E8, F8, G8, H8,
+    None, Offboard
+}
+
+pub enum Pieces {
+    Empty,
+    WP, WN, WB, WR, WQ, WK,
+    BP, BN, BB, BR, BQ, BK
+}
+
+pub enum Color {
+    White, Black,
+    Both
+}
+
+pub const SQUARE_120_TO_64: [usize; BOARD_SQ_NUM] = [
     65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
     65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
     65,  0,  1,  2,  3,  4,  5,  6,  7, 65,

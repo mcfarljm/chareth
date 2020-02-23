@@ -1,16 +1,10 @@
 mod board;
 mod bitboard;
 
-use board::{ranks,files};
+use board::{Board};
 
 fn main() {
     println!("Hello, world!");
 
-    for r in ranks().rev() {
-        println!("r: {}", r);
-    }
-
-    for f in files() {
-        println!("f: {}", f);
-    }
+    let board = Board::new();
 }
