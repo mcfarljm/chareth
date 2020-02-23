@@ -21,6 +21,14 @@ pub fn fr_to_sq(file: i32, rank: i32) -> usize {
 }
 
 
+pub fn ranks() -> std::ops::Range<i32> {
+    (RANK_1..RANK_8 + 1)
+}
+
+pub fn files() -> std::ops::Range<i32> {
+    (FILE_A..FILE_H + 1)
+}
+
 pub struct Bitboard {
     val: u64,
 }
@@ -41,8 +49,8 @@ impl Bitboard {
         let mut sq64: usize;
 
         let mut s = String::new();
-        for rank in (RANK_1..RANK_8+1).rev() {
-            for file in FILE_A..FILE_H+1 {
+        for rank in ranks().rev() {
+            for file in files() {
                 sq = fr_to_sq(file, rank);
                 sq64 = SQUARE_120_TO_64[sq];
                 if (one << sq64) & self.val != 0 {
