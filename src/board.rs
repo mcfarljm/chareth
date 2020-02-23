@@ -1,3 +1,5 @@
+use rand::Rng;
+
 const BOARD_SQ_NUM: usize = 120;
 
 pub const FILE_A: i32 = 0;
@@ -52,10 +54,14 @@ pub struct Board {
 
     castle_perm: i32,
     position_key: u64,
+
+    hash_keys: HashKeys,
 }
 
 impl Board {
     pub fn new() -> Board {
+        let hash_keys = HashKeys::new();
+        
         let mut board = Board{
             pieces: [Position::Offboard as i32; BOARD_SQ_NUM],
 
@@ -78,6 +84,8 @@ impl Board {
 
             castle_perm: 0,
             position_key: 0,
+
+            hash_keys: hash_keys,
         };
 
         for i in 0..64 {
@@ -85,6 +93,35 @@ impl Board {
         }
 
         board
+    }
+
+struct HashKeys {
+    piece_keys: [[u64; 120]; 13],
+    side_key: u64,
+    castle_keys: [u64; 16],
+}
+
+impl HashKeys {
+    fn new() -> HashKeys {
+        let mut hasher = HashKeys {
+            piece_keys: [[0; 120]; 13],
+            side_key: 0,
+            castle_keys: [0; 16],
+        };
+
+        hasher.side_key = rand::thread_rng().gen::<u64>();
+        let mut i = 0;
+        let mut j = 0;
+        for i in 0..13 {
+            for j in 0..120 {
+                hasher.piece_keys[i][j] = rand::thread_rng().gen::<u64>();
+            }
+        }
+        for i in 0..16 {
+            hasher.castle_keys[i] = rand::thread_rng().gen::<u64>();
+        }
+
+        hasher
     }
 }
 
