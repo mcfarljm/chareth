@@ -30,6 +30,11 @@ impl Bitboard {
         Bitboard{ val: 0 }
     }
 
+    pub fn set_bit(&mut self, index: usize) {
+        let mask: u64 = 1 << index;
+        self.val |= mask;
+    }
+
     pub fn to_string(&self) -> String {
         let one: u64 = 1;
         let mut sq: usize;
@@ -83,7 +88,7 @@ mod tests {
     use crate::*;
     
     #[test]
-    fn empty_bb_string() {
+    fn bb_string_empty() {
         let bb = Bitboard::new();
         let s = "--------\n\
                  --------\n\
@@ -92,6 +97,37 @@ mod tests {
                  --------\n\
                  --------\n\
                  --------\n\
+                 --------\n";
+        assert_eq!(bb.to_string(), s);
+    }
+
+    #[test]
+    fn bb_string_bit9() {
+        let mut bb = Bitboard::new();
+        bb.set_bit(9);
+        let s = "--------\n\
+                 --------\n\
+                 --------\n\
+                 --------\n\
+                 --------\n\
+                 --------\n\
+                 -x------\n\
+                 --------\n";
+        assert_eq!(bb.to_string(), s);
+    }
+
+    #[test]
+    fn bb_string_bit9_44() {
+        let mut bb = Bitboard::new();
+        bb.set_bit(9);
+        bb.set_bit(44);
+        let s = "--------\n\
+                 --------\n\
+                 ----x---\n\
+                 --------\n\
+                 --------\n\
+                 --------\n\
+                 -x------\n\
                  --------\n";
         assert_eq!(bb.to_string(), s);
     }
