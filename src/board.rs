@@ -95,6 +95,32 @@ impl Board {
         board
     }
 
+
+    pub fn position_hash(&self) -> u64 {
+        let mut hash: u64 = 0;
+
+        let mut piece;
+        let mut sq = 0;
+        for sq in 0..BOARD_SQ_NUM {
+            piece = self.pieces[sq];
+            if piece != Pieces::Empty as i32 {
+                hash ^= self.hash_keys.piece_keys[piece as usize][sq];
+            }
+        }
+
+        if self.side == Color::White as i32 {
+            hash ^= self.hash_keys.side_key;
+        }
+
+        if self.en_pas != Position::None as usize {
+            hash ^= self.hash_keys.piece_keys[Pieces::Empty as usize][self.en_pas];
+        }
+
+        hash ^= self.hash_keys.castle_keys[self.castle_perm as usize];
+        
+        hash
+    }
+}
 struct HashKeys {
     piece_keys: [[u64; 120]; 13],
     side_key: u64,
