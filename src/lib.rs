@@ -48,6 +48,16 @@ impl Bitboard {
         self.val &= mask;
     }
 
+    pub fn count_bits(&self) -> i32 {
+        let mut b = self.val;
+        let mut r = 0;
+        while b != 0 {
+            r += 1;
+            b &= b - 1;
+        }
+        r
+    }
+
     pub fn to_string(&self) -> String {
         let one: u64 = 1;
         let mut sq: usize;
@@ -160,6 +170,14 @@ mod tests {
                  -x------\n\
                  --------\n";
         assert_eq!(bb.to_string(), s);
+    }
+
+     #[test]
+    fn bb_count() {
+        let mut bb = Bitboard::new();
+        bb.set_bit(9);
+        bb.set_bit(44);
+        assert_eq!(bb.count_bits(), 2);
     }
 
 }
