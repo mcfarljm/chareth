@@ -118,7 +118,7 @@ pub const SQUARE_64_TO_120: [usize; 64] = [
 
 #[cfg(test)]
 mod tests {
-    use crate::*;
+    use crate::bitboard::*;
     
     #[test]
     fn bb_string_empty() {
