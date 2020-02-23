@@ -43,6 +43,11 @@ impl Bitboard {
         self.val |= mask;
     }
 
+    pub fn clear_bit(&mut self, index: usize) {
+        let mask: u64 = !(1 << index);
+        self.val &= mask;
+    }
+
     pub fn to_string(&self) -> String {
         let one: u64 = 1;
         let mut sq: usize;
@@ -132,6 +137,23 @@ mod tests {
         let s = "--------\n\
                  --------\n\
                  ----x---\n\
+                 --------\n\
+                 --------\n\
+                 --------\n\
+                 -x------\n\
+                 --------\n";
+        assert_eq!(bb.to_string(), s);
+    }
+
+    #[test]
+    fn bb_clear_bit() {
+        let mut bb = Bitboard::new();
+        bb.set_bit(9);
+        bb.set_bit(44);
+        bb.clear_bit(44);
+        let s = "--------\n\
+                 --------\n\
+                 --------\n\
                  --------\n\
                  --------\n\
                  --------\n\
