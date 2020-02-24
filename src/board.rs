@@ -64,10 +64,6 @@ pub struct Board {
     position_hash: u64,
 
     hash_keys: HashKeys,
-
-    // Static data stored here to facilitate array initialization
-    files: [i32; BOARD_SQ_NUM],
-    ranks: [i32; BOARD_SQ_NUM],
 }
 
 impl Board {
@@ -104,22 +100,10 @@ impl Board {
             position_hash: 0,
 
             hash_keys: hash_keys,
-
-            files: [Position::OFFBOARD as i32; BOARD_SQ_NUM],
-            ranks: [Position::OFFBOARD as i32; BOARD_SQ_NUM],
         };
 
         for i in 0..64 {
             board.pieces[SQUARE_64_TO_120[i]] = Piece::EMPTY;
-        }
-        // Set static array data:
-        let mut sq;
-        for rank in ranks() {
-            for file in files() {
-                sq = fr_to_sq(file, rank);
-                board.files[sq] = file;
-                board.ranks[sq] = rank;
-            }
         }
 
         board
@@ -389,8 +373,8 @@ impl Board {
         assert_eq!(self.position_hash, self.get_position_hash());
 
         assert!(self.en_pas == Position::NONE as usize ||
-                (self.ranks[self.en_pas] == RANK_6 && self.side == WHITE) ||
-                (self.ranks[self.en_pas] == RANK_3 && self.side == BLACK));
+                (RANKS[self.en_pas] == RANK_6 && self.side == WHITE) ||
+                (RANKS[self.en_pas] == RANK_3 && self.side == BLACK));
 
         assert_eq!(self.pieces[self.king_sq[WHITE]], Piece::WK);
         assert_eq!(self.pieces[self.king_sq[BLACK]], Piece::BK);
@@ -528,6 +512,39 @@ pub const SQUARE_64_TO_120: [usize; 64] = [
     81, 82, 83, 84, 85, 86, 87, 88,
     91, 92, 93, 94, 95, 96, 97, 98
 ];
+
+
+pub const FILES: [i32; BOARD_SQ_NUM] = [
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100
+];
+
+pub const RANKS: [i32; BOARD_SQ_NUM] = [
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 0, 0, 0, 0, 0, 0, 0, 0, 100,
+    100, 1, 1, 1, 1, 1, 1, 1, 1, 100,
+    100, 2, 2, 2, 2, 2, 2, 2, 2, 100,
+    100, 3, 3, 3, 3, 3, 3, 3, 3, 100,
+    100, 4, 4, 4, 4, 4, 4, 4, 4, 100,
+    100, 5, 5, 5, 5, 5, 5, 5, 5, 100,
+    100, 6, 6, 6, 6, 6, 6, 6, 6, 100,
+    100, 7, 7, 7, 7, 7, 7, 7, 7, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
+    100, 100, 100, 100, 100, 100, 100, 100, 100, 100
+];
+
+
 
 
 #[cfg(test)]
