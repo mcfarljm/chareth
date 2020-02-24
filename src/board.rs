@@ -1,4 +1,6 @@
 use rand::Rng;
+
+use crate::pieces::*;
 use crate::bitboard;
 
 const BOARD_SQ_NUM: usize = 120;
@@ -22,23 +24,6 @@ pub const RANK_6: i32 = 5;
 pub const RANK_8: i32 = 7;
 
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-pub const PIECE_IS_BIG: [bool; 13] = [ false, false, true, true, true, true, true, false, true, true, true, true, true ];
-pub const PIECE_IS_MAJ: [bool; 13] = [ false, false, false, false, true, true, true, false, false, false, true, true, true ];
-pub const PIECE_IS_MIN: [bool; 13] = [ false, false, true, true, false, false, false, false, true, true, false, false, false ];
-pub const PIECE_VAL: [i32; 13]= [ 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000  ];
-pub const PIECE_COLOR: [usize; 13] = [ 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1 ];
-
-const PIECE_IS_KNIGHT: [bool; 13] = [ false, false, true, false, false, false, false, false, true, false, false, false, false ];
-const PIECE_IS_KING: [bool; 13] = [ false, false, false, false, false, false, true, false, false, false, false, false, true ];
-const PIECE_IS_ROOK_OR_QUEEN: [bool; 13] = [ false, false, false, false, true, true, false, false, false, false, true, true, false ];
-const PIECE_IS_BISHOP_OR_QUEEN: [bool; 13] = [ false, false, false, true, false, true, false, false, false, true, false, true, false ];
-
-const KNIGHT_DIR: [i32; 8] = [-8, -19, -21, -12, 8, 19, 21, 12];
-const ROOK_DIR: [i32; 4] = [-1, -10, 1, 10];
-const BISHOP_DIR: [i32; 4] = [-9, -11, 11, 9];
-const KING_DIR: [i32; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
-
 
 pub fn fr_to_sq(file: i32, rank: i32) -> usize {
     (21 + file + rank * 10) as usize
@@ -511,18 +496,6 @@ pub enum Position {
     A7 = 81, B7, C7, D7, E7, F7, G7, H7,
     A8 = 91, B8, C8, D8, E8, F8, G8, H8,
     None, Offboard
-}
-
-pub enum Pieces {
-    Empty,
-    WP, WN, WB, WR, WQ, WK,
-    BP, BN, BB, BR, BQ, BK,
-    Offboard,
-}
-
-pub enum Color {
-    White, Black,
-    Both
 }
 
 pub enum Castling {

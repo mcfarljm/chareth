@@ -1,3 +1,4 @@
+mod pieces;
 mod board;
 mod bitboard;
 
