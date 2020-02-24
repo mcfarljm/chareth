@@ -158,8 +158,8 @@ impl Board {
                 if piece != Piece::EMPTY {
                     sq120 = fr_to_sq(file, rank);
                     board.pieces[sq120] = piece;
-                    file += 1;
                 }
+                file += 1;
             }
         }
 
