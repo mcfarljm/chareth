@@ -23,7 +23,7 @@ pub struct Piece;
 // Placing the values inside a struct serves as a namespace (these are
 // termed "associated constants")
 impl Piece {
-    pub const Empty: usize = 0;
+    pub const EMPTY: usize = 0;
     pub const WP: usize = 1;
     pub const WN: usize = 2;
     pub const WB: usize = 3;
@@ -36,5 +36,5 @@ impl Piece {
     pub const BR: usize = 10;
     pub const BQ: usize = 11;
     pub const BK: usize = 12;
-    pub const Offboard: usize = 13;
+    pub const OFFBOARD: usize = 13;
 }

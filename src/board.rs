@@ -80,7 +80,7 @@ impl Board {
         }
         
         let mut board = Board{
-            pieces: [Piece::Offboard; BOARD_SQ_NUM],
+            pieces: [Piece::OFFBOARD; BOARD_SQ_NUM],
 
             pawns: vec![bitboard::Bitboard::new(); 3],
 
@@ -105,12 +105,12 @@ impl Board {
 
             hash_keys: hash_keys,
 
-            files: [Position::Offboard as i32; BOARD_SQ_NUM],
-            ranks: [Position::Offboard as i32; BOARD_SQ_NUM],
+            files: [Position::OFFBOARD as i32; BOARD_SQ_NUM],
+            ranks: [Position::OFFBOARD as i32; BOARD_SQ_NUM],
         };
 
         for i in 0..64 {
-            board.pieces[SQUARE_64_TO_120[i]] = Piece::Empty;
+            board.pieces[SQUARE_64_TO_120[i]] = Piece::EMPTY;
         }
         // Set static array data:
         let mut sq;
@@ -156,7 +156,7 @@ impl Board {
                 'Q' => piece = Piece::WQ,
 
                 '1'..='8' => {
-                    piece = Piece::Empty;
+                    piece = Piece::EMPTY;
                     count = c.to_digit(10).unwrap();
                 }, 
 
@@ -170,7 +170,7 @@ impl Board {
             }
 
             for _i in 0..count {
-                if piece != Piece::Empty {
+                if piece != Piece::EMPTY {
                     sq120 = fr_to_sq(file, rank);
                     board.pieces[sq120] = piece;
                     file += 1;
@@ -225,7 +225,7 @@ impl Board {
         let mut piece;
         for sq in 0..BOARD_SQ_NUM {
             piece = self.pieces[sq];
-            if piece != Piece::Empty && piece != Piece::Offboard {
+            if piece != Piece::EMPTY && piece != Piece::OFFBOARD {
                 hash ^= self.hash_keys.piece_keys[piece][sq];
             }
         }
@@ -235,7 +235,7 @@ impl Board {
         }
 
         if self.en_pas != Position::None as usize {
-            hash ^= self.hash_keys.piece_keys[Piece::Empty][self.en_pas];
+            hash ^= self.hash_keys.piece_keys[Piece::EMPTY][self.en_pas];
         }
 
         hash ^= self.hash_keys.castle_keys[self.castle_perm as usize];
@@ -288,7 +288,7 @@ impl Board {
         for sq in 0..64 {
            sq120 = SQUARE_64_TO_120[sq]; 
             piece = self.pieces[sq120];
-            if piece != Piece::Empty {
+            if piece != Piece::EMPTY {
                 color = PIECE_COLOR[piece];
                 if PIECE_IS_BIG[piece] {
                     self.num_big_piece[color] += 1;
@@ -335,7 +335,7 @@ impl Board {
         for sq64 in 0..64 {
             sq120 = SQUARE_64_TO_120[sq64]; 
             piece = self.pieces[sq120];
-            if piece != Piece::Empty {
+            if piece != Piece::EMPTY {
                 piece_count[piece] += 1;
                 color = PIECE_COLOR[piece];
                 if PIECE_IS_BIG[piece] {
@@ -422,8 +422,8 @@ impl Board {
         for dir in &ROOK_DIR {
             t_sq = sq + *dir as usize;
             piece = self.pieces[t_sq];
-            while piece != Piece::Offboard {
-                if piece != Piece::Empty {
+            while piece != Piece::OFFBOARD {
+                if piece != Piece::EMPTY {
                     if PIECE_IS_ROOK_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
                     break;
                 }
@@ -436,8 +436,8 @@ impl Board {
         for dir in &BISHOP_DIR {
             t_sq = sq + *dir as usize;
             piece = self.pieces[t_sq];
-            while piece != Piece::Offboard {
-                if piece != Piece::Empty {
+            while piece != Piece::OFFBOARD {
+                if piece != Piece::EMPTY {
                     if PIECE_IS_BISHOP_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
                     break;
                 }
@@ -496,7 +496,7 @@ pub enum Position {
     A6 = 71, B6, C6, D6, E6, F6, G6, H6,
     A7 = 81, B7, C7, D7, E7, F7, G7, H7,
     A8 = 91, B8, C8, D8, E8, F8, G8, H8,
-    None, Offboard
+    None, OFFBOARD
 }
 
 pub enum Castling {
