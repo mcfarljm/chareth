@@ -1,6 +1,7 @@
 mod pieces;
 mod board;
 mod bitboard;
+mod moves;
 
 use board::{Board,START_FEN};
 
