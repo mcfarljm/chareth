@@ -14,4 +14,8 @@ fn main() {
     println!("{}", board.pawns[0].to_string());
     println!("{}", board.pawns[1].to_string());
     println!("{}", board.pawns[2].to_string());
+
+    let mv = moves::Move::new(23, 33, 0, pieces::Piece::WR, false, false, false);
+    let s = mv.to_string();
+    println!("{}", s);
 }
