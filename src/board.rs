@@ -1,4 +1,5 @@
 use rand::Rng;
+use crate::bitboard;
 
 const BOARD_SQ_NUM: usize = 120;
 
@@ -44,7 +45,7 @@ pub fn files() -> std::ops::Range<i32> {
 pub struct Board {
     pieces: [i32; BOARD_SQ_NUM],
 
-    pawns: [u64; 3],
+    pub pawns: Vec<bitboard::Bitboard>,
 
     piece_count: [i32; 13],
 
@@ -87,7 +88,7 @@ impl Board {
         let mut board = Board{
             pieces: [Pieces::Empty as i32; BOARD_SQ_NUM],
 
-            pawns: [0; 3],
+            pawns: vec![bitboard::Bitboard::new(); 3],
 
             piece_count: [0; 13],
 
@@ -222,6 +223,8 @@ impl Board {
 
         board.position_hash = board.get_position_hash();
 
+        board.update_lists_and_material();
+
         board
     }
 
@@ -289,7 +292,7 @@ impl Board {
         s
     }
 
-    pub fn update_lists_and_material(&mut self) {
+    fn update_lists_and_material(&mut self) {
         let mut sq120;
         let mut color;
         let mut piece: usize;
@@ -311,6 +314,12 @@ impl Board {
                 self.piece_lists[piece].push(sq120 as i32);
                 if piece == Pieces::WK as usize || piece == Pieces::BK as usize {
                     self.king_sq[color] = sq120 as i32;
+                }
+                let sq64;
+                if piece == Pieces::WP as usize || piece == Pieces::BP as usize {
+                    sq64 = SQUARE_120_TO_64[sq120];
+                    self.pawns[color].set_bit(sq64);
+                    self.pawns[Color::Both as usize].set_bit(sq64);
                 }
             }
         }
