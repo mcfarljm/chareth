@@ -69,6 +69,10 @@ pub struct Board {
     position_hash: u64,
 
     hash_keys: HashKeys,
+
+    // Static data stored here to facilitate array initialization
+    files: [i32; BOARD_SQ_NUM],
+    ranks: [i32; BOARD_SQ_NUM],
 }
 
 impl Board {
@@ -107,10 +111,22 @@ impl Board {
             position_hash: 0,
 
             hash_keys: hash_keys,
+
+            files: [Position::Offboard as i32; BOARD_SQ_NUM],
+            ranks: [Position::Offboard as i32; BOARD_SQ_NUM],
         };
 
         for i in 0..64 {
             board.pieces[SQUARE_64_TO_120[i]] = Pieces::Empty as i32;
+        }
+        // Set static array data:
+        let mut sq;
+        for rank in ranks() {
+            for file in files() {
+                sq = fr_to_sq(file, rank);
+                board.files[sq] = file;
+                board.ranks[sq] = rank;
+            }
         }
 
         board
