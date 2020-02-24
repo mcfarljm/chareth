@@ -15,7 +15,8 @@ pub struct Move {
     0000 1111 0000 0000 0000 0000 0000 -> Promoted Piece >> 20, 0xF
     0001 0000 0000 0000 0000 0000 0000 -> Castle 0x1000000
      */
-    val: u32,
+    data: u32,
+    score: i32,
 }
 
 pub fn square_string(sq: usize) -> String {
@@ -27,50 +28,50 @@ pub fn square_string(sq: usize) -> String {
 #[allow(dead_code)]
 impl Move {
     pub fn new(from: usize, to: usize, capture: usize, promote: usize, en_pas: bool, pawn_start: bool, castle: bool) -> Move {
-        let mut val: u32;
-        val = (from | (to << 7) | (capture << 14) | (promote << 20)) as u32;
+        let mut data: u32;
+        data = (from | (to << 7) | (capture << 14) | (promote << 20)) as u32;
 
-        if en_pas { val |= EN_PAS_FLAG; }
-        if pawn_start { val |= PAWN_START_FLAG; }
-        if castle { val |= CASTLE_FLAG; }
+        if en_pas { data |= EN_PAS_FLAG; }
+        if pawn_start { data |= PAWN_START_FLAG; }
+        if castle { data |= CASTLE_FLAG; }
         
-        Move{val}
+        Move{data: data, score: 0}
     }
 
     pub fn from(&self) -> usize {
-        (self.val & 0x7F) as usize
+        (self.data & 0x7F) as usize
     }
 
     pub fn to(&self) -> usize {
-        ( (self.val >> 7) & 0x7F ) as usize
+        ( (self.data >> 7) & 0x7F ) as usize
     }
 
     pub fn captured_piece(&self) -> usize {
-        ((self.val >> 14) & 0xF) as usize
+        ((self.data >> 14) & 0xF) as usize
     }
 
     pub fn promoted_piece(&self) -> usize {
-        ((self.val >> 20) & 0xF) as usize
+        ((self.data >> 20) & 0xF) as usize
     }
 
     pub fn en_pas(&self) -> bool {
-        (self.val & EN_PAS_FLAG) != 0
+        (self.data & EN_PAS_FLAG) != 0
     }
 
     pub fn pawn_start(&self) -> bool {
-        (self.val & PAWN_START_FLAG) != 0
+        (self.data & PAWN_START_FLAG) != 0
     }
 
     pub fn castle(&self) -> bool {
-        (self.val & CASTLE_FLAG) != 0
+        (self.data & CASTLE_FLAG) != 0
     }
 
     pub fn is_capture(&self) -> bool {
-        (self.val & 0x7c000) != 0
+        (self.data & 0x7c000) != 0
     }
 
     pub fn is_promotion(&self) -> bool {
-        (self.val & 0xF00000) != 0
+        (self.data & 0xF00000) != 0
     }
 
     pub fn to_string(&self) -> String {
