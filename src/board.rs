@@ -91,10 +91,10 @@ impl Board {
 
             piece_lists: piece_lists,
 
-            king_sq: [Position::None as usize; 2],
+            king_sq: [Position::NONE as usize; 2],
 
             side: BOTH,
-            en_pas: Position::None as usize,
+            en_pas: Position::NONE as usize,
             fifty_move: 0,
 
             ply: 0,
@@ -234,7 +234,7 @@ impl Board {
             hash ^= self.hash_keys.side_key;
         }
 
-        if self.en_pas != Position::None as usize {
+        if self.en_pas != Position::NONE as usize {
             hash ^= self.hash_keys.piece_keys[Piece::EMPTY][self.en_pas];
         }
 
@@ -388,7 +388,7 @@ impl Board {
         assert!(self.side == WHITE || self.side == BLACK);
         assert_eq!(self.position_hash, self.get_position_hash());
 
-        assert!(self.en_pas == Position::None as usize ||
+        assert!(self.en_pas == Position::NONE as usize ||
                 (self.ranks[self.en_pas] == RANK_6 && self.side == WHITE) ||
                 (self.ranks[self.en_pas] == RANK_3 && self.side == BLACK));
 
@@ -496,7 +496,7 @@ pub enum Position {
     A6 = 71, B6, C6, D6, E6, F6, G6, H6,
     A7 = 81, B7, C7, D7, E7, F7, G7, H7,
     A8 = 91, B8, C8, D8, E8, F8, G8, H8,
-    None, OFFBOARD
+    NONE, OFFBOARD
 }
 
 pub enum Castling {
