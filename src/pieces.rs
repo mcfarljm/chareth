@@ -14,14 +14,27 @@ pub const ROOK_DIR: [i32; 4] = [-1, -10, 1, 10];
 pub const BISHOP_DIR: [i32; 4] = [-9, -11, 11, 9];
 pub const KING_DIR: [i32; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
 
-pub enum Pieces {
-    Empty,
-    WP, WN, WB, WR, WQ, WK,
-    BP, BN, BB, BR, BQ, BK,
-    Offboard,
-}
+pub const WHITE: usize = 0;
+pub const BLACK: usize = 1;
+pub const BOTH: usize = 2;
 
-pub enum Color {
-    White, Black,
-    Both
+pub struct Piece;
+
+// Placing the values inside a struct serves as a namespace (these are
+// termed "associated constants")
+impl Piece {
+    pub const Empty: usize = 0;
+    pub const WP: usize = 1;
+    pub const WN: usize = 2;
+    pub const WB: usize = 3;
+    pub const WR: usize = 4;
+    pub const WQ: usize = 5;
+    pub const WK: usize = 6;
+    pub const BP: usize = 7;
+    pub const BN: usize = 8;
+    pub const BB: usize = 9;
+    pub const BR: usize = 10;
+    pub const BQ: usize = 11;
+    pub const BK: usize = 12;
+    pub const Offboard: usize = 13;
 }

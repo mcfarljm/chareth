@@ -53,7 +53,7 @@ pub struct Board {
     // Redundant with piece_lists
     king_sq: [usize; 2],
 
-    side: i32,
+    side: usize,
     en_pas: usize,
     fifty_move: i32,
 
@@ -80,7 +80,7 @@ impl Board {
         }
         
         let mut board = Board{
-            pieces: [Pieces::Offboard as usize; BOARD_SQ_NUM],
+            pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
             pawns: vec![bitboard::Bitboard::new(); 3],
 
@@ -93,7 +93,7 @@ impl Board {
 
             king_sq: [Position::None as usize; 2],
 
-            side: Color::Both as i32,
+            side: BOTH,
             en_pas: Position::None as usize,
             fifty_move: 0,
 
@@ -110,7 +110,7 @@ impl Board {
         };
 
         for i in 0..64 {
-            board.pieces[SQUARE_64_TO_120[i]] = Pieces::Empty as usize;
+            board.pieces[SQUARE_64_TO_120[i]] = Piece::Empty;
         }
         // Set static array data:
         let mut sq;
@@ -141,22 +141,22 @@ impl Board {
             c = fen_iter.next().unwrap();
             count = 1;
             match c {
-                'p' => piece = Pieces::BP as usize,
-                'r' => piece = Pieces::BR as usize,
-                'n' => piece = Pieces::BN as usize,
-                'b' => piece = Pieces::BB as usize,
-                'k' => piece = Pieces::BK as usize,
-                'q' => piece = Pieces::BQ as usize,
+                'p' => piece = Piece::BP,
+                'r' => piece = Piece::BR,
+                'n' => piece = Piece::BN,
+                'b' => piece = Piece::BB,
+                'k' => piece = Piece::BK,
+                'q' => piece = Piece::BQ,
 
-                'P' => piece = Pieces::WP as usize,
-                'R' => piece = Pieces::WR as usize,
-                'N' => piece = Pieces::WN as usize,
-                'B' => piece = Pieces::WB as usize,
-                'K' => piece = Pieces::WK as usize,
-                'Q' => piece = Pieces::WQ as usize,
+                'P' => piece = Piece::WP,
+                'R' => piece = Piece::WR,
+                'N' => piece = Piece::WN,
+                'B' => piece = Piece::WB,
+                'K' => piece = Piece::WK,
+                'Q' => piece = Piece::WQ,
 
                 '1'..='8' => {
-                    piece = Pieces::Empty as usize;
+                    piece = Piece::Empty;
                     count = c.to_digit(10).unwrap();
                 }, 
 
@@ -170,7 +170,7 @@ impl Board {
             }
 
             for _i in 0..count {
-                if piece != Pieces::Empty as usize {
+                if piece != Piece::Empty {
                     sq120 = fr_to_sq(file, rank);
                     board.pieces[sq120] = piece;
                     file += 1;
@@ -180,8 +180,8 @@ impl Board {
 
         c = fen_iter.next().unwrap();
         board.side = match c {
-            'w' => Color::White as i32,
-            'b' => Color::Black as i32,
+            'w' => WHITE,
+            'b' => BLACK,
             _ => panic!("unexpected FEN side color character"),
         };
 
@@ -225,17 +225,17 @@ impl Board {
         let mut piece;
         for sq in 0..BOARD_SQ_NUM {
             piece = self.pieces[sq];
-            if piece != Pieces::Empty as usize && piece != Pieces::Offboard as usize {
+            if piece != Piece::Empty && piece != Piece::Offboard {
                 hash ^= self.hash_keys.piece_keys[piece][sq];
             }
         }
 
-        if self.side == Color::White as i32 {
+        if self.side == WHITE {
             hash ^= self.hash_keys.side_key;
         }
 
         if self.en_pas != Position::None as usize {
-            hash ^= self.hash_keys.piece_keys[Pieces::Empty as usize][self.en_pas];
+            hash ^= self.hash_keys.piece_keys[Piece::Empty][self.en_pas];
         }
 
         hash ^= self.hash_keys.castle_keys[self.castle_perm as usize];
@@ -288,7 +288,7 @@ impl Board {
         for sq in 0..64 {
            sq120 = SQUARE_64_TO_120[sq]; 
             piece = self.pieces[sq120];
-            if piece != Pieces::Empty as usize {
+            if piece != Piece::Empty {
                 color = PIECE_COLOR[piece];
                 if PIECE_IS_BIG[piece] {
                     self.num_big_piece[color] += 1;
@@ -301,14 +301,14 @@ impl Board {
                 }
                 self.material[color] += PIECE_VAL[piece];
                 self.piece_lists[piece].push(sq120 as i32);
-                if piece == Pieces::WK as usize || piece == Pieces::BK as usize {
+                if piece == Piece::WK || piece == Piece::BK {
                     self.king_sq[color] = sq120;
                 }
                 let sq64;
-                if piece == Pieces::WP as usize || piece == Pieces::BP as usize {
+                if piece == Piece::WP || piece == Piece::BP {
                     sq64 = SQUARE_120_TO_64[sq120];
                     self.pawns[color].set_bit(sq64);
-                    self.pawns[Color::Both as usize].set_bit(sq64);
+                    self.pawns[BOTH].set_bit(sq64);
                 }
             }
         }
@@ -335,7 +335,7 @@ impl Board {
         for sq64 in 0..64 {
             sq120 = SQUARE_64_TO_120[sq64]; 
             piece = self.pieces[sq120];
-            if piece != Pieces::Empty as usize {
+            if piece != Piece::Empty {
                 piece_count[piece] += 1;
                 color = PIECE_COLOR[piece];
                 if PIECE_IS_BIG[piece] {
@@ -357,23 +357,23 @@ impl Board {
 
         // Check pawn bitboards:
         let mut pawns = self.pawns.clone();
-        assert_eq!(piece_count[Pieces::WP as usize], pawns[Color::White as usize].count());
-        assert_eq!(piece_count[Pieces::BP as usize], pawns[Color::Black as usize].count());
-        assert_eq!(piece_count[Pieces::WP as usize] + piece_count[Pieces::BP as usize], self.pawns[Color::Both as usize].count());
+        assert_eq!(piece_count[Piece::WP], pawns[WHITE].count());
+        assert_eq!(piece_count[Piece::BP], pawns[BLACK].count());
+        assert_eq!(piece_count[Piece::WP] + piece_count[Piece::BP], self.pawns[BOTH].count());
 
         // Check pawn bitboard squares:
         let mut sq64;
-        while pawns[Color::White as usize].nonzero() {
-            sq64 = pawns[Color::White as usize].pop_bit();
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Pieces::WP as usize);
+        while pawns[WHITE].nonzero() {
+            sq64 = pawns[WHITE].pop_bit();
+            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Piece::WP);
         }
-        while pawns[Color::Black as usize].nonzero() {
-            sq64 = pawns[Color::Black as usize].pop_bit();
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Pieces::BP as usize);
+        while pawns[BLACK].nonzero() {
+            sq64 = pawns[BLACK].pop_bit();
+            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Piece::BP);
         }
-        while pawns[Color::Both as usize].nonzero() {
-            sq64 = pawns[Color::Both as usize].pop_bit();
-            assert!(self.pieces[SQUARE_64_TO_120[sq64]] == Pieces::WP as usize || self.pieces[SQUARE_64_TO_120[sq64]] == Pieces::BP as usize);
+        while pawns[BOTH].nonzero() {
+            sq64 = pawns[BOTH].pop_bit();
+            assert!(self.pieces[SQUARE_64_TO_120[sq64]] == Piece::WP || self.pieces[SQUARE_64_TO_120[sq64]] == Piece::BP);
         }
         
         fn checker(a1: [i32; 2], a2: [i32; 2]) {
@@ -385,28 +385,28 @@ impl Board {
         checker(num_major_piece, self.num_major_piece);
         checker(num_minor_piece, self.num_minor_piece);
 
-        assert!(self.side == Color::White as i32 || self.side == Color::Black as i32);
+        assert!(self.side == WHITE || self.side == BLACK);
         assert_eq!(self.position_hash, self.get_position_hash());
 
         assert!(self.en_pas == Position::None as usize ||
-                (self.ranks[self.en_pas] == RANK_6 && self.side == Color::White as i32) ||
-                (self.ranks[self.en_pas] == RANK_3 && self.side == Color::Black as i32));
+                (self.ranks[self.en_pas] == RANK_6 && self.side == WHITE) ||
+                (self.ranks[self.en_pas] == RANK_3 && self.side == BLACK));
 
-        assert_eq!(self.pieces[self.king_sq[Color::White as usize]], Pieces::WK as usize);
-        assert_eq!(self.pieces[self.king_sq[Color::Black as usize]], Pieces::BK as usize);
+        assert_eq!(self.pieces[self.king_sq[WHITE]], Piece::WK);
+        assert_eq!(self.pieces[self.king_sq[BLACK]], Piece::BK);
         
         true
     }
 
-    pub fn square_attacked(&self, sq: usize, side: i32) -> bool {
+    pub fn square_attacked(&self, sq: usize, side: usize) -> bool {
         let mut piece;
 
         // pawns
-        if side == Color::White as i32 {
-            if self.pieces[sq-11] == Pieces::WP as usize || self.pieces[sq-9] == Pieces::WP as usize { return true; }
+        if side == WHITE {
+            if self.pieces[sq-11] == Piece::WP || self.pieces[sq-9] == Piece::WP { return true; }
         }
         else {
-            if self.pieces[sq+11] == Pieces::BP as usize || self.pieces[sq+9] == Pieces::BP as usize { return true; }
+            if self.pieces[sq+11] == Piece::BP || self.pieces[sq+9] == Piece::BP { return true; }
         }
             
         // knights
@@ -422,8 +422,8 @@ impl Board {
         for dir in &ROOK_DIR {
             t_sq = sq + *dir as usize;
             piece = self.pieces[t_sq as usize];
-            while piece != Pieces::Offboard as usize {
-                if piece != Pieces::Empty as usize {
+            while piece != Piece::Offboard {
+                if piece != Piece::Empty {
                     if PIECE_IS_ROOK_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
                     break;
                 }
@@ -436,8 +436,8 @@ impl Board {
         for dir in &BISHOP_DIR {
             t_sq = sq + *dir as usize;
             piece = self.pieces[t_sq as usize];
-            while piece != Pieces::Offboard as usize {
-                if piece != Pieces::Empty as usize {
+            while piece != Piece::Offboard {
+                if piece != Piece::Empty {
                     if PIECE_IS_BISHOP_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
                     break;
                 }
