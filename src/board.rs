@@ -22,6 +22,13 @@ pub const RANK_8: i32 = 7;
 
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
+pub const PIECE_IS_BIG: [bool; 13] = [ false, false, true, true, true, true, true, false, true, true, true, true, true ];
+pub const PIECE_IS_MAJ: [bool; 13] = [ false, false, false, false, true, true, true, false, false, false, true, true, true ];
+pub const PIECE_IS_MIN: [bool; 13] = [ false, false, true, true, false, false, false, false, true, true, false, false, false ];
+pub const PIECE_VAL: [i32; 13]= [ 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000  ];
+pub const PIECE_COLOR: [usize; 13] = [ 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1 ];
+
+
 pub fn fr_to_sq(file: i32, rank: i32) -> usize {
     (21 + file + rank * 10) as usize
 }
@@ -41,10 +48,14 @@ pub struct Board {
 
     piece_count: [i32; 13],
 
-    num_big_piece: [i32; 3],
-    num_major_piece: [i32; 3],
-    num_minor_piece: [i32; 3],
+    num_big_piece: [i32; 2],
+    num_major_piece: [i32; 2],
+    num_minor_piece: [i32; 2],
+    material: [i32; 2],
 
+    piece_lists: Vec<Vec<i32>>,
+
+    // Redundant with piece_lists
     king_sq: [i32; 2],
 
     side: i32,
@@ -63,6 +74,11 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         let hash_keys = HashKeys::new();
+
+        let mut piece_lists: Vec<Vec<i32>> = Vec::new();
+        for i in 0..13 {
+            piece_lists.push(Vec::new());
+        }
         
         let mut board = Board{
             pieces: [Pieces::Empty as i32; BOARD_SQ_NUM],
@@ -71,9 +87,12 @@ impl Board {
 
             piece_count: [0; 13],
 
-            num_big_piece: [0; 3],
-            num_major_piece: [0; 3],
-            num_minor_piece: [0; 3],
+            num_big_piece: [0; 2],
+            num_major_piece: [0; 2],
+            num_minor_piece: [0; 2],
+            material: [0; 2],
+
+            piece_lists: piece_lists,
 
             king_sq: [Position::None as i32; 2],
 
@@ -252,6 +271,33 @@ impl Board {
                             if self.castle_perm & Castling::BQ as u8 != 0 {'q'} else {'-'}));
 
         s
+    }
+
+    pub fn update_lists_and_material(&mut self) {
+        let mut sq120;
+        let mut color;
+        let mut piece: usize;
+        for sq in 0..64 {
+           sq120 = SQUARE_64_TO_120[sq]; 
+            piece = self.pieces[sq120] as usize;
+            if piece != Pieces::Empty as usize {
+                color = PIECE_COLOR[piece];
+                if PIECE_IS_BIG[piece] {
+                    self.num_big_piece[color] += 1;
+                }
+                if PIECE_IS_MIN[piece] {
+                    self.num_minor_piece[color] += 1;
+                }
+                if PIECE_IS_MAJ[piece] {
+                    self.num_major_piece[color] += 1;
+                }
+                self.material[color] += PIECE_VAL[piece];
+                self.piece_lists[piece].push(sq120 as i32);
+                if piece == Pieces::WK as usize || piece == Pieces::BK as usize {
+                    self.king_sq[color] = sq120 as i32;
+                }
+            }
+        }
     }
 }
 
