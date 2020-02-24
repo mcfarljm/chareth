@@ -2,6 +2,7 @@ use rand::Rng;
 
 use crate::pieces::*;
 use crate::bitboard;
+use crate::validate;
 
 const BOARD_SQ_NUM: usize = 120;
 
@@ -383,6 +384,10 @@ impl Board {
     }
 
     pub fn square_attacked(&self, sq: usize, side: usize) -> bool {
+        debug_assert!(validate::square_on_board(sq));
+        debug_assert!(validate::side_valid(side));
+        debug_assert!(self.check());
+        
         let mut piece;
 
         // pawns

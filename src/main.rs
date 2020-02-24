@@ -2,6 +2,7 @@ mod pieces;
 mod board;
 mod bitboard;
 mod moves;
+mod validate;
 
 use board::{Board,START_FEN};
 
