@@ -421,7 +421,7 @@ impl Board {
         let mut t_sq;
         for dir in &ROOK_DIR {
             t_sq = sq + *dir as usize;
-            piece = self.pieces[t_sq as usize];
+            piece = self.pieces[t_sq];
             while piece != Piece::Offboard {
                 if piece != Piece::Empty {
                     if PIECE_IS_ROOK_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
@@ -435,7 +435,7 @@ impl Board {
         // rooks, queens
         for dir in &BISHOP_DIR {
             t_sq = sq + *dir as usize;
-            piece = self.pieces[t_sq as usize];
+            piece = self.pieces[t_sq];
             while piece != Piece::Offboard {
                 if piece != Piece::Empty {
                     if PIECE_IS_BISHOP_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
