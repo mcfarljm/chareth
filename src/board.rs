@@ -84,7 +84,7 @@ impl Board {
         }
         
         let mut board = Board{
-            pieces: [Pieces::Empty as i32; BOARD_SQ_NUM],
+            pieces: [Pieces::Offboard as i32; BOARD_SQ_NUM],
 
             pawns: vec![bitboard::Bitboard::new(); 3],
 
@@ -229,7 +229,7 @@ impl Board {
         let mut piece;
         for sq in 0..BOARD_SQ_NUM {
             piece = self.pieces[sq];
-            if piece != Pieces::Empty as i32 {
+            if piece != Pieces::Empty as i32 && piece != Pieces::Offboard as i32 {
                 hash ^= self.hash_keys.piece_keys[piece as usize][sq];
             }
         }
@@ -447,7 +447,8 @@ pub enum Position {
 pub enum Pieces {
     Empty,
     WP, WN, WB, WR, WQ, WK,
-    BP, BN, BB, BR, BQ, BK
+    BP, BN, BB, BR, BQ, BK,
+    Offboard,
 }
 
 pub enum Color {
