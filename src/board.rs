@@ -16,12 +16,12 @@ pub const FILE_A: i32 = 0;
 pub const FILE_H: i32 = 7;
 
 pub const RANK_1: i32 = 0;
-// pub const RANK_2: i32 = 1;
+pub const RANK_2: i32 = 1;
 pub const RANK_3: i32 = 2;
 // pub const RANK_4: i32 = 3;
 // pub const RANK_5: i32 = 4;
 pub const RANK_6: i32 = 5;
-// pub const RANK_7: i32 = 6;
+pub const RANK_7: i32 = 6;
 pub const RANK_8: i32 = 7;
 
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -38,8 +38,12 @@ pub fn files() -> std::ops::Range<i32> {
     (FILE_A..FILE_H + 1)
 }
 
+pub fn square_on_board(sq: usize) -> bool {
+    SQUARE_120_TO_64[sq] <= 63
+}
+
 pub struct Board {
-    pieces: [usize; BOARD_SQ_NUM],
+    pub pieces: [usize; BOARD_SQ_NUM],
 
     pub pawns: Vec<bitboard::Bitboard>,
 
@@ -49,13 +53,13 @@ pub struct Board {
     material: [i32; 2],
 
     // piece_lists[piece] produces a vector of squares for that piece
-    piece_lists: Vec<Vec<i32>>,
+    pub piece_lists: Vec<Vec<usize>>,
 
     // Redundant with piece_lists
     king_sq: [usize; 2],
 
-    side: usize,
-    en_pas: usize,
+    pub side: usize,
+    pub en_pas: usize,
     fifty_move: i32,
 
     ply: i32,
@@ -71,7 +75,7 @@ impl Board {
     pub fn new() -> Board {
         let hash_keys = HashKeys::new();
 
-        let mut piece_lists: Vec<Vec<i32>> = Vec::new();
+        let mut piece_lists: Vec<Vec<usize>> = Vec::new();
         for _i in 0..13 {
             piece_lists.push(Vec::new());
         }
@@ -285,7 +289,7 @@ impl Board {
                     self.num_major_piece[color] += 1;
                 }
                 self.material[color] += PIECE_VAL[piece];
-                self.piece_lists[piece].push(sq120 as i32);
+                self.piece_lists[piece].push(sq120);
                 if piece == Piece::WK || piece == Piece::BK {
                     self.king_sq[color] = sq120;
                 }
@@ -384,7 +388,7 @@ impl Board {
     }
 
     pub fn square_attacked(&self, sq: usize, side: usize) -> bool {
-        debug_assert!(validate::square_on_board(sq));
+        debug_assert!(square_on_board(sq));
         debug_assert!(validate::side_valid(side));
         debug_assert!(self.check());
         

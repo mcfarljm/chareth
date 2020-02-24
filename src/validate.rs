@@ -1,10 +1,6 @@
 use crate::pieces;
 use crate::board;
 
-pub fn square_on_board(sq: usize) -> bool {
-    board::SQUARE_120_TO_64[sq] <= 63
-}
-
 pub fn side_valid(side: usize) -> bool {
     side == pieces::WHITE || side == pieces::BLACK
 }

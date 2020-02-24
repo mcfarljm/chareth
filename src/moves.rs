@@ -27,13 +27,13 @@ pub fn square_string(sq: usize) -> String {
 
 #[allow(dead_code)]
 impl Move {
-    pub fn new(from: usize, to: usize, capture: usize, promote: usize, en_pas: bool, pawn_start: bool, castle: bool) -> Move {
+    pub fn new(from: usize, to: usize, capture: usize, promote: usize, en_pas: bool, pawn_start: bool) -> Move {
         let mut data: u32;
         data = (from | (to << 7) | (capture << 14) | (promote << 20)) as u32;
 
         if en_pas { data |= EN_PAS_FLAG; }
         if pawn_start { data |= PAWN_START_FLAG; }
-        if castle { data |= CASTLE_FLAG; }
+        // if castle { data |= CASTLE_FLAG; }
         
         Move{data: data, score: 0}
     }
@@ -99,6 +99,10 @@ impl Move {
         s
     }
 
+    pub fn score(&self) -> i32 {
+        self.score
+    }
+
 }
 
 #[cfg(test)]
@@ -107,7 +111,7 @@ mod tests {
     
     #[test]
     fn move_string() {
-        let mv = Move::new(board::Position::C1 as usize, board::Position::C3 as usize, 0, pieces::Piece::WR, false, false, false);
+        let mv = Move::new(board::Position::C1 as usize, board::Position::C3 as usize, 0, pieces::Piece::WR, false, false);
         let s = mv.to_string();
         assert_eq!(s, "c1c3r");
     }
