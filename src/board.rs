@@ -47,8 +47,6 @@ pub struct Board {
 
     pub pawns: Vec<bitboard::Bitboard>,
 
-    piece_count: [i32; 13],
-
     num_big_piece: [i32; 2],
     num_major_piece: [i32; 2],
     num_minor_piece: [i32; 2],
@@ -89,8 +87,6 @@ impl Board {
             pieces: [Pieces::Empty as i32; BOARD_SQ_NUM],
 
             pawns: vec![bitboard::Bitboard::new(); 3],
-
-            piece_count: [0; 13],
 
             num_big_piece: [0; 2],
             num_major_piece: [0; 2],
@@ -324,6 +320,90 @@ impl Board {
             }
         }
     }
+
+    pub fn check(&self) -> bool {
+        let mut piece_count: [i32; 13] = [0; 13];
+        let mut num_big_piece = [0; 2];
+        let mut num_major_piece = [0; 2];
+        let mut num_minor_piece = [0; 2];
+        let mut material = [0; 2];
+
+        // Check piece lists:
+        for piece in 1..13 {
+            for sq in &self.piece_lists[piece] {
+                assert_eq!(self.pieces[*sq as usize], piece as i32);
+            }
+        }
+
+        // Check counts
+        let mut sq120;
+        let mut piece;
+        let mut color;
+        for sq64 in 0..64 {
+            sq120 = SQUARE_64_TO_120[sq64]; 
+            piece = self.pieces[sq120] as usize;
+            if piece != Pieces::Empty as usize {
+                piece_count[piece as usize] += 1;
+                color = PIECE_COLOR[piece];
+                if PIECE_IS_BIG[piece] {
+                    num_big_piece[color] += 1;
+                }
+                if PIECE_IS_MIN[piece] {
+                    num_minor_piece[color] += 1;
+                }
+                if PIECE_IS_MAJ[piece] {
+                    num_major_piece[color] += 1;
+                }
+                material[color] += PIECE_VAL[piece];
+            }
+        }
+
+        for piece in 1..13 {
+            assert_eq!(piece_count[piece] as usize, self.piece_lists[piece].len());
+        }
+
+        // Check pawn bitboards:
+        let mut pawns = self.pawns.clone();
+        assert_eq!(piece_count[Pieces::WP as usize], pawns[Color::White as usize].count());
+        assert_eq!(piece_count[Pieces::BP as usize], pawns[Color::Black as usize].count());
+        assert_eq!(piece_count[Pieces::WP as usize] + piece_count[Pieces::BP as usize], self.pawns[Color::Both as usize].count());
+
+        // Check pawn bitboard squares:
+        let mut sq64;
+        while pawns[Color::White as usize].nonzero() {
+            sq64 = pawns[Color::White as usize].pop_bit();
+            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Pieces::WP as i32);
+        }
+        while pawns[Color::Black as usize].nonzero() {
+            sq64 = pawns[Color::Black as usize].pop_bit();
+            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Pieces::BP as i32);
+        }
+        while pawns[Color::Both as usize].nonzero() {
+            sq64 = pawns[Color::Both as usize].pop_bit();
+            assert!(self.pieces[SQUARE_64_TO_120[sq64]] == Pieces::WP as i32 || self.pieces[SQUARE_64_TO_120[sq64]] == Pieces::BP as i32);
+        }
+        
+        fn checker(a1: [i32; 2], a2: [i32; 2]) {
+            assert_eq!(a1[0], a2[0]);
+            assert_eq!(a1[1], a2[1]);
+        }
+        checker(material, self.material);
+        checker(num_big_piece, self.num_big_piece);
+        checker(num_major_piece, self.num_major_piece);
+        checker(num_minor_piece, self.num_minor_piece);
+
+        assert!(self.side == Color::White as i32 || self.side == Color::Black as i32);
+        assert_eq!(self.position_hash, self.get_position_hash());
+
+        assert!(self.en_pas == Position::None as usize ||
+                (self.ranks[self.en_pas] == RANK_6 && self.side == Color::White as i32) ||
+                (self.ranks[self.en_pas] == RANK_3 && self.side == Color::Black as i32));
+
+        assert_eq!(self.pieces[self.king_sq[Color::White as usize] as usize], Pieces::WK as i32);
+        assert_eq!(self.pieces[self.king_sq[Color::Black as usize] as usize], Pieces::BK as i32);
+        
+        true
+    }
 }
 
 struct HashKeys {
@@ -415,7 +495,7 @@ mod tests {
     use crate::board::*;
     
     #[test]
-    fn init_board_string() {
+    fn init_board() {
         let board = Board::from_fen(START_FEN);
         let s = "8     r  n  b  q  k  b  n  r  \n\
                  7     p  p  p  p  p  p  p  p  \n\
@@ -431,5 +511,6 @@ mod tests {
                  enPas: 99\n\
                  castle: KQkq\n";
         assert_eq!(board.to_string(), s);
+        assert!(board.check());
     }
 }

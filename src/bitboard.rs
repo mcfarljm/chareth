@@ -12,6 +12,10 @@ impl Bitboard {
         Bitboard{ val: 0 }
     }
 
+    pub fn nonzero(&self) -> bool {
+        self.val != 0
+    }
+
     pub fn set_bit(&mut self, index: usize) {
         let mask: u64 = 1 << index;
         self.val |= mask;
@@ -22,7 +26,7 @@ impl Bitboard {
         self.val &= mask;
     }
 
-    pub fn count_bits(&self) -> i32 {
+    pub fn count(&self) -> i32 {
         let mut b = self.val;
         let mut r = 0;
         while b != 0 {
@@ -134,7 +138,7 @@ mod tests {
         let mut bb = Bitboard::new();
         bb.set_bit(9);
         bb.set_bit(44);
-        assert_eq!(bb.count_bits(), 2);
+        assert_eq!(bb.count(), 2);
     }
 
     #[test]

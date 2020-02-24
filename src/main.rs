@@ -5,6 +5,7 @@ use board::{Board,START_FEN};
 
 fn main() {
     let board = Board::from_fen(START_FEN);
+    board.check();
 
     println!("{}", board.to_string());
 
