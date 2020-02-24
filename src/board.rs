@@ -4,21 +4,21 @@ use crate::bitboard;
 const BOARD_SQ_NUM: usize = 120;
 
 pub const FILE_A: i32 = 0;
-pub const FILE_B: i32 = 1;
-pub const FILE_C: i32 = 2;
-pub const FILE_D: i32 = 3;
-pub const FILE_E: i32 = 4;
-pub const FILE_F: i32 = 5;
-pub const FILE_G: i32 = 6;
+// pub const FILE_B: i32 = 1;
+// pub const FILE_C: i32 = 2;
+// pub const FILE_D: i32 = 3;
+// pub const FILE_E: i32 = 4;
+// pub const FILE_F: i32 = 5;
+// pub const FILE_G: i32 = 6;
 pub const FILE_H: i32 = 7;
 
 pub const RANK_1: i32 = 0;
-pub const RANK_2: i32 = 1;
+// pub const RANK_2: i32 = 1;
 pub const RANK_3: i32 = 2;
-pub const RANK_4: i32 = 3;
-pub const RANK_5: i32 = 4;
+// pub const RANK_4: i32 = 3;
+// pub const RANK_5: i32 = 4;
 pub const RANK_6: i32 = 5;
-pub const RANK_7: i32 = 6;
+// pub const RANK_7: i32 = 6;
 pub const RANK_8: i32 = 7;
 
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -79,7 +79,7 @@ impl Board {
         let hash_keys = HashKeys::new();
 
         let mut piece_lists: Vec<Vec<i32>> = Vec::new();
-        for i in 0..13 {
+        for _i in 0..13 {
             piece_lists.push(Vec::new());
         }
         
@@ -134,9 +134,8 @@ impl Board {
 
         let mut rank = RANK_8;
         let mut file = FILE_A;
-        let mut piece = Pieces::Empty as i32;
-        let mut count = 0;
-        let mut i = 0;
+        let mut piece;
+        let mut count;
         let mut sq120: usize;
 
         let mut fen_iter = fen.chars();
@@ -174,7 +173,7 @@ impl Board {
                 _ => panic!("FEN error"),
             }
 
-            for i in 0..count {
+            for _i in 0..count {
                 if piece != Pieces::Empty as i32 {
                     sq120 = fr_to_sq(file, rank);
                     board.pieces[sq120] = piece;
@@ -193,7 +192,7 @@ impl Board {
         // Castling permissions:
         fen_iter.next();
         c = fen_iter.next().unwrap();
-        for i in 0..4 {
+        for _i in 0..4 {
             match c {
                 'K' => board.castle_perm |= Castling::WK as u8,
                 'Q' => board.castle_perm |= Castling::WQ as u8,
@@ -228,7 +227,6 @@ impl Board {
         let mut hash: u64 = 0;
 
         let mut piece;
-        let mut sq = 0;
         for sq in 0..BOARD_SQ_NUM {
             piece = self.pieces[sq];
             if piece != Pieces::Empty as i32 {
@@ -252,7 +250,6 @@ impl Board {
     pub fn to_string(&self) -> String {
         let piece_chars = ".PNBRQKpnbrqk";
         let side_chars = "wb-";
-        let rank_chars = "12345678";
         let file_chars = "abcdefgh";
 
         let mut s = String::new();
@@ -421,8 +418,6 @@ impl HashKeys {
         };
 
         hasher.side_key = rand::thread_rng().gen::<u64>();
-        let mut i = 0;
-        let mut j = 0;
         for i in 0..13 {
             for j in 0..120 {
                 hasher.piece_keys[i][j] = rand::thread_rng().gen::<u64>();
@@ -436,6 +431,7 @@ impl HashKeys {
     }
 }
 
+#[allow(dead_code)]
 pub enum Position {
     A1 = 21, B1, C1, D1, E1, F1, G1, H1,
     A2 = 31, B2, C2, D2, E2, F2, G2, H2,
