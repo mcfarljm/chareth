@@ -29,6 +29,16 @@ pub const PIECE_IS_MIN: [bool; 13] = [ false, false, true, true, false, false, f
 pub const PIECE_VAL: [i32; 13]= [ 0, 100, 325, 325, 550, 1000, 50000, 100, 325, 325, 550, 1000, 50000  ];
 pub const PIECE_COLOR: [usize; 13] = [ 2, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1 ];
 
+const PIECE_IS_KNIGHT: [bool; 13] = [ false, false, true, false, false, false, false, false, true, false, false, false, false ];
+const PIECE_IS_KING: [bool; 13] = [ false, false, false, false, false, false, true, false, false, false, false, false, true ];
+const PIECE_IS_ROOK_OR_QUEEN: [bool; 13] = [ false, false, false, false, true, true, false, false, false, false, true, true, false ];
+const PIECE_IS_BISHOP_OR_QUEEN: [bool; 13] = [ false, false, false, true, false, true, false, false, false, true, false, true, false ];
+
+const KNIGHT_DIR: [i32; 8] = [-8, -19, -21, -12, 8, 19, 21, 12];
+const ROOK_DIR: [i32; 4] = [-1, -10, 1, 10];
+const BISHOP_DIR: [i32; 4] = [-9, -11, 11, 9];
+const KING_DIR: [i32; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
+
 
 pub fn fr_to_sq(file: i32, rank: i32) -> usize {
     (21 + file + rank * 10) as usize
@@ -400,6 +410,65 @@ impl Board {
         assert_eq!(self.pieces[self.king_sq[Color::Black as usize] as usize], Pieces::BK as i32);
         
         true
+    }
+
+    pub fn square_attacked(&self, sq: usize, side: i32) -> bool {
+        let mut piece;
+
+        // pawns
+        if side == Color::White as i32 {
+            if self.pieces[sq-11] == Pieces::WP as i32 || self.pieces[sq-9] == Pieces::WP as i32 { return true; }
+        }
+        else {
+            if self.pieces[sq+11] == Pieces::BP as i32 || self.pieces[sq+9] == Pieces::BP as i32 { return true; }
+        }
+            
+        // knights
+        for dir in &KNIGHT_DIR {
+            piece = self.pieces[sq + *dir as usize] as usize;
+            if PIECE_IS_KNIGHT[piece] && PIECE_COLOR[piece] == side as usize {
+                return true;
+            }
+        }
+
+        // rooks, queens
+        let mut t_sq;
+        for dir in &ROOK_DIR {
+            t_sq = sq + *dir as usize;
+            piece = self.pieces[t_sq as usize] as usize;
+            while piece != Pieces::Offboard as usize {
+                if piece != Pieces::Empty as usize {
+                    if PIECE_IS_ROOK_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
+                    break;
+                }
+                t_sq += *dir as usize;
+                piece = self.pieces[t_sq] as usize;
+            }
+        }
+
+        // rooks, queens
+        for dir in &BISHOP_DIR {
+            t_sq = sq + *dir as usize;
+            piece = self.pieces[t_sq as usize] as usize;
+            while piece != Pieces::Offboard as usize {
+                if piece != Pieces::Empty as usize {
+                    if PIECE_IS_BISHOP_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
+                    break;
+                }
+                t_sq += *dir as usize;
+                piece = self.pieces[t_sq] as usize;
+            }
+        }
+
+        // kings
+        for dir in &KING_DIR {
+            piece = self.pieces[sq + *dir as usize] as usize;
+            if PIECE_IS_KING[piece] && PIECE_COLOR[piece] == side as usize {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
