@@ -30,13 +30,8 @@ pub fn fr_to_sq(file: i32, rank: i32) -> usize {
     (21 + file + rank * 10) as usize
 }
 
-pub fn ranks() -> std::ops::Range<i32> {
-    (RANK_1..RANK_8 + 1)
-}
-
-pub fn files() -> std::ops::Range<i32> {
-    (FILE_A..FILE_H + 1)
-}
+pub const RANKS_ITER: std::ops::Range<i32> = (RANK_1..RANK_8+1);
+pub const FILES_ITER: std::ops::Range<i32> = (FILE_A..FILE_H+1);
 
 pub fn square_on_board(sq: usize) -> bool {
     SQUARE_120_TO_64[sq] <= 63
@@ -241,9 +236,9 @@ impl Board {
 
         let mut sq;
         let mut piece;
-        for rank in ranks().rev() {
+        for rank in RANKS_ITER.rev() {
             s.push_str(&format!("{}     ", rank+1));
-            for file in files() {
+            for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
                 piece = self.pieces[sq];
                 s.push_str(&format!("{:3}", piece_chars.chars().nth(piece).unwrap()))
@@ -253,7 +248,7 @@ impl Board {
         // s.push('\n');
         s.push_str(&"\n      ");
 
-        for file in files() {
+        for file in FILES_ITER {
             s.push_str(&format!("{:3}", file_chars.chars().nth(file as usize).unwrap()));
         }
 
