@@ -406,48 +406,57 @@ impl Board {
         else {
             if self.pieces[sq+11] == Piece::BP || self.pieces[sq+9] == Piece::BP { return true; }
         }
-            
+
+        let mut t_sq: usize;
+
         // knights
         for dir in &KNIGHT_DIR {
-            piece = self.pieces[sq + *dir as usize];
+            t_sq = (sq as i32 + *dir) as usize;
+            if ! square_on_board(t_sq) {
+                continue;
+            }
+            piece = self.pieces[t_sq];
             if PIECE_IS_KNIGHT[piece] && PIECE_COLOR[piece] == side as usize {
                 return true;
             }
         }
 
         // rooks, queens
-        let mut t_sq;
         for dir in &ROOK_DIR {
-            t_sq = sq + *dir as usize;
+            t_sq = (sq as i32 + *dir) as usize;
             piece = self.pieces[t_sq];
             while piece != Piece::OFFBOARD {
                 if piece != Piece::EMPTY {
                     if PIECE_IS_ROOK_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
                     break;
                 }
-                t_sq += *dir as usize;
+                t_sq = (t_sq as i32 + *dir) as usize;
                 piece = self.pieces[t_sq];
             }
         }
 
         // rooks, queens
         for dir in &BISHOP_DIR {
-            t_sq = sq + *dir as usize;
+            t_sq = (sq as i32 + *dir) as usize;
             piece = self.pieces[t_sq];
             while piece != Piece::OFFBOARD {
                 if piece != Piece::EMPTY {
                     if PIECE_IS_BISHOP_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
                     break;
                 }
-                t_sq += *dir as usize;
+                t_sq = (t_sq as i32 + *dir) as usize;
                 piece = self.pieces[t_sq];
             }
         }
 
         // kings
         for dir in &KING_DIR {
-            piece = self.pieces[sq + *dir as usize];
-            if PIECE_IS_KING[piece] && PIECE_COLOR[piece] == side as usize {
+            t_sq = (sq as i32 + *dir) as usize;
+            if ! square_on_board(t_sq) {
+                continue;
+            }
+            piece = self.pieces[t_sq];
+            if PIECE_IS_KING[piece] && PIECE_COLOR[piece] == side {
                 return true;
             }
         }
