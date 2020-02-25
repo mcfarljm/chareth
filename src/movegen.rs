@@ -143,6 +143,25 @@ impl MoveList {
         // Sliders
         for piece in pieces::SLIDERS[b.side].iter() {
             println!("slider: {}", piece);
+            for sq in &b.piece_lists[*piece] {
+                println!("piece on: {}", moves::square_string(*sq));
+
+                for dir in &pieces::DIRECTIONS[*piece] {
+                    t_sq = (*sq as i32 + dir) as usize;
+
+                    while board::square_on_board(t_sq) {
+                        // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
+                        if b.pieces[t_sq] != Piece::EMPTY {
+                            if pieces::PIECE_COLOR[b.pieces[t_sq]] == b.side ^ 1 {
+                                println!("\tCapture on {}", moves::square_string(t_sq));
+                            }
+                            break;
+                        }
+                        println!("\tNormal on {}", moves::square_string(t_sq));
+                        t_sq = (t_sq as i32 + dir) as usize;
+                    }
+                }
+            }
         }
 
         // Non-sliders
@@ -150,6 +169,7 @@ impl MoveList {
             println!("non slider: {}", piece);
             for sq in &b.piece_lists[*piece] {
                 println!("piece on: {}", moves::square_string(*sq));
+
                 for dir in &pieces::DIRECTIONS[*piece] {
                     t_sq = (*sq as i32 + dir) as usize;
                     if ! board::square_on_board(t_sq) {
