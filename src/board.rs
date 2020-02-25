@@ -24,6 +24,15 @@ pub const RANK_6: i32 = 5;
 pub const RANK_7: i32 = 6;
 pub const RANK_8: i32 = 7;
 
+pub struct Castling;
+
+impl Castling {
+    pub const WK: u8 = 1;
+    pub const WQ: u8 = 2;
+    pub const BK: u8 = 4;
+    pub const BQ: u8 = 8;
+}
+
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 pub fn fr_to_sq(file: i32, rank: i32) -> usize {
@@ -174,10 +183,10 @@ impl Board {
         c = fen_iter.next().unwrap();
         for _i in 0..4 {
             match c {
-                'K' => board.castle_perm |= Castling::WK as u8,
-                'Q' => board.castle_perm |= Castling::WQ as u8,
-                'k' => board.castle_perm |= Castling::BK as u8,
-                'q' => board.castle_perm |= Castling::BQ as u8,
+                'K' => board.castle_perm |= Castling::WK,
+                'Q' => board.castle_perm |= Castling::WQ,
+                'k' => board.castle_perm |= Castling::BK,
+                'q' => board.castle_perm |= Castling::BQ,
                 '-' => (),
                 ' ' => break,
                 _ => panic!("unexpected FEN castling permission character"),
@@ -258,10 +267,10 @@ impl Board {
         s.push_str(&format!("enPas: {}\n", self.en_pas));
 
         s.push_str(&format!("castle: {}{}{}{}\n",
-                            if self.castle_perm & Castling::WK as u8 != 0 {'K'} else {'-'},
-                            if self.castle_perm & Castling::WQ as u8 != 0 {'Q'} else {'-'},
-                            if self.castle_perm & Castling::BK as u8 != 0 {'k'} else {'-'},
-                            if self.castle_perm & Castling::BQ as u8 != 0 {'q'} else {'-'}));
+                            if self.castle_perm & Castling::WK != 0 {'K'} else {'-'},
+                            if self.castle_perm & Castling::WQ != 0 {'Q'} else {'-'},
+                            if self.castle_perm & Castling::BK != 0 {'k'} else {'-'},
+                            if self.castle_perm & Castling::BQ != 0 {'q'} else {'-'}));
 
         s
     }
@@ -486,10 +495,6 @@ pub enum Position {
     A7 = 81, B7, C7, D7, E7, F7, G7, H7,
     A8 = 91, B8, C8, D8, E8, F8, G8, H8,
     NONE, OFFBOARD
-}
-
-pub enum Castling {
-    WK = 1, WQ = 2, BK = 4, BQ = 8
 }
 
 pub const SQUARE_120_TO_64: [usize; BOARD_SQ_NUM] = [
