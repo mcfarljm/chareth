@@ -228,6 +228,7 @@ impl Board {
     }
 
     pub fn to_string(&self) -> String {
+        // Todo: change to list of chars to simplify indexing
         let piece_chars = ".PNBRQKpnbrqk";
         let side_chars = "wb-";
         let file_chars = "abcdefgh";
