@@ -30,10 +30,10 @@ impl MoveList {
         // but by using a closure, we can handle both cases here.
         let mut adder: Box<dyn FnMut(usize)>;
         if capture != Piece::EMPTY {
-            adder = Box::new(|promote: usize| self.add_capture_move(b, moves::Move::new(from, to, capture, promote, false, false)));
+            adder = Box::new(|promote: usize| self.add_capture_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
         }
         else {
-            adder = Box::new(|promote: usize| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, false, false)));
+            adder = Box::new(|promote: usize| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
         }
         
         if board::RANKS[from] == board::RANK_7 {
@@ -54,10 +54,10 @@ impl MoveList {
         // but by using a closure, we can handle both cases here.
         let mut adder: Box<dyn FnMut(usize)>;
         if capture != Piece::EMPTY {
-            adder = Box::new(|promote: usize| self.add_capture_move(b, moves::Move::new(from, to, capture, promote, false, false)));
+            adder = Box::new(|promote: usize| self.add_capture_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
         }
         else {
-            adder = Box::new(|promote: usize| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, false, false)));
+            adder = Box::new(|promote: usize| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
         }
         
         if board::RANKS[from] == board::RANK_2 {
@@ -85,7 +85,7 @@ impl MoveList {
                     self.add_white_pawn_move(b, *sq, sq+10, Piece::EMPTY);
                     if board::RANKS[*sq] == board::RANK_2 && b.pieces[sq+20] == Piece::EMPTY {
                         // pawn forward two squares
-                        self.add_quiet_move(b, moves::Move::new(*sq, sq+20, Piece::EMPTY, Piece::EMPTY, false, true));
+                        self.add_quiet_move(b, moves::Move::new(*sq, sq+20, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::pawn_start));
                     }
                 }
 
@@ -100,10 +100,10 @@ impl MoveList {
 
                 // Check en passant captures
                 if sq + 9 == b.en_pas {
-                    self.add_capture_move(b, moves::Move::new(*sq, sq+9, Piece::EMPTY, Piece::EMPTY, true, false));
+                    self.add_capture_move(b, moves::Move::new(*sq, sq+9, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::en_pas));
                 }
                 if sq + 11 == b.en_pas {
-                    self.add_capture_move(b, moves::Move::new(*sq, sq+11, Piece::EMPTY, Piece::EMPTY, true, false));
+                    self.add_capture_move(b, moves::Move::new(*sq, sq+11, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::en_pas));
                 }
             }
         }
@@ -115,7 +115,7 @@ impl MoveList {
                     self.add_black_pawn_move(b, *sq, sq-10, Piece::EMPTY);
                     if board::RANKS[*sq] == board::RANK_7 && b.pieces[sq-20] == Piece::EMPTY {
                         // pawn forward two squares
-                        self.add_quiet_move(b, moves::Move::new(*sq, sq-20, Piece::EMPTY, Piece::EMPTY, false, true));
+                        self.add_quiet_move(b, moves::Move::new(*sq, sq-20, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::pawn_start));
                     }
                 }
 
@@ -130,10 +130,10 @@ impl MoveList {
 
                 // Check en passant captures
                 if sq - 9 == b.en_pas {
-                    self.add_capture_move(b, moves::Move::new(*sq, sq-9, Piece::EMPTY, Piece::EMPTY, true, false));
+                    self.add_capture_move(b, moves::Move::new(*sq, sq-9, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::en_pas));
                 }
                 if sq - 11 == b.en_pas {
-                    self.add_capture_move(b, moves::Move::new(*sq, sq-11, Piece::EMPTY, Piece::EMPTY, true, false));
+                    self.add_capture_move(b, moves::Move::new(*sq, sq-11, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::en_pas));
                 }
             }
         }
