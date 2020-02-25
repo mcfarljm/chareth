@@ -69,7 +69,7 @@ pub struct Board {
     ply: i32,
     hist_ply: i32,
 
-    castle_perm: u8,
+    pub castle_perm: u8,
     position_hash: u64,
 
     hash_keys: HashKeys,

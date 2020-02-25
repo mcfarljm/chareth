@@ -29,7 +29,10 @@ fn main() {
     let QUEENS = "6k1/8/4nq2/8/1nQ5/5N2/1N6/6K1 b - - 0 1 ";
     let BISHOPS = "6k1/1b6/4n3/8/1n4B1/1B3N2/1N6/2b3K1 b - - 0 1 ";
 
-    let board = Board::from_fen(BISHOPS);
+    let CASTLE1 = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1";
+    let CASTLE2 = "3rk2r/8/8/8/8/8/6p1/R3K2R b KQk - 0 1";
+
+    let board = Board::from_fen(CASTLE2);
     println!("{}", board.to_string());
     board.check();
 

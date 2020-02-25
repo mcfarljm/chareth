@@ -1,5 +1,6 @@
 use crate::moves;
 use crate::board;
+use crate::board::Castling;
 use crate::pieces;
 use crate::pieces::Piece;
 
@@ -106,6 +107,23 @@ impl MoveList {
                     self.add_capture_move(b, moves::Move::new(*sq, sq+11, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::en_pas));
                 }
             }
+
+            // Castling
+            if b.castle_perm & Castling::WK != 0 {
+                if b.pieces[board::Position::F1 as usize] == Piece::EMPTY && b.pieces[board::Position::G1 as usize] == Piece::EMPTY {
+                    if (! b.square_attacked(board::Position::E1 as usize, pieces::BLACK)) && (!b.square_attacked(board::Position::F1 as usize, pieces::BLACK)) {
+                        println!("WKCA move gen");
+                    }
+                }
+            }
+
+            if b.castle_perm & Castling::WQ != 0 {
+                if b.pieces[board::Position::D1 as usize] == Piece::EMPTY && b.pieces[board::Position::C1 as usize] == Piece::EMPTY && b.pieces[board::Position::B1 as usize] == Piece::EMPTY {
+                    if (! b.square_attacked(board::Position::E1 as usize, pieces::BLACK)) && (!b.square_attacked(board::Position::D1 as usize, pieces::BLACK)) {
+                        println!("WQCA move gen");
+                    }
+                }
+            }
         }
         else {
             for sq in &b.piece_lists[Piece::BP] {
@@ -134,6 +152,23 @@ impl MoveList {
                 }
                 if sq - 11 == b.en_pas {
                     self.add_capture_move(b, moves::Move::new(*sq, sq-11, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::en_pas));
+                }
+            }
+
+            // Castling
+            if b.castle_perm & Castling::BK != 0 {
+                if b.pieces[board::Position::F8 as usize] == Piece::EMPTY && b.pieces[board::Position::G8 as usize] == Piece::EMPTY {
+                    if (! b.square_attacked(board::Position::E8 as usize, pieces::WHITE)) && (!b.square_attacked(board::Position::F8 as usize, pieces::WHITE)) {
+                        println!("BKCA move gen");
+                    }
+                }
+            }
+
+            if b.castle_perm & Castling::BQ != 0 {
+                if b.pieces[board::Position::D8 as usize] == Piece::EMPTY && b.pieces[board::Position::C8 as usize] == Piece::EMPTY && b.pieces[board::Position::B8 as usize] == Piece::EMPTY {
+                    if (! b.square_attacked(board::Position::E8 as usize, pieces::WHITE)) && (!b.square_attacked(board::Position::D8 as usize, pieces::WHITE)) {
+                        println!("BQCA move gen");
+                    }
                 }
             }
         }
