@@ -137,6 +137,36 @@ impl MoveList {
                 }
             }
         }
+
+        let mut t_sq: usize;
+
+        // Sliders
+        for piece in pieces::SLIDERS[b.side].iter() {
+            println!("slider: {}", piece);
+        }
+
+        // Non-sliders
+        for piece in &pieces::NON_SLIDERS[b.side] {
+            println!("non slider: {}", piece);
+            for sq in &b.piece_lists[*piece] {
+                println!("piece on: {}", moves::square_string(*sq));
+                for dir in &pieces::DIRECTIONS[*piece] {
+                    t_sq = (*sq as i32 + dir) as usize;
+                    if ! board::square_on_board(t_sq) {
+                        continue;
+                    }
+
+                    // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
+                    if b.pieces[t_sq] != Piece::EMPTY {
+                        if pieces::PIECE_COLOR[b.pieces[t_sq]] == b.side ^ 1 {
+                            println!("\tCapture on {}", moves::square_string(t_sq));
+                        }
+                        continue;
+                    }
+                    println!("\tNormal on {}", moves::square_string(t_sq));
+                }
+            }
+        }
     }
 
     pub fn print(&self) {
