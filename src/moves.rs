@@ -27,9 +27,9 @@ pub struct Move {
 
 pub enum MoveFlag {
     None,
-    en_pas,
-    pawn_start,
-    castle,
+    EnPas,
+    PawnStart,
+    Castle,
 }
 
 
@@ -40,9 +40,9 @@ impl Move {
         data = (from | (to << 7) | (capture << 14) | (promote << 20)) as u32;
 
         match flag {
-            en_pas => data |= EN_PAS_FLAG,
-            pawn_start => data |= PAWN_START_FLAG,
-            castle => data |= CASTLE_FLAG,
+            MoveFlag::EnPas => data |= EN_PAS_FLAG,
+            MoveFlag::PawnStart => data |= PAWN_START_FLAG,
+            MoveFlag::Castle => data |= CASTLE_FLAG,
             _ => (),
         }
         

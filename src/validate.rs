@@ -1,5 +1,4 @@
 use crate::pieces;
-use crate::board;
 
 pub fn side_valid(side: usize) -> bool {
     side == pieces::WHITE || side == pieces::BLACK
