@@ -31,13 +31,14 @@ fn main() {
 
     let CASTLE1 = "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1";
     let CASTLE2 = "3rk2r/8/8/8/8/8/6p1/R3K2R b KQk - 0 1";
+    let CASTLE3 = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 
-    let board = Board::from_fen(CASTLE2);
+    let board = Board::from_fen(CASTLE3);
     println!("{}", board.to_string());
     board.check();
 
     let mut ml = movegen::MoveList::new();
     ml.generate_all_moves(&board);
-    // ml.print();
+    ml.print();
 
 }

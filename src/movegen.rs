@@ -112,7 +112,7 @@ impl MoveList {
             if b.castle_perm & Castling::WK != 0 {
                 if b.pieces[board::Position::F1 as usize] == Piece::EMPTY && b.pieces[board::Position::G1 as usize] == Piece::EMPTY {
                     if (! b.square_attacked(board::Position::E1 as usize, pieces::BLACK)) && (!b.square_attacked(board::Position::F1 as usize, pieces::BLACK)) {
-                        println!("WKCA move gen");
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E1 as usize, board::Position::G1 as usize, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::castle));
                     }
                 }
             }
@@ -120,7 +120,7 @@ impl MoveList {
             if b.castle_perm & Castling::WQ != 0 {
                 if b.pieces[board::Position::D1 as usize] == Piece::EMPTY && b.pieces[board::Position::C1 as usize] == Piece::EMPTY && b.pieces[board::Position::B1 as usize] == Piece::EMPTY {
                     if (! b.square_attacked(board::Position::E1 as usize, pieces::BLACK)) && (!b.square_attacked(board::Position::D1 as usize, pieces::BLACK)) {
-                        println!("WQCA move gen");
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E1 as usize, board::Position::C1 as usize, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::castle));
                     }
                 }
             }
@@ -159,7 +159,7 @@ impl MoveList {
             if b.castle_perm & Castling::BK != 0 {
                 if b.pieces[board::Position::F8 as usize] == Piece::EMPTY && b.pieces[board::Position::G8 as usize] == Piece::EMPTY {
                     if (! b.square_attacked(board::Position::E8 as usize, pieces::WHITE)) && (!b.square_attacked(board::Position::F8 as usize, pieces::WHITE)) {
-                        println!("BKCA move gen");
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E8 as usize, board::Position::G8 as usize, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::castle));
                     }
                 }
             }
@@ -167,7 +167,7 @@ impl MoveList {
             if b.castle_perm & Castling::BQ != 0 {
                 if b.pieces[board::Position::D8 as usize] == Piece::EMPTY && b.pieces[board::Position::C8 as usize] == Piece::EMPTY && b.pieces[board::Position::B8 as usize] == Piece::EMPTY {
                     if (! b.square_attacked(board::Position::E8 as usize, pieces::WHITE)) && (!b.square_attacked(board::Position::D8 as usize, pieces::WHITE)) {
-                        println!("BQCA move gen");
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E8 as usize, board::Position::C8 as usize, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::castle));
                     }
                 }
             }
@@ -177,9 +177,7 @@ impl MoveList {
 
         // Sliders
         for piece in pieces::SLIDERS[b.side].iter() {
-            println!("slider: {}", piece);
             for sq in &b.piece_lists[*piece] {
-                println!("piece on: {}", moves::square_string(*sq));
 
                 for dir in &pieces::DIRECTIONS[*piece] {
                     t_sq = (*sq as i32 + dir) as usize;
@@ -188,11 +186,11 @@ impl MoveList {
                         // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
                         if b.pieces[t_sq] != Piece::EMPTY {
                             if pieces::PIECE_COLOR[b.pieces[t_sq]] == b.side ^ 1 {
-                                println!("\tCapture on {}", moves::square_string(t_sq));
+                                self.add_capture_move(b, moves::Move::new(*sq, t_sq, b.pieces[t_sq], Piece::EMPTY, moves::MoveFlag::None));
                             }
                             break;
                         }
-                        println!("\tNormal on {}", moves::square_string(t_sq));
+                        self.add_quiet_move(b, moves::Move::new(*sq, t_sq, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::None));
                         t_sq = (t_sq as i32 + dir) as usize;
                     }
                 }
@@ -201,9 +199,7 @@ impl MoveList {
 
         // Non-sliders
         for piece in &pieces::NON_SLIDERS[b.side] {
-            println!("non slider: {}", piece);
             for sq in &b.piece_lists[*piece] {
-                println!("piece on: {}", moves::square_string(*sq));
 
                 for dir in &pieces::DIRECTIONS[*piece] {
                     t_sq = (*sq as i32 + dir) as usize;
@@ -214,11 +210,11 @@ impl MoveList {
                     // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
                     if b.pieces[t_sq] != Piece::EMPTY {
                         if pieces::PIECE_COLOR[b.pieces[t_sq]] == b.side ^ 1 {
-                            println!("\tCapture on {}", moves::square_string(t_sq));
+                            self.add_capture_move(b, moves::Move::new(*sq, t_sq, b.pieces[t_sq], Piece::EMPTY, moves::MoveFlag::None));
                         }
                         continue;
                     }
-                    println!("\tNormal on {}", moves::square_string(t_sq));
+                    self.add_quiet_move(b, moves::Move::new(*sq, t_sq, Piece::EMPTY, Piece::EMPTY, moves::MoveFlag::None));
                 }
             }
         }
@@ -257,5 +253,12 @@ mod tests {
     fn black_pawn_start() {
         let pawn_moves_b = "rnbqkbnr/p1p1p3/3p3p/1p1p4/2P1Pp2/8/PP1P1PpP/RNBQKB1R b KQkq e3 0 1";
         check_move_count(pawn_moves_b, 26);
+    }
+
+    #[test]
+    fn castling() {
+        // A fairly complicated setup used in VICE video 36
+        let castle_fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+        check_move_count(castle_fen, 48);
     }
 }
