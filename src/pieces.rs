@@ -44,6 +44,7 @@ pub const DIRECTIONS: [[i32; 9]; 13] =
        [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ]
     ];
 
+
 pub struct Piece;
 
 // Placing the values inside a struct serves as a namespace (these are

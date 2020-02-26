@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::pieces::*;
+use crate::pieces2::*;
 use crate::bitboard;
 use crate::validate;
 
@@ -47,7 +47,7 @@ pub fn square_on_board(sq: usize) -> bool {
 }
 
 pub struct Board {
-    pub pieces: [usize; BOARD_SQ_NUM],
+    pub pieces: [Piece; BOARD_SQ_NUM],
 
     pub pawns: Vec<bitboard::Bitboard>,
 
@@ -85,7 +85,7 @@ impl Board {
         }
         
         let mut board = Board{
-            pieces: [Piece::OFFBOARD; BOARD_SQ_NUM],
+            pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
             pawns: vec![bitboard::Bitboard::new(); 3],
 
@@ -112,7 +112,7 @@ impl Board {
         };
 
         for i in 0..64 {
-            board.pieces[SQUARE_64_TO_120[i]] = Piece::EMPTY;
+            board.pieces[SQUARE_64_TO_120[i]] = Piece::Empty;
         }
 
         board
@@ -149,7 +149,7 @@ impl Board {
                 'Q' => piece = Piece::WQ,
 
                 '1'..='8' => {
-                    piece = Piece::EMPTY;
+                    piece = Piece::Empty;
                     count = c.to_digit(10).unwrap();
                 }, 
 
@@ -163,7 +163,7 @@ impl Board {
             }
 
             for _i in 0..count {
-                if piece != Piece::EMPTY {
+                if piece.exists() {
                     sq120 = fr_to_sq(file, rank);
                     board.pieces[sq120] = piece;
                 }
@@ -218,8 +218,8 @@ impl Board {
         let mut piece;
         for sq in 0..BOARD_SQ_NUM {
             piece = self.pieces[sq];
-            if piece != Piece::EMPTY && piece != Piece::OFFBOARD {
-                hash ^= self.hash_keys.piece_keys[piece][sq];
+            if piece.exists() {
+                hash ^= self.hash_keys.piece_keys[piece as usize][sq];
             }
         }
 
@@ -228,7 +228,7 @@ impl Board {
         }
 
         if self.en_pas != Position::NONE as usize {
-            hash ^= self.hash_keys.piece_keys[Piece::EMPTY][self.en_pas];
+            hash ^= self.hash_keys.piece_keys[Piece::Empty as usize][self.en_pas];
         }
 
         hash ^= self.hash_keys.castle_keys[self.castle_perm as usize];
@@ -251,7 +251,7 @@ impl Board {
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
                 piece = self.pieces[sq];
-                s.push_str(&format!("{:3}", piece_chars.chars().nth(piece).unwrap()))
+                s.push_str(&format!("{:3}", piece_chars.chars().nth(piece as usize).unwrap()))
             }
             s.push('\n');
         }
@@ -278,28 +278,28 @@ impl Board {
     fn update_lists_and_material(&mut self) {
         let mut sq120;
         let mut color;
-        let mut piece: usize;
+        let mut piece;
         for sq in 0..64 {
            sq120 = SQUARE_64_TO_120[sq]; 
             piece = self.pieces[sq120];
-            if piece != Piece::EMPTY {
-                color = PIECE_COLOR[piece];
-                if PIECE_IS_BIG[piece] {
+            if piece.exists() {
+                color = piece.color();
+                if piece.is_big() {
                     self.num_big_piece[color] += 1;
                 }
-                if PIECE_IS_MIN[piece] {
+                if piece.is_minor() {
                     self.num_minor_piece[color] += 1;
                 }
-                if PIECE_IS_MAJ[piece] {
+                if piece.is_major() {
                     self.num_major_piece[color] += 1;
                 }
-                self.material[color] += PIECE_VAL[piece];
-                self.piece_lists[piece].push(sq120);
-                if piece == Piece::WK || piece == Piece::BK {
+                self.material[color] += piece.value();
+                self.piece_lists[piece as usize].push(sq120);
+                if piece.is_king() {
                     self.king_sq[color] = sq120;
                 }
                 let sq64;
-                if piece == Piece::WP || piece == Piece::BP {
+                if let Piece::WP | Piece::BP = piece {
                     sq64 = SQUARE_120_TO_64[sq120];
                     self.pawns[color].set_bit(sq64);
                     self.pawns[BOTH].set_bit(sq64);
@@ -317,8 +317,8 @@ impl Board {
 
         // Check piece lists:
         for piece in 1..13 {
-            for sq in &self.piece_lists[piece] {
-                assert_eq!(self.pieces[*sq as usize], piece);
+            for sq in &self.piece_lists[piece as usize] {
+                assert_eq!(self.pieces[*sq as usize] as usize, piece);
             }
         }
 
@@ -329,31 +329,31 @@ impl Board {
         for sq64 in 0..64 {
             sq120 = SQUARE_64_TO_120[sq64]; 
             piece = self.pieces[sq120];
-            if piece != Piece::EMPTY {
-                piece_count[piece] += 1;
-                color = PIECE_COLOR[piece];
-                if PIECE_IS_BIG[piece] {
+            if piece.exists() {
+                piece_count[piece as usize] += 1;
+                color = piece.color();
+                if piece.is_big() {
                     num_big_piece[color] += 1;
                 }
-                if PIECE_IS_MIN[piece] {
+                if piece.is_minor() {
                     num_minor_piece[color] += 1;
                 }
-                if PIECE_IS_MAJ[piece] {
+                if piece.is_major() {
                     num_major_piece[color] += 1;
                 }
-                material[color] += PIECE_VAL[piece];
+                material[color] += piece.value();
             }
         }
 
         for piece in 1..13 {
-            assert_eq!(piece_count[piece] as usize, self.piece_lists[piece].len());
+            assert_eq!(piece_count[piece as usize] as usize, self.piece_lists[piece as usize].len());
         }
 
         // Check pawn bitboards:
         let mut pawns = self.pawns.clone();
-        assert_eq!(piece_count[Piece::WP], pawns[WHITE].count());
-        assert_eq!(piece_count[Piece::BP], pawns[BLACK].count());
-        assert_eq!(piece_count[Piece::WP] + piece_count[Piece::BP], self.pawns[BOTH].count());
+        assert_eq!(piece_count[Piece::WP as usize], pawns[WHITE].count());
+        assert_eq!(piece_count[Piece::BP as usize], pawns[BLACK].count());
+        assert_eq!(piece_count[Piece::WP as usize] + piece_count[Piece::BP as usize], self.pawns[BOTH].count());
 
         // Check pawn bitboard squares:
         let mut sq64;
@@ -416,7 +416,7 @@ impl Board {
                 continue;
             }
             piece = self.pieces[t_sq];
-            if PIECE_IS_KNIGHT[piece] && PIECE_COLOR[piece] == side as usize {
+            if piece.is_knight() && piece.color() == side as usize {
                 return true;
             }
         }
@@ -425,9 +425,9 @@ impl Board {
         for dir in &ROOK_DIR {
             t_sq = (sq as i32 + *dir) as usize;
             piece = self.pieces[t_sq];
-            while piece != Piece::OFFBOARD {
-                if piece != Piece::EMPTY {
-                    if PIECE_IS_ROOK_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
+            while piece != Piece::Offboard {
+                if piece.exists() {
+                    if piece.is_rook_or_queen() && piece.color() == side as usize { return true; }
                     break;
                 }
                 t_sq = (t_sq as i32 + *dir) as usize;
@@ -439,9 +439,9 @@ impl Board {
         for dir in &BISHOP_DIR {
             t_sq = (sq as i32 + *dir) as usize;
             piece = self.pieces[t_sq];
-            while piece != Piece::OFFBOARD {
-                if piece != Piece::EMPTY {
-                    if PIECE_IS_BISHOP_OR_QUEEN[piece] && PIECE_COLOR[piece] == side as usize { return true; }
+            while piece != Piece::Offboard {
+                if piece.exists() {
+                    if piece.is_bishop_or_queen() && piece.color() == side as usize { return true; }
                     break;
                 }
                 t_sq = (t_sq as i32 + *dir) as usize;
@@ -456,7 +456,7 @@ impl Board {
                 continue;
             }
             piece = self.pieces[t_sq];
-            if PIECE_IS_KING[piece] && PIECE_COLOR[piece] == side {
+            if piece.is_king() && piece.color() == side {
                 return true;
             }
         }
