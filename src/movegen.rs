@@ -180,6 +180,9 @@ impl MoveList {
             for sq in &b.piece_lists[*piece] {
 
                 for dir in &pieces::DIRECTIONS[*piece] {
+                    // Todo: currently the DIRECTIONS arrays include
+                    // 0's at the end to denote stop.  If continue
+                    // using this format, should add a break statement
                     t_sq = (*sq as i32 + dir) as usize;
 
                     while board::square_on_board(t_sq) {
