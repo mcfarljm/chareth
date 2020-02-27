@@ -1,5 +1,5 @@
 use crate::board;
-use crate::pieces2::Piece;
+use crate::pieces::Piece;
 
 const EN_PAS_FLAG: u8 = 1;
 const PAWN_START_FLAG: u8 = 2;

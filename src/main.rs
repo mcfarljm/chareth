@@ -1,5 +1,4 @@
 mod pieces;
-mod pieces2;
 mod board;
 mod bitboard;
 mod moves;

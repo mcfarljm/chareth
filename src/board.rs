@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::pieces2::*;
+use crate::pieces::*;
 use crate::bitboard;
 use crate::validate;
 

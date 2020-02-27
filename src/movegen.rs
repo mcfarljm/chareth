@@ -1,8 +1,8 @@
 use crate::moves;
 use crate::board;
 use crate::board::Castling;
-use crate::pieces2 as pieces;
-use crate::pieces2::Piece;
+use crate::pieces;
+use crate::pieces::Piece;
 
 pub struct MoveList {
     pub moves: Vec<moves::Move>,
