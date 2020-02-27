@@ -4,7 +4,10 @@ use crate::pieces::*;
 use crate::bitboard;
 use crate::validate;
 
-type Square = i8;
+// Signed integer is used instead of unsigned in order to avoid need
+// to cast when adding with signed directions.  i8 goes up to 128,
+// which is enough to cover the entire board.
+pub type Square = i8;
 type FileRank = Square;
 
 const BOARD_SQ_NUM: usize = 120;
@@ -38,15 +41,15 @@ impl Castling {
 
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-pub fn fr_to_sq(file: FileRank, rank: FileRank) -> usize {
-    (21 + file + rank * 10) as usize
+pub fn fr_to_sq(file: FileRank, rank: FileRank) -> Square {
+    21 + file + rank * 10
 }
 
 pub const RANKS_ITER: std::ops::Range<FileRank> = (RANK_1..RANK_8+1);
 pub const FILES_ITER: std::ops::Range<FileRank> = (FILE_A..FILE_H+1);
 
-pub fn square_on_board(sq: usize) -> bool {
-    SQUARE_120_TO_64[sq] <= 63
+pub fn square_on_board(sq: Square) -> bool {
+    SQUARE_120_TO_64[sq as usize] <= 63
 }
 
 pub struct Board {
@@ -60,13 +63,13 @@ pub struct Board {
     material: [i32; 2],
 
     // piece_lists[piece] produces a vector of squares for that piece
-    pub piece_lists: Vec<Vec<usize>>,
+    pub piece_lists: Vec<Vec<Square>>,
 
     // Redundant with piece_lists
-    king_sq: [usize; 2],
+    king_sq: [Square; 2],
 
     pub side: usize,
-    pub en_pas: usize,
+    pub en_pas: Square,
     fifty_move: i32,
 
     ply: i32,
@@ -82,7 +85,7 @@ impl Board {
     pub fn new() -> Board {
         let hash_keys = HashKeys::new();
 
-        let mut piece_lists: Vec<Vec<usize>> = Vec::new();
+        let mut piece_lists: Vec<Vec<Square>> = Vec::new();
         for _i in 0..13 {
             piece_lists.push(Vec::new());
         }
@@ -99,10 +102,10 @@ impl Board {
 
             piece_lists: piece_lists,
 
-            king_sq: [Position::NONE as usize; 2],
+            king_sq: [Position::NONE as Square; 2],
 
             side: BOTH,
-            en_pas: Position::NONE as usize,
+            en_pas: Position::NONE as Square,
             fifty_move: 0,
 
             ply: 0,
@@ -115,7 +118,7 @@ impl Board {
         };
 
         for i in 0..64 {
-            board.pieces[SQUARE_64_TO_120[i]] = Piece::Empty;
+            board.pieces[SQUARE_64_TO_120[i] as usize] = Piece::Empty;
         }
 
         board
@@ -128,7 +131,7 @@ impl Board {
         let mut file = FILE_A;
         let mut piece;
         let mut count;
-        let mut sq120: usize;
+        let mut sq120: Square;
 
         let mut fen_iter = fen.chars();
         let mut c;
@@ -168,7 +171,7 @@ impl Board {
             for _i in 0..count {
                 if piece.exists() {
                     sq120 = fr_to_sq(file, rank);
-                    board.pieces[sq120] = piece;
+                    board.pieces[sq120 as usize] = piece;
                 }
                 file += 1;
             }
@@ -230,8 +233,8 @@ impl Board {
             hash ^= self.hash_keys.side_key;
         }
 
-        if self.en_pas != Position::NONE as usize {
-            hash ^= self.hash_keys.piece_keys[Piece::Empty as usize][self.en_pas];
+        if self.en_pas != Position::NONE as Square {
+            hash ^= self.hash_keys.piece_keys[Piece::Empty as usize][self.en_pas as usize];
         }
 
         hash ^= self.hash_keys.castle_keys[self.castle_perm as usize];
@@ -253,7 +256,7 @@ impl Board {
             s.push_str(&format!("{}     ", rank+1));
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
-                piece = self.pieces[sq];
+                piece = self.pieces[sq as usize];
                 s.push_str(&format!("{:3}", piece_chars.chars().nth(piece as usize).unwrap()))
             }
             s.push('\n');
@@ -284,7 +287,7 @@ impl Board {
         let mut piece;
         for sq in 0..64 {
            sq120 = SQUARE_64_TO_120[sq]; 
-            piece = self.pieces[sq120];
+            piece = self.pieces[sq120 as usize];
             if piece.exists() {
                 color = piece.color();
                 if piece.is_big() {
@@ -303,7 +306,7 @@ impl Board {
                 }
                 let sq64;
                 if let Piece::WP | Piece::BP = piece {
-                    sq64 = SQUARE_120_TO_64[sq120];
+                    sq64 = SQUARE_120_TO_64[sq120 as usize];
                     self.pawns[color].set_bit(sq64);
                     self.pawns[BOTH].set_bit(sq64);
                 }
@@ -331,7 +334,7 @@ impl Board {
         let mut color;
         for sq64 in 0..64 {
             sq120 = SQUARE_64_TO_120[sq64]; 
-            piece = self.pieces[sq120];
+            piece = self.pieces[sq120 as usize];
             if piece.exists() {
                 piece_count[piece as usize] += 1;
                 color = piece.color();
@@ -362,15 +365,15 @@ impl Board {
         let mut sq64;
         while pawns[WHITE].nonzero() {
             sq64 = pawns[WHITE].pop_bit();
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Piece::WP);
+            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::WP);
         }
         while pawns[BLACK].nonzero() {
             sq64 = pawns[BLACK].pop_bit();
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64]], Piece::BP);
+            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::BP);
         }
         while pawns[BOTH].nonzero() {
             sq64 = pawns[BOTH].pop_bit();
-            assert!(self.pieces[SQUARE_64_TO_120[sq64]] == Piece::WP || self.pieces[SQUARE_64_TO_120[sq64]] == Piece::BP);
+            assert!(self.pieces[SQUARE_64_TO_120[sq64] as usize] == Piece::WP || self.pieces[SQUARE_64_TO_120[sq64] as usize] == Piece::BP);
         }
         
         fn checker(a1: [i32; 2], a2: [i32; 2]) {
@@ -385,17 +388,17 @@ impl Board {
         assert!(self.side == WHITE || self.side == BLACK);
         assert_eq!(self.position_hash, self.get_position_hash());
 
-        assert!(self.en_pas == Position::NONE as usize ||
-                (RANKS[self.en_pas] == RANK_6 && self.side == WHITE) ||
-                (RANKS[self.en_pas] == RANK_3 && self.side == BLACK));
+        assert!(self.en_pas == Position::NONE as Square ||
+                (RANKS[self.en_pas as usize] == RANK_6 && self.side == WHITE) ||
+                (RANKS[self.en_pas as usize] == RANK_3 && self.side == BLACK));
 
-        assert_eq!(self.pieces[self.king_sq[WHITE]], Piece::WK);
-        assert_eq!(self.pieces[self.king_sq[BLACK]], Piece::BK);
+        assert_eq!(self.pieces[self.king_sq[WHITE] as usize], Piece::WK);
+        assert_eq!(self.pieces[self.king_sq[BLACK] as usize], Piece::BK);
         
         true
     }
 
-    pub fn square_attacked(&self, sq: usize, side: usize) -> bool {
+    pub fn square_attacked(&self, sq: Square, side: usize) -> bool {
         debug_assert!(square_on_board(sq));
         debug_assert!(validate::side_valid(side));
         debug_assert!(self.check());
@@ -404,21 +407,21 @@ impl Board {
 
         // pawns
         if side == WHITE {
-            if self.pieces[sq-11] == Piece::WP || self.pieces[sq-9] == Piece::WP { return true; }
+            if self.pieces[(sq-11) as usize] == Piece::WP || self.pieces[(sq-9) as usize] == Piece::WP { return true; }
         }
         else {
-            if self.pieces[sq+11] == Piece::BP || self.pieces[sq+9] == Piece::BP { return true; }
+            if self.pieces[(sq+11) as usize] == Piece::BP || self.pieces[(sq+9) as usize] == Piece::BP { return true; }
         }
 
-        let mut t_sq: usize;
+        let mut t_sq: Square;
 
         // knights
         for dir in &KNIGHT_DIR {
-            t_sq = (sq as i32 + *dir) as usize;
+            t_sq = sq + *dir;
             if ! square_on_board(t_sq) {
                 continue;
             }
-            piece = self.pieces[t_sq];
+            piece = self.pieces[t_sq as usize];
             if piece.is_knight() && piece.color() == side as usize {
                 return true;
             }
@@ -426,39 +429,39 @@ impl Board {
 
         // rooks, queens
         for dir in &ROOK_DIR {
-            t_sq = (sq as i32 + *dir) as usize;
-            piece = self.pieces[t_sq];
+            t_sq = sq + *dir;
+            piece = self.pieces[t_sq as usize];
             while piece != Piece::Offboard {
                 if piece.exists() {
                     if piece.is_rook_or_queen() && piece.color() == side as usize { return true; }
                     break;
                 }
-                t_sq = (t_sq as i32 + *dir) as usize;
-                piece = self.pieces[t_sq];
+                t_sq += *dir;
+                piece = self.pieces[t_sq as usize];
             }
         }
 
         // rooks, queens
         for dir in &BISHOP_DIR {
-            t_sq = (sq as i32 + *dir) as usize;
-            piece = self.pieces[t_sq];
+            t_sq = sq + *dir;
+            piece = self.pieces[t_sq as usize];
             while piece != Piece::Offboard {
                 if piece.exists() {
                     if piece.is_bishop_or_queen() && piece.color() == side as usize { return true; }
                     break;
                 }
-                t_sq = (t_sq as i32 + *dir) as usize;
-                piece = self.pieces[t_sq];
+                t_sq += *dir;
+                piece = self.pieces[t_sq as usize];
             }
         }
 
         // kings
         for dir in &KING_DIR {
-            t_sq = (sq as i32 + *dir) as usize;
+            t_sq = sq + *dir;
             if ! square_on_board(t_sq) {
                 continue;
             }
-            piece = self.pieces[t_sq];
+            piece = self.pieces[t_sq as usize];
             if piece.is_king() && piece.color() == side {
                 return true;
             }
@@ -524,7 +527,7 @@ pub const SQUARE_120_TO_64: [usize; BOARD_SQ_NUM] = [
     65, 65, 65, 65, 65, 65, 65, 65, 65, 65
 ];
 
-pub const SQUARE_64_TO_120: [usize; 64] = [
+pub const SQUARE_64_TO_120: [Square; 64] = [
     21, 22, 23, 24, 25, 26, 27, 28,
     31, 32, 33, 34, 35, 36, 37, 38,
     41, 42, 43, 44, 45, 46, 47, 48,

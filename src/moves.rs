@@ -1,14 +1,15 @@
 use crate::board;
+use crate::board::Square;
 use crate::pieces::Piece;
 
 const EN_PAS_FLAG: u8 = 1;
 const PAWN_START_FLAG: u8 = 2;
 const CASTLE_FLAG: u8 = 4;
 
-pub fn square_string(sq: usize) -> String {
+pub fn square_string(sq: Square) -> String {
     String::from(format!("{}{}",
-                         ('a' as u8 + board::FILES[sq] as u8) as char,
-                         ('1' as u8 + board::RANKS[sq] as u8) as char))
+                         ('a' as u8 + board::FILES[sq as usize] as u8) as char,
+                         ('1' as u8 + board::RANKS[sq as usize] as u8) as char))
 }
 
 
@@ -21,8 +22,8 @@ pub enum MoveFlag {
 
 
 pub struct Move {
-    from: u8,
-    to: u8,
+    from: Square,
+    to: Square,
     capture: Piece,
     promote: Piece,
     flag: MoveFlag,
@@ -33,11 +34,11 @@ pub struct Move {
 
 #[allow(dead_code)]
 impl Move {
-    pub fn new(from: usize, to: usize, capture: Piece, promote: Piece, flag: MoveFlag) -> Move {
+    pub fn new(from: Square, to: Square, capture: Piece, promote: Piece, flag: MoveFlag) -> Move {
 
         Move {
-            from: from as u8,
-            to: to as u8,
+            from: from,
+            to: to,
             capture: capture,
             promote: promote,
             flag: flag,
@@ -45,12 +46,12 @@ impl Move {
         }
     }
 
-    pub fn from(&self) -> usize {
-        self.from as usize
+    pub fn from(&self) -> Square {
+        self.from
     }
 
-    pub fn to(&self) -> usize {
-        self.to as usize
+    pub fn to(&self) -> Square {
+        self.to
     }
 
     pub fn is_capture(&self) -> bool {
@@ -96,7 +97,7 @@ mod tests {
     
     #[test]
     fn move_string() {
-        let mv = Move::new(board::Position::C1 as usize, board::Position::C3 as usize, Piece::Empty, Piece::WR, MoveFlag::None);
+        let mv = Move::new(board::Position::C1 as Square, board::Position::C3 as Square, Piece::Empty, Piece::WR, MoveFlag::None);
         let s = mv.to_string();
         assert_eq!(s, "c1c3r");
     }

@@ -46,14 +46,14 @@ impl Bitboard {
 
     pub fn to_string(&self) -> String {
         let one: u64 = 1;
-        let mut sq: usize;
+        let mut sq;
         let mut sq64: usize;
 
         let mut s = String::new();
         for rank in RANKS_ITER.rev() {
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
-                sq64 = SQUARE_120_TO_64[sq];
+                sq64 = SQUARE_120_TO_64[sq as usize];
                 if (one << sq64) & self.val != 0 {
                     s.push('x');
                 } else {

@@ -1,6 +1,6 @@
 use crate::moves;
 use crate::board;
-use crate::board::Castling;
+use crate::board::{Castling,Square};
 use crate::pieces;
 use crate::pieces::Piece;
 
@@ -26,7 +26,7 @@ impl MoveList {
         self.moves.push(mv);
     }
 
-    fn add_white_pawn_move(&mut self, b: &board::Board, from: usize, to: usize, capture: Piece) {
+    fn add_white_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         // VICE uses two separate functions for capture/no-capture,
         // but by using a closure, we can handle both cases here.
         let mut adder: Box<dyn FnMut(Piece)>;
@@ -37,7 +37,7 @@ impl MoveList {
             adder = Box::new(|promote: Piece| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
         }
         
-        if board::RANKS[from] == board::RANK_7 {
+        if board::RANKS[from as usize] == board::RANK_7 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::WN, Piece::WB, Piece::WR, Piece::WQ] {
                 adder(*promote);
@@ -50,7 +50,7 @@ impl MoveList {
 
     // Todo: this could be consolidated with above function.  Only
     // difference is RANK_2 and BN,BQ
-    fn add_black_pawn_move(&mut self, b: &board::Board, from: usize, to: usize, capture: Piece) {
+    fn add_black_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         // VICE uses two separate functions for capture/no-capture,
         // but by using a closure, we can handle both cases here.
         let mut adder: Box<dyn FnMut(Piece)>;
@@ -61,7 +61,7 @@ impl MoveList {
             adder = Box::new(|promote: Piece| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
         }
         
-        if board::RANKS[from] == board::RANK_2 {
+        if board::RANKS[from as usize] == board::RANK_2 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::BN, Piece::BB, Piece::BR, Piece::BQ] {
                 adder(*promote);
@@ -76,26 +76,26 @@ impl MoveList {
     pub fn generate_all_moves(&mut self, b: &board::Board) {
         debug_assert!(b.check());
 
-        let mut t_sq: usize;
+        let mut t_sq: Square;
 
         if b.side == pieces::WHITE {
             for sq in &b.piece_lists[Piece::WP as usize] {
 
-                if b.pieces[sq+10] == Piece::Empty {
+                if b.pieces[(sq+10) as usize] == Piece::Empty {
                     // pawn forward one square
                     self.add_white_pawn_move(b, *sq, sq+10, Piece::Empty);
-                    if board::RANKS[*sq] == board::RANK_2 && b.pieces[sq+20] == Piece::Empty {
+                    if board::RANKS[*sq as usize] == board::RANK_2 && b.pieces[(sq+20) as usize] == Piece::Empty {
                         // pawn forward two squares
                         self.add_quiet_move(b, moves::Move::new(*sq, sq+20, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
                     }
                 }
 
                 // Check pawn captures in both directions
-                let dirs: [usize; 2] = [9, 11];
+                let dirs: [i8; 2] = [9, 11];
                 for dir in &dirs {
                     t_sq = sq + dir;
-                    if board::square_on_board(t_sq) && b.pieces[t_sq].color() == pieces::BLACK {
-                        self.add_white_pawn_move(b, *sq, t_sq, b.pieces[t_sq]);
+                    if board::square_on_board(t_sq) && b.pieces[t_sq as usize].color() == pieces::BLACK {
+                        self.add_white_pawn_move(b, *sq, t_sq, b.pieces[t_sq as usize]);
                     }
                 }
 
@@ -111,16 +111,16 @@ impl MoveList {
             // Castling
             if b.castle_perm & Castling::WK != 0 {
                 if b.pieces[board::Position::F1 as usize] == Piece::Empty && b.pieces[board::Position::G1 as usize] == Piece::Empty {
-                    if (! b.square_attacked(board::Position::E1 as usize, pieces::BLACK)) && (!b.square_attacked(board::Position::F1 as usize, pieces::BLACK)) {
-                        self.add_quiet_move(b, moves::Move::new(board::Position::E1 as usize, board::Position::G1 as usize, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
+                    if (! b.square_attacked(board::Position::E1 as Square, pieces::BLACK)) && (!b.square_attacked(board::Position::F1 as Square, pieces::BLACK)) {
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E1 as Square, board::Position::G1 as Square, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
                     }
                 }
             }
 
             if b.castle_perm & Castling::WQ != 0 {
                 if b.pieces[board::Position::D1 as usize] == Piece::Empty && b.pieces[board::Position::C1 as usize] == Piece::Empty && b.pieces[board::Position::B1 as usize] == Piece::Empty {
-                    if (! b.square_attacked(board::Position::E1 as usize, pieces::BLACK)) && (!b.square_attacked(board::Position::D1 as usize, pieces::BLACK)) {
-                        self.add_quiet_move(b, moves::Move::new(board::Position::E1 as usize, board::Position::C1 as usize, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
+                    if (! b.square_attacked(board::Position::E1 as Square, pieces::BLACK)) && (!b.square_attacked(board::Position::D1 as Square, pieces::BLACK)) {
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E1 as Square, board::Position::C1 as Square, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
                     }
                 }
             }
@@ -128,21 +128,21 @@ impl MoveList {
         else {
             for sq in &b.piece_lists[Piece::BP as usize] {
 
-                if b.pieces[sq-10] == Piece::Empty {
+                if b.pieces[(sq-10) as usize] == Piece::Empty {
                     // pawn forward one square
                     self.add_black_pawn_move(b, *sq, sq-10, Piece::Empty);
-                    if board::RANKS[*sq] == board::RANK_7 && b.pieces[sq-20] == Piece::Empty {
+                    if board::RANKS[*sq as usize] == board::RANK_7 && b.pieces[(sq-20) as usize] == Piece::Empty {
                         // pawn forward two squares
                         self.add_quiet_move(b, moves::Move::new(*sq, sq-20, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
                     }
                 }
 
                 // Check pawn captures in both directions
-                let dirs: [usize; 2] = [9, 11];
+                let dirs: [i8; 2] = [9, 11];
                 for dir in &dirs {
                     t_sq = sq - dir;
-                    if board::square_on_board(t_sq) && b.pieces[t_sq].color() == pieces::WHITE {
-                        self.add_black_pawn_move(b, *sq, t_sq, b.pieces[t_sq]);
+                    if board::square_on_board(t_sq) && b.pieces[t_sq as usize].color() == pieces::WHITE {
+                        self.add_black_pawn_move(b, *sq, t_sq, b.pieces[t_sq as usize]);
                     }
                 }
 
@@ -158,22 +158,22 @@ impl MoveList {
             // Castling
             if b.castle_perm & Castling::BK != 0 {
                 if b.pieces[board::Position::F8 as usize] == Piece::Empty && b.pieces[board::Position::G8 as usize] == Piece::Empty {
-                    if (! b.square_attacked(board::Position::E8 as usize, pieces::WHITE)) && (!b.square_attacked(board::Position::F8 as usize, pieces::WHITE)) {
-                        self.add_quiet_move(b, moves::Move::new(board::Position::E8 as usize, board::Position::G8 as usize, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
+                    if (! b.square_attacked(board::Position::E8 as Square, pieces::WHITE)) && (!b.square_attacked(board::Position::F8 as Square, pieces::WHITE)) {
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E8 as Square, board::Position::G8 as Square, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
                     }
                 }
             }
 
             if b.castle_perm & Castling::BQ != 0 {
                 if b.pieces[board::Position::D8 as usize] == Piece::Empty && b.pieces[board::Position::C8 as usize] == Piece::Empty && b.pieces[board::Position::B8 as usize] == Piece::Empty {
-                    if (! b.square_attacked(board::Position::E8 as usize, pieces::WHITE)) && (!b.square_attacked(board::Position::D8 as usize, pieces::WHITE)) {
-                        self.add_quiet_move(b, moves::Move::new(board::Position::E8 as usize, board::Position::C8 as usize, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
+                    if (! b.square_attacked(board::Position::E8 as Square, pieces::WHITE)) && (!b.square_attacked(board::Position::D8 as Square, pieces::WHITE)) {
+                        self.add_quiet_move(b, moves::Move::new(board::Position::E8 as Square, board::Position::C8 as Square, Piece::Empty, Piece::Empty, moves::MoveFlag::Castle));
                     }
                 }
             }
         }
 
-        let mut t_sq: usize;
+        let mut t_sq: Square;
 
         // Sliders
         for piece in pieces::SLIDERS[b.side].iter() {
@@ -183,18 +183,18 @@ impl MoveList {
                     // Todo: currently the DIRECTIONS arrays include
                     // 0's at the end to denote stop.  If continue
                     // using this format, should add a break statement
-                    t_sq = (*sq as i32 + dir) as usize;
+                    t_sq = *sq + dir;
 
                     while board::square_on_board(t_sq) {
                         // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
-                        if b.pieces[t_sq] != Piece::Empty {
-                            if b.pieces[t_sq].color() == b.side ^ 1 {
-                                self.add_capture_move(b, moves::Move::new(*sq, t_sq, b.pieces[t_sq], Piece::Empty, moves::MoveFlag::None));
+                        if b.pieces[t_sq as usize] != Piece::Empty {
+                            if b.pieces[t_sq as usize].color() == b.side ^ 1 {
+                                self.add_capture_move(b, moves::Move::new(*sq, t_sq, b.pieces[t_sq as usize], Piece::Empty, moves::MoveFlag::None));
                             }
                             break;
                         }
                         self.add_quiet_move(b, moves::Move::new(*sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
-                        t_sq = (t_sq as i32 + dir) as usize;
+                        t_sq += dir;
                     }
                 }
             }
@@ -205,15 +205,15 @@ impl MoveList {
             for sq in &b.piece_lists[*piece as usize] {
 
                 for dir in &pieces::DIRECTIONS[*piece as usize] {
-                    t_sq = (*sq as i32 + dir) as usize;
+                    t_sq = *sq + dir;
                     if ! board::square_on_board(t_sq) {
                         continue;
                     }
 
                     // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
-                    if b.pieces[t_sq] != Piece::Empty {
-                        if b.pieces[t_sq].color() == b.side ^ 1 {
-                            self.add_capture_move(b, moves::Move::new(*sq, t_sq, b.pieces[t_sq], Piece::Empty, moves::MoveFlag::None));
+                    if b.pieces[t_sq as usize] != Piece::Empty {
+                        if b.pieces[t_sq as usize].color() == b.side ^ 1 {
+                            self.add_capture_move(b, moves::Move::new(*sq, t_sq, b.pieces[t_sq as usize], Piece::Empty, moves::MoveFlag::None));
                         }
                         continue;
                     }
