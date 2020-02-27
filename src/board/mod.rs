@@ -1,3 +1,5 @@
+mod makemove;
+
 use rand::Rng;
 
 use crate::pieces::*;
@@ -76,7 +78,7 @@ pub struct Board {
     hist_ply: i32,
 
     pub castle_perm: u8,
-    position_hash: u64,
+    hash: u64,
 
     hash_keys: HashKeys,
 }
@@ -112,7 +114,7 @@ impl Board {
             hist_ply: 0,
 
             castle_perm: 0,
-            position_hash: 0,
+            hash: 0,
 
             hash_keys: hash_keys,
         };
@@ -211,7 +213,7 @@ impl Board {
             board.en_pas = fr_to_sq(file, rank);
         }
 
-        board.position_hash = board.get_position_hash();
+        board.hash = board.get_position_hash();
 
         board.update_lists_and_material();
 
@@ -386,7 +388,7 @@ impl Board {
         checker(num_minor_piece, self.num_minor_piece);
 
         assert!(self.side == WHITE || self.side == BLACK);
-        assert_eq!(self.position_hash, self.get_position_hash());
+        assert_eq!(self.hash, self.get_position_hash());
 
         assert!(self.en_pas == Position::NONE as Square ||
                 (RANKS[self.en_pas as usize] == RANK_6 && self.side == WHITE) ||
