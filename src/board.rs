@@ -4,25 +4,28 @@ use crate::pieces::*;
 use crate::bitboard;
 use crate::validate;
 
+type Square = i8;
+type FileRank = Square;
+
 const BOARD_SQ_NUM: usize = 120;
 
-pub const FILE_A: i32 = 0;
-// pub const FILE_B: i32 = 1;
-// pub const FILE_C: i32 = 2;
-// pub const FILE_D: i32 = 3;
-// pub const FILE_E: i32 = 4;
-// pub const FILE_F: i32 = 5;
-// pub const FILE_G: i32 = 6;
-pub const FILE_H: i32 = 7;
+pub const FILE_A: FileRank = 0;
+// pub const FILE_B: FileRank = 1;
+// pub const FILE_C: FileRank = 2;
+// pub const FILE_D: FileRank = 3;
+// pub const FILE_E: FileRank = 4;
+// pub const FILE_F: FileRank = 5;
+// pub const FILE_G: FileRank = 6;
+pub const FILE_H: FileRank = 7;
 
-pub const RANK_1: i32 = 0;
-pub const RANK_2: i32 = 1;
-pub const RANK_3: i32 = 2;
-// pub const RANK_4: i32 = 3;
-// pub const RANK_5: i32 = 4;
-pub const RANK_6: i32 = 5;
-pub const RANK_7: i32 = 6;
-pub const RANK_8: i32 = 7;
+pub const RANK_1: FileRank = 0;
+pub const RANK_2: FileRank = 1;
+pub const RANK_3: FileRank = 2;
+// pub const RANK_4: FileRank = 3;
+// pub const RANK_5: FileRank = 4;
+pub const RANK_6: FileRank = 5;
+pub const RANK_7: FileRank = 6;
+pub const RANK_8: FileRank = 7;
 
 pub struct Castling;
 
@@ -35,12 +38,12 @@ impl Castling {
 
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
-pub fn fr_to_sq(file: i32, rank: i32) -> usize {
+pub fn fr_to_sq(file: FileRank, rank: FileRank) -> usize {
     (21 + file + rank * 10) as usize
 }
 
-pub const RANKS_ITER: std::ops::Range<i32> = (RANK_1..RANK_8+1);
-pub const FILES_ITER: std::ops::Range<i32> = (FILE_A..FILE_H+1);
+pub const RANKS_ITER: std::ops::Range<FileRank> = (RANK_1..RANK_8+1);
+pub const FILES_ITER: std::ops::Range<FileRank> = (FILE_A..FILE_H+1);
 
 pub fn square_on_board(sq: usize) -> bool {
     SQUARE_120_TO_64[sq] <= 63
@@ -197,9 +200,9 @@ impl Board {
         // En passant
         c = fen_iter.next().unwrap();
         if c != '-' {
-            file = c as i32 - 'a' as i32;
+            file = c as FileRank - 'a' as FileRank;
             c = fen_iter.next().unwrap();
-            rank = c as i32 - '1' as i32;
+            rank = c as FileRank - '1' as FileRank;
             assert!(file >= FILE_A && file <= FILE_H);
             assert!(rank >= RANK_1 && rank <= RANK_8);
             board.en_pas = fr_to_sq(file, rank);
@@ -533,7 +536,7 @@ pub const SQUARE_64_TO_120: [usize; 64] = [
 ];
 
 
-pub const FILES: [i32; BOARD_SQ_NUM] = [
+pub const FILES: [FileRank; BOARD_SQ_NUM] = [
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
@@ -548,7 +551,7 @@ pub const FILES: [i32; BOARD_SQ_NUM] = [
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100
 ];
 
-pub const RANKS: [i32; BOARD_SQ_NUM] = [
+pub const RANKS: [FileRank; BOARD_SQ_NUM] = [
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
     100, 0, 0, 0, 0, 0, 0, 0, 0, 100,
