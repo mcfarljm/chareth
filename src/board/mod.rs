@@ -296,6 +296,11 @@ impl Board {
         s
     }
 
+    // Print to stdout.  Unlike to_string, this includes the position key
+    pub fn print(&self) {
+        println!("{}Hash: {:x}", self.to_string(), self.hash);
+    }
+
     fn update_lists_and_material(&mut self) {
         let mut sq120;
         let mut color;
