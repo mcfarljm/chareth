@@ -108,7 +108,7 @@ impl Board {
 
         debug_assert!(self.check());
 
-        if self.square_attacked(self.king_sq[self.side], self.side) {
+        if self.square_attacked(self.king_sq[side], self.side) {
             self.undo_move();
             return false;
         }
