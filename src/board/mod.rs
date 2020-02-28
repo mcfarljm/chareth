@@ -5,6 +5,7 @@ use rand::Rng;
 use crate::pieces::*;
 use crate::bitboard;
 use crate::validate;
+use crate::moves;
 
 // Signed integer is used instead of unsigned in order to avoid need
 // to cast when adding with signed directions.  i8 goes up to 128,
@@ -54,6 +55,14 @@ pub fn square_on_board(sq: Square) -> bool {
     SQUARE_120_TO_64[sq as usize] <= 63
 }
 
+pub struct Undo {
+    mv: moves::Move,
+    castle_perm: u8,
+    en_pas: Square,
+    fifty_move: i32,
+    hash: u64,
+}
+
 pub struct Board {
     pub pieces: [Piece; BOARD_SQ_NUM],
 
@@ -76,6 +85,8 @@ pub struct Board {
 
     ply: i32,
     hist_ply: i32,
+
+    pub history: Vec<Undo>,
 
     pub castle_perm: u8,
     hash: u64,
@@ -112,6 +123,8 @@ impl Board {
 
             ply: 0,
             hist_ply: 0,
+
+            history: Vec::new(),
 
             castle_perm: 0,
             hash: 0,

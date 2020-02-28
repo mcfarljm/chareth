@@ -13,6 +13,7 @@ pub fn square_string(sq: Square) -> String {
 }
 
 
+#[derive(Clone)]
 pub enum MoveFlag {
     None,
     EnPas,
@@ -20,12 +21,12 @@ pub enum MoveFlag {
     Castle,
 }
 
-
+#[derive(Clone)]
 pub struct Move {
     from: Square,
     to: Square,
-    capture: Piece,
-    promote: Piece,
+    pub capture: Piece,
+    pub promote: Piece,
     flag: MoveFlag,
     score: i32,
 }
@@ -60,6 +61,27 @@ impl Move {
 
     pub fn is_promotion(&self) -> bool {
         self.promote.exists()
+    }
+
+    pub fn is_en_pas(&self) -> bool {
+        match self.flag {
+            MoveFlag::EnPas => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_castle(&self) -> bool {
+        match self.flag {
+            MoveFlag::Castle => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_pawn_start(&self) -> bool {
+        match self.flag {
+            MoveFlag::PawnStart => true,
+            _ => false,
+        }
     }
 
     pub fn to_string(&self) -> String {

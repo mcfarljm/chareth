@@ -61,6 +61,13 @@ impl Piece {
         }
     }
 
+    pub fn is_pawn(&self) -> bool {
+        match *self {
+            Piece::WP | Piece::BP => true,
+            _ => false,
+        }
+    }
+
     pub fn is_knight(&self) -> bool {
         match *self {
             Piece::WN | Piece::BN => true,
