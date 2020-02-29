@@ -5,6 +5,7 @@ mod io;
 mod search;
 
 use rand::Rng;
+use std::collections::HashMap;
 
 use crate::pieces::*;
 use crate::bitboard;
@@ -96,12 +97,14 @@ pub struct Board {
     hash: u64,
 
     hash_keys: HashKeys,
+
+    pub pv_table: HashMap<u64, moves::Move>,
+    // Todo: better as a member or a return value?
+    pub pv_array: Vec<moves::Move>,
 }
 
 impl Board {
     pub fn new() -> Board {
-        let hash_keys = HashKeys::new();
-
         let mut piece_lists: Vec<Vec<Square>> = Vec::new();
         for _i in 0..13 {
             piece_lists.push(Vec::new());
@@ -133,7 +136,10 @@ impl Board {
             castle_perm: 0,
             hash: 0,
 
-            hash_keys: hash_keys,
+            hash_keys: HashKeys::new(),
+
+            pv_table: HashMap::new(),
+            pv_array: Vec::new(),
         };
 
         for i in 0..64 {

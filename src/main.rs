@@ -24,9 +24,20 @@ fn main() {
         match input.chars().next().unwrap() {
             'q' => { break; }
             't' => { board.undo_move(); }
+            'p' => {
+                board.get_pv_line(4);
+                println!("PvLine of {} moves", board.pv_array.len());
+                for mv in &board.pv_array {
+                    print!(" {}", mv.to_string());
+                }
+                println!("");
+            }
             _ => {
                 match board.parse_move(&input) {
-                    Some(mv) => { board.make_move(&mv); }
+                    Some(mv) => {
+                        board.store_pv_move(mv);
+                        board.make_move(&mv);
+                    }
                     _ => { println!("Move not parsed"); }
                 }
             }
