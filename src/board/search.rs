@@ -21,7 +21,21 @@ struct SearchInfo {
 }
 
 impl Board {
-    pub fn is_repetition(&self) -> bool {
+    pub fn search(&mut self, info: &SearchInfo) {
+    }
+
+    pub fn clear_for_search(&mut self, info: &SearchInfo) {
+    }
+
+    pub fn alpha_beta(&mut self, alpha: i32, beta: i32, depth: u32, info: &SearchInfo, do_null: bool) -> i32 {
+        0
+    }
+
+    pub fn quiescence(&mut self, alpha: i32, beta: i32, info: &SearchInfo) -> i32 {
+        0
+    }
+
+    fn is_repetition(&self) -> bool {
         for i in self.hist_ply-self.fifty_move..self.hist_ply-1 {
             if self.history[i as usize].hash == self.hash {
                 return true;

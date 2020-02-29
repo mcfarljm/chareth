@@ -3,6 +3,7 @@ mod makemove;
 mod perft;
 mod io;
 mod search;
+mod evaluate;
 
 use rand::Rng;
 use std::collections::HashMap;
