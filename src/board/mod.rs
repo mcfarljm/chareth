@@ -12,6 +12,7 @@ use crate::pieces::*;
 use crate::bitboard;
 use crate::validate;
 use crate::moves;
+pub use search::SearchInfo;
 
 // Signed integer is used instead of unsigned in order to avoid need
 // to cast when adding with signed directions.  i8 goes up to 128,

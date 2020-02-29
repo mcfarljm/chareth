@@ -4,7 +4,7 @@ mod bitboard;
 mod moves;
 mod validate;
 
-use board::{Board,START_FEN};
+use board::{Board,START_FEN,SearchInfo};
 
 use std::io::{self, Write};
 
@@ -24,13 +24,9 @@ fn main() {
         match input.chars().next().unwrap() {
             'q' => { break; }
             't' => { board.undo_move(); }
-            'p' => {
-                board.get_pv_line(4);
-                println!("PvLine of {} moves", board.pv_array.len());
-                for mv in &board.pv_array {
-                    print!(" {}", mv.to_string());
-                }
-                println!("");
+            's' => {
+               let mut info = SearchInfo::new(4); 
+                board.search(&mut info);
             }
             _ => {
                 match board.parse_move(&input) {
