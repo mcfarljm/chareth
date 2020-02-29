@@ -3,6 +3,8 @@ use crate::moves;
 
 use std::time::{Duration, Instant};
 
+const MATE: i32 = 29000;
+
 struct SearchInfo {
     start_time: Instant,
     depth: u32,
@@ -56,8 +58,57 @@ impl Board {
         info.nodes = 0;
     }
 
-    pub fn alpha_beta(&mut self, alpha: i32, beta: i32, depth: u32, info: &SearchInfo, do_null: bool) -> i32 {
-        0
+    pub fn alpha_beta(&mut self, alpha_in: i32, beta: i32, depth: u32, info: &mut SearchInfo, do_null: bool) -> i32 {
+        debug_assert!(self.check());
+
+        if depth == 0 {
+            info.nodes += 1;
+            return self.evaluate();
+        }
+
+        info.nodes += 1;
+
+        if self.is_repetition() || self.fifty_move >= 100 {
+            return 0;
+        }
+
+        let mut legal = false;
+        let mut alpha = alpha_in;
+        let mut score = std::i32::MIN;
+        // Use option to workaround uninitalized values
+        let mut best_move: Option<moves::Move> = None;
+
+        let move_list = self.generate_all_moves();
+        for mv in move_list.moves.iter() {
+            if ! self.make_move(mv) {
+                continue;
+            }
+            legal = true;
+            score = - self.alpha_beta(-beta, -alpha, depth-1, info, true);
+            self.undo_move();
+
+            if score > alpha {
+                if score >= beta {
+                    return beta;
+                }
+                alpha = score;
+                best_move = Some(*mv);
+            }
+        }
+
+        if ! legal {
+            if self.square_attacked(self.king_sq[self.side], self.side^1) {
+                return -MATE + self.ply as i32;
+            } else {
+                return 0;
+            }
+        }
+
+        if alpha != alpha_in {
+            self.store_pv_move(best_move.unwrap());
+        }
+
+        alpha
     }
 
     pub fn quiescence(&mut self, alpha: i32, beta: i32, info: &SearchInfo) -> i32 {
