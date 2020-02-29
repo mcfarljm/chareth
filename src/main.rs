@@ -35,28 +35,11 @@ fn main() {
     // ml.generate_all_moves(&board);
     // ml.print();
 
-    let mut board = Board::from_fen(START_FEN);
-    let mut ml = movegen::MoveList::new();
-    ml.generate_all_moves(&board);
-    println!("Generated {} moves", ml.moves.len());
+    const PERFT_FEN: &'static str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 
-    board.print();
-    stdin().read(&mut [0]).unwrap();
+    let mut board = Board::from_fen(PERFT_FEN);
+    let count = board.perft(5, true);
+    println!("Count: {}", count);
 
-
-    for mv in ml.moves {
-        if ! board.make_move(mv) {
-            println!("continuing");
-            continue;
-        }
-        println!("Made: {}", mv.to_string());
-        board.print();
-
-        board.undo_move();
-        println!("\nUndo: {}", mv.to_string());
-        board.print();
-
-        stdin().read(&mut [0]).unwrap();
-    }
 
 }

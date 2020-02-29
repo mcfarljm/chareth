@@ -4,7 +4,7 @@ use crate::validate::side_valid;
 
 impl Board {
     // Return false if in check after making the move
-    pub fn make_move(&mut self, mv: Move) -> bool {
+    pub fn make_move(&mut self, mv: &Move) -> bool {
         debug_assert!(self.check());
 
         let from = mv.from();

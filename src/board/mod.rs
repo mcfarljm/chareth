@@ -1,4 +1,5 @@
 mod makemove;
+mod perft;
 
 use rand::Rng;
 
