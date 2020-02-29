@@ -1,6 +1,7 @@
 mod movegen;
 mod makemove;
 mod perft;
+mod io;
 
 use rand::Rng;
 
