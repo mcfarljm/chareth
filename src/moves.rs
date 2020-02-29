@@ -2,16 +2,11 @@ use crate::board;
 use crate::board::Square;
 use crate::pieces::Piece;
 
-const EN_PAS_FLAG: u8 = 1;
-const PAWN_START_FLAG: u8 = 2;
-const CASTLE_FLAG: u8 = 4;
-
 pub fn square_string(sq: Square) -> String {
     String::from(format!("{}{}",
                          ('a' as u8 + board::FILES[sq as usize] as u8) as char,
                          ('1' as u8 + board::RANKS[sq as usize] as u8) as char))
 }
-
 
 #[derive(Clone)]
 #[derive(Copy)]

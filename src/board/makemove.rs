@@ -69,7 +69,7 @@ impl Board {
 
         self.fifty_move += 1;
 
-        if (mv.is_capture()) {
+        if mv.is_capture() {
             self.clear_piece(to);
             self.fifty_move = 0;
         }
