@@ -21,7 +21,25 @@ struct SearchInfo {
 }
 
 impl Board {
-    pub fn search(&mut self, info: &SearchInfo) {
+    pub fn search(&mut self, info: &mut SearchInfo) {
+        let mut best_move: moves::Move;
+        let mut best_score = std::i32::MIN;
+        let pv_num = 0;
+
+        self.clear_for_search(info);
+
+        // Iterative deepening
+        for current_depth in 1..=info.depth {
+            best_score = self.alpha_beta(std::i32::MIN, std::i32::MAX, current_depth, info, true);
+            self.get_pv_line(current_depth);
+            best_move = self.pv_array[0];
+            print!("Depth:{} score:{} move:{} nodes{} ", current_depth, best_score, best_move.to_string(), info.nodes);
+            print!("pv");
+            for mv in &self.pv_array {
+                print!(" {}", mv.to_string());
+            }
+            println!("");
+        }
     }
 
     pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
@@ -61,6 +79,7 @@ impl Board {
 
     pub fn get_pv_line(&mut self, depth: u32) {
         let mut count: u32 = 0;
+        self.pv_array.clear();
         loop {
             match self.pv_table.get(&self.hash) {
                 Some(&mv) if count < depth => {
