@@ -3,7 +3,6 @@ mod board;
 mod bitboard;
 mod moves;
 mod validate;
-mod movegen;
 
 use board::{Board,START_FEN};
 
@@ -38,7 +37,7 @@ fn main() {
     const PERFT_FEN: &'static str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
 
     let mut board = Board::from_fen(PERFT_FEN);
-    let count = board.perft(5, true);
+    let count = board.perft(3, true);
     println!("Count: {}", count);
 
 

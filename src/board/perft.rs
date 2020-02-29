@@ -1,6 +1,5 @@
 use crate::board::*;
 use crate::moves::Move;
-use crate::movegen;
 
 impl Board {
     pub fn perft(&mut self, depth: u32, verbose: bool) -> u64 {
@@ -10,8 +9,7 @@ impl Board {
             return 1;
         }
 
-        let mut move_list = movegen::MoveList::new();
-        move_list.generate_all_moves(self);
+        let move_list = self.generate_all_moves();
 
         let mut count: u64 = 0;
         let mut new: u64 = 0;

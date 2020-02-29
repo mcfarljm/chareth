@@ -1,3 +1,4 @@
+mod movegen;
 mod makemove;
 mod perft;
 
