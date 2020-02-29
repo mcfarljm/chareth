@@ -24,7 +24,18 @@ impl Board {
     pub fn search(&mut self, info: &SearchInfo) {
     }
 
-    pub fn clear_for_search(&mut self, info: &SearchInfo) {
+    pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
+        self.search_history = [[0; BOARD_SQ_NUM]; 13];
+        self.search_killers.clear();
+
+        self.pv_table.clear();
+        self.pv_array.clear();
+
+        self.ply = 0;
+
+        info.start_time = Instant::now();
+        info.stopped = false;
+        info.nodes = 0;
     }
 
     pub fn alpha_beta(&mut self, alpha: i32, beta: i32, depth: u32, info: &SearchInfo, do_null: bool) -> i32 {
