@@ -101,6 +101,12 @@ pub struct Board {
     pub pv_table: HashMap<u64, moves::Move>,
     // Todo: better as a member or a return value?
     pub pv_array: Vec<moves::Move>,
+
+    // Incremented for piece type and its to square when move beats alpha
+    search_history : [[u32; BOARD_SQ_NUM]; 13],
+    // Two most recent moves that recently caused a beta cutoff that
+    // aren't captures; vector length is by depth.
+    search_killers: Vec<[moves::Move; 2]>,
 }
 
 impl Board {
@@ -140,6 +146,9 @@ impl Board {
 
             pv_table: HashMap::new(),
             pv_array: Vec::new(),
+
+            search_history: [[0; BOARD_SQ_NUM]; 13],
+            search_killers: Vec::new(),
         };
 
         for i in 0..64 {

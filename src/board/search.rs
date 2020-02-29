@@ -1,6 +1,25 @@
 use crate::board::*;
 use crate::moves;
 
+use std::time::{Duration, Instant};
+
+struct SearchInfo {
+    start_time: Instant,
+    depth: u32,
+
+    depth_set: u32,
+    time_set: Duration,
+
+    moves_to_go: u32,
+    infinite: bool,
+
+    // Count of all positioned visited
+    nodes: u64,
+
+    quit: bool,
+    stopped: bool,
+}
+
 impl Board {
     pub fn is_repetition(&self) -> bool {
         for i in self.hist_ply-self.fifty_move..self.hist_ply-1 {
