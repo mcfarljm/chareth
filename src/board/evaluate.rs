@@ -17,7 +17,7 @@ impl Board {
 
         piece = Piece::BP;
         for sq in &self.piece_lists[piece as usize] {
-            score -= PAWN_TABLE[MIRROR64[*sq as usize]];
+            score -= PAWN_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
         }
 
         piece = Piece::WN;
@@ -27,7 +27,7 @@ impl Board {
 
         piece = Piece::BN;
         for sq in &self.piece_lists[piece as usize] {
-            score -= KNIGHT_TABLE[MIRROR64[*sq as usize]];
+            score -= KNIGHT_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
         }
 
         piece = Piece::WB;
@@ -37,7 +37,7 @@ impl Board {
 
         piece = Piece::BB;
         for sq in &self.piece_lists[piece as usize] {
-            score -= BISHOP_TABLE[MIRROR64[*sq as usize]];
+            score -= BISHOP_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
         }
 
         piece = Piece::WR;
@@ -47,7 +47,7 @@ impl Board {
 
         piece = Piece::BR;
         for sq in &self.piece_lists[piece as usize] {
-            score -= ROOK_TABLE[MIRROR64[*sq as usize]];
+            score -= ROOK_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
         }
 
         if self.side == WHITE {
