@@ -2,6 +2,7 @@ mod movegen;
 mod makemove;
 mod perft;
 mod io;
+mod search;
 
 use rand::Rng;
 
@@ -62,7 +63,7 @@ pub struct Undo {
     mv: moves::Move,
     castle_perm: u8,
     en_pas: Square,
-    fifty_move: i32,
+    fifty_move: u32,
     hash: u64,
 }
 
@@ -84,10 +85,10 @@ pub struct Board {
 
     pub side: usize,
     pub en_pas: Square,
-    fifty_move: i32,
+    fifty_move: u32,
 
-    ply: i32,
-    hist_ply: i32,
+    ply: u32,
+    hist_ply: u32,
 
     pub history: Vec<Undo>,
 
