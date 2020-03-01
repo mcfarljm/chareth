@@ -4,6 +4,8 @@ use crate::board::{Castling,Square};
 use crate::pieces;
 use crate::pieces::Piece;
 
+const VICTIM_SCORE: [i32; 13] = [0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600];
+
 pub struct ScoredMove {
     pub mv: moves::Move,
     pub score: i32,
@@ -17,10 +19,10 @@ pub struct ScoredMove {
 // undefined, whereas the ScoredMove structure ensures that we only
 // create entries that do have a score defined.
 impl ScoredMove {
-    pub fn new(mv: moves::Move) -> ScoredMove {
+    pub fn new(mv: moves::Move, score: i32) -> ScoredMove {
         ScoredMove{
             mv: mv,
-            score: 0,
+            score: score,
         }
     }
 }
@@ -35,15 +37,16 @@ impl MoveList {
     }
 
     fn add_quiet_move(&mut self, b: &board::Board, mv: moves::Move) {
-        self.moves.push(ScoredMove::new(mv));
+        self.moves.push(ScoredMove::new(mv, 0));
     }
 
     fn add_capture_move(&mut self, b: &board::Board, mv: moves::Move) {
-        self.moves.push(ScoredMove::new(mv));
+        let score = b.mvv_lva_scores[mv.capture as usize][b.pieces[mv.from() as usize] as usize];
+        self.moves.push(ScoredMove::new(mv, score));
     }
 
     fn add_en_passant_move(&mut self, b: &board::Board, mv: moves::Move) {
-        self.moves.push(ScoredMove::new(mv));
+        self.moves.push(ScoredMove::new(mv, 105));
     }
 
     fn add_white_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
@@ -259,6 +262,15 @@ impl board::Board {
             }
         }
         move_list
+    }
+
+    // Initialize most valuable victim, least valuable attacker array
+    pub fn init_mvv_lva(&mut self) {
+        for attacker in Piece::WP as usize..=Piece::BK as usize {
+            for victim in Piece::WP as usize..=Piece::BK as usize {
+                self.mvv_lva_scores[victim][attacker] = VICTIM_SCORE[victim] + 6 - VICTIM_SCORE[attacker]/100;
+            }
+        }
     }
 
 }

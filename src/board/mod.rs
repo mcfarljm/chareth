@@ -109,6 +109,11 @@ pub struct Board {
     // Two most recent moves that recently caused a beta cutoff that
     // aren't captures; vector length is by depth.
     search_killers: Vec<[moves::Move; 2]>,
+
+    // Static arrays:
+
+    // Scores for most valuable victim, least valuable attacker
+    mvv_lva_scores: [[i32; 13]; 13],
 }
 
 impl Board {
@@ -151,11 +156,16 @@ impl Board {
 
             search_history: [[0; BOARD_SQ_NUM]; 13],
             search_killers: Vec::new(),
+
+            // Static arrays that need to be initialized via code:
+            mvv_lva_scores: [[0; 13]; 13],
         };
 
         for i in 0..64 {
             board.pieces[SQUARE_64_TO_120[i] as usize] = Piece::Empty;
         }
+
+        board.init_mvv_lva();
 
         board
     }
