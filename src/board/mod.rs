@@ -151,6 +151,11 @@ impl Board {
 
             hash_keys: HashKeys::new(),
 
+            // Todo: VICE uses a reset board function, and the
+            // pv_table map is not re-initialized when the board is
+            // re-initialized.  Do we need a reset_board separate from
+            // just creating a new board object, so that the table can
+            // be retained during reset?  See video 62.
             pv_table: HashMap::new(),
             pv_array: Vec::new(),
 

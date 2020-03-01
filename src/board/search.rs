@@ -1,5 +1,6 @@
 use crate::board::*;
 use crate::moves;
+use self::movegen::MoveList;
 
 use std::time::{Duration, Instant};
 
@@ -49,6 +50,21 @@ impl SearchInfo {
             fail_high_first: 0
         }
     }
+}
+
+// Modify movelist in place by switching selected move into position
+// move_num
+fn pick_next_move(move_num: usize, move_list: &mut MoveList) {
+    let mut best_score = 0;
+    let mut best_num = move_num;
+    for i in move_num..move_list.moves.len() {
+        if move_list.moves[i].score > best_score {
+            best_score = move_list.moves[i].score;
+            best_num = i;
+        }
+
+    }
+    move_list.moves.swap(move_num, best_num);
 }
 
 impl Board {
@@ -111,8 +127,13 @@ impl Board {
         // Use option to workaround uninitalized values
         let mut best_move: Option<moves::Move> = None;
 
-        let move_list = self.generate_all_moves();
-        for smv in move_list.moves.iter() {
+        let mut move_list = self.generate_all_moves();
+        // Loop is not done with iter, because pick_next_move may swap
+        // elements in the move list
+        for imove in 0..move_list.moves.len() {
+            pick_next_move(imove, &mut move_list);
+            let smv = &move_list.moves[imove];
+            
             if ! self.make_move(&smv.mv) {
                 continue;
             }
