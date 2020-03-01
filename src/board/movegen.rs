@@ -37,15 +37,22 @@ impl MoveList {
     }
 
     fn add_quiet_move(&mut self, b: &board::Board, mv: moves::Move) {
+        debug_assert!(board::square_on_board(mv.from()));
+        debug_assert!(board::square_on_board(mv.to()));
         self.moves.push(ScoredMove::new(mv, 0));
     }
 
     fn add_capture_move(&mut self, b: &board::Board, mv: moves::Move) {
+        debug_assert!(board::square_on_board(mv.from()));
+        debug_assert!(board::square_on_board(mv.to()));
+        debug_assert!(mv.capture.exists());
         let score = b.mvv_lva_scores[mv.capture as usize][b.pieces[mv.from() as usize] as usize];
         self.moves.push(ScoredMove::new(mv, score));
     }
 
     fn add_en_passant_move(&mut self, b: &board::Board, mv: moves::Move) {
+        debug_assert!(board::square_on_board(mv.from()));
+        debug_assert!(board::square_on_board(mv.to()));
         self.moves.push(ScoredMove::new(mv, 105));
     }
 
@@ -135,11 +142,13 @@ impl board::Board {
                 }
 
                 // Check en passant captures
-                if sq + 9 == self.en_pas {
-                    move_list.add_capture_move(self, moves::Move::new(*sq, sq+9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                }
-                if sq + 11 == self.en_pas {
-                    move_list.add_capture_move(self, moves::Move::new(*sq, sq+11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                if self.en_pas != board::Position::NONE as Square {
+                    if sq + 9 == self.en_pas {
+                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq+9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                    }
+                    if sq + 11 == self.en_pas {
+                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq+11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                    }
                 }
             }
 
@@ -182,11 +191,13 @@ impl board::Board {
                 }
 
                 // Check en passant captures
-                if sq - 9 == self.en_pas {
-                    move_list.add_capture_move(self, moves::Move::new(*sq, sq-9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                }
-                if sq - 11 == self.en_pas {
-                    move_list.add_capture_move(self, moves::Move::new(*sq, sq-11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                if self.en_pas != board::Position::NONE as Square {
+                    if sq - 9 == self.en_pas {
+                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq-9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                    }
+                    if sq - 11 == self.en_pas {
+                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq-11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                    }
                 }
             }
 
