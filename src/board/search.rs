@@ -208,3 +208,27 @@ impl Board {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::board::*;
+    
+    #[test]
+    fn search_start_depth3() {
+        let mut board = Board::from_fen(START_FEN);
+        let mut info = SearchInfo::new(3); 
+        board.search(&mut info);
+        assert_eq!(board.pv_array[0].to_string(), "d2d4");
+        assert_eq!(info.nodes, 2389);
+    }
+
+    #[test]
+    fn search_wac1_depth3() {
+        let WAC1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+        let mut board = Board::from_fen(WAC1);
+        let mut info = SearchInfo::new(3); 
+        board.search(&mut info);
+        assert_eq!(board.pv_array[0].to_string(), "d4c6");
+        assert_eq!(info.nodes, 2141);
+    }
+}
