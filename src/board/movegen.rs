@@ -4,26 +4,46 @@ use crate::board::{Castling,Square};
 use crate::pieces;
 use crate::pieces::Piece;
 
+pub struct ScoredMove {
+    pub mv: moves::Move,
+    pub score: i32,
+}
+
+// Having a separate data structure for move items that go into the
+// list is similar to what is done in VICE.  Alternatively, since we
+// already have a Move structure (VICE just uses an int), we could
+// include the score there.  With that approach, it would be good to
+// then represent score as an Option, since it would be initially
+// undefined, whereas the ScoredMove structure ensures that we only
+// create entries that do have a score defined.
+impl ScoredMove {
+    pub fn new(mv: moves::Move) -> ScoredMove {
+        ScoredMove{
+            mv: mv,
+            score: 0,
+        }
+    }
+}
+
 pub struct MoveList {
-    pub moves: Vec<moves::Move>,
+    pub moves: Vec<ScoredMove>,
 }
 
 impl MoveList {
     fn new() -> MoveList {
-        // let l = Vec::<moves::Move>::new();
-        MoveList{moves: Vec::<moves::Move>::new()}
+        MoveList{moves: Vec::<ScoredMove>::new()}
     }
 
     fn add_quiet_move(&mut self, b: &board::Board, mv: moves::Move) {
-        self.moves.push(mv);
+        self.moves.push(ScoredMove::new(mv));
     }
 
     fn add_capture_move(&mut self, b: &board::Board, mv: moves::Move) {
-        self.moves.push(mv);
+        self.moves.push(ScoredMove::new(mv));
     }
 
     fn add_en_passant_move(&mut self, b: &board::Board, mv: moves::Move) {
-        self.moves.push(mv);
+        self.moves.push(ScoredMove::new(mv));
     }
 
     fn add_white_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
@@ -74,8 +94,8 @@ impl MoveList {
 
     pub fn print(&self) {
         println!("Move list: {}", self.moves.len());
-        for (i, mv) in self.moves.iter().enumerate() {
-            println!("Move: {} > {} (score: {})", i+1, mv.to_string(), mv.score());
+        for (i, smv) in self.moves.iter().enumerate() {
+            println!("Move: {} > {} (score: {})", i+1, smv.mv.to_string(), smv.score);
         }
     }
 

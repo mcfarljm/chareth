@@ -31,7 +31,8 @@ impl Board {
 
         let move_list = self.generate_all_moves();
 
-        for mv in move_list.moves.into_iter() {
+        for smv in move_list.moves.into_iter() {
+            let mv = smv.mv;
             if mv.from() == from && mv.to() == to {
                 let prom_piece = mv.promote;
                 if prom_piece.exists() {

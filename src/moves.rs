@@ -25,7 +25,6 @@ pub struct Move {
     pub capture: Piece,
     pub promote: Piece,
     flag: MoveFlag,
-    score: i32,
 }
 
 
@@ -40,7 +39,6 @@ impl Move {
             capture: capture,
             promote: promote,
             flag: flag,
-            score: 0
         }
     }
 
@@ -103,11 +101,6 @@ impl Move {
 
         s
     }
-
-    pub fn score(&self) -> i32 {
-        self.score
-    }
-
 }
 
 #[cfg(test)]

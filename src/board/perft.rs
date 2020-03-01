@@ -12,13 +12,13 @@ impl Board {
 
         let mut count: u64 = 0;
         let mut new: u64;
-        for mv in move_list.moves.iter() {
-            if ! self.make_move(mv) {
+        for smv in move_list.moves.iter() {
+            if ! self.make_move(&smv.mv) {
                 continue;
             }
             new = self.perft(depth - 1, false);
             if verbose {
-                println!("move {} : {}", mv.to_string(), new);
+                println!("move {} : {}", smv.mv.to_string(), new);
             }
             count += new;
             self.undo_move();

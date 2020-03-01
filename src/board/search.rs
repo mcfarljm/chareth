@@ -112,8 +112,8 @@ impl Board {
         let mut best_move: Option<moves::Move> = None;
 
         let move_list = self.generate_all_moves();
-        for mv in move_list.moves.iter() {
-            if ! self.make_move(mv) {
+        for smv in move_list.moves.iter() {
+            if ! self.make_move(&smv.mv) {
                 continue;
             }
             legal += 1;
@@ -129,7 +129,7 @@ impl Board {
                     return beta;
                 }
                 alpha = score;
-                best_move = Some(*mv);
+                best_move = Some(smv.mv);
             }
         }
 
