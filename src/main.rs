@@ -7,6 +7,6 @@ mod simpleloop;
 
 fn main() {
 
-    simpleloop::simple_loop();
+    board::uci_loop();
 
 }

@@ -4,6 +4,7 @@ mod perft;
 mod io;
 mod search;
 mod evaluate;
+mod uci;
 
 use rand::Rng;
 use std::collections::HashMap;
@@ -13,6 +14,7 @@ use crate::bitboard;
 use crate::validate;
 use crate::moves;
 pub use search::SearchInfo;
+pub use uci::uci_loop;
 
 // Signed integer is used instead of unsigned in order to avoid need
 // to cast when adding with signed directions.  i8 goes up to 128,
@@ -270,6 +272,20 @@ impl Board {
 
         board.update_lists_and_material();
 
+        board
+    }
+
+    // Moves the current board into a new board with the given FEN string
+    //
+    // The only information retained is the pv_table
+    //
+    // An alternative would be to separate out parse_fen into a member
+    // function and implement a reset function, but then there is some
+    // duplication of initialization code between the reset function
+    // and new()
+    pub fn update_from_fen(self, fen: &str) -> Board {
+        let mut board = Board::from_fen(fen);
+        board.pv_table = self.pv_table;
         board
     }
 
