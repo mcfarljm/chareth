@@ -40,7 +40,7 @@ impl MoveList {
         debug_assert!(board::square_on_board(mv.from()));
         debug_assert!(board::square_on_board(mv.to()));
 
-        let score = match b.search_killers.get(&b.ply) {
+        let mut score = match b.search_killers.get(&b.ply) {
             Some(killers) => {
                 match killers[0] {
                     Some(kmv) if kmv == mv => 900_000,
@@ -52,6 +52,9 @@ impl MoveList {
             }
             _ => 0,
         };
+        if score == 0 {
+            score = b.search_history[b.pieces[mv.from() as usize] as usize][mv.to() as usize] as i32;
+        }
         
         self.moves.push(ScoredMove::new(mv, score));
     }

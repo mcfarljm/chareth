@@ -159,6 +159,12 @@ impl Board {
                 }
                 alpha = score;
                 best_move = Some(smv.mv);
+                if ! smv.mv.is_capture() {
+                    // VICE video 64: mentions prioritizing moves
+                    // "nearest to ply", but this seems to be the
+                    // opposite of adding depth?
+                    self.search_history[self.pieces[smv.mv.from() as usize] as usize][smv.mv.to() as usize] += depth;
+                }
             }
         }
 
@@ -227,7 +233,7 @@ mod tests {
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
-        assert_eq!(info.nodes, 1224);
+        assert_eq!(info.nodes, 1098);
     }
 
     #[test]
