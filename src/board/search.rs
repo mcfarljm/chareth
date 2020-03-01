@@ -110,8 +110,7 @@ impl Board {
         debug_assert!(self.check());
 
         if depth == 0 {
-            info.nodes += 1;
-            return self.evaluate();
+            return self.quiescence(alpha_in, beta, info);
         }
 
         info.nodes += 1;
@@ -198,8 +197,67 @@ impl Board {
         alpha
     }
 
-    pub fn quiescence(&mut self, alpha: i32, beta: i32, info: &SearchInfo) -> i32 {
-        0
+    // Mitigate the horizon effect by making sure evaluation is only
+    // done at quiet positions
+    pub fn quiescence(&mut self, alpha_in: i32, beta: i32, info: &mut SearchInfo) -> i32 {
+        debug_assert!(self.check());
+
+        info.nodes += 1;
+
+        if self.is_repetition() || self.fifty_move >= 100 {
+            return 0;
+        }
+
+        let mut alpha = alpha_in;
+
+        let mut score = self.evaluate();
+        if score >= beta {
+            return beta;
+        }
+        else if score > alpha {
+            // Standing pat
+            alpha = score;
+        }
+
+        let mut legal = 0;
+        // Use option to workaround uninitalized values
+        let mut best_move: Option<moves::Move> = None;
+
+        let old_alpha = alpha;
+
+        let mut move_list = self.generate_all_captures();
+        // Loop is not done with iter, because pick_next_move may swap
+        // elements in the move list
+        for imove in 0..move_list.moves.len() {
+            pick_next_move(imove, &mut move_list);
+            let smv = &move_list.moves[imove];
+            
+            if ! self.make_move(&smv.mv) {
+                continue;
+            }
+            legal += 1;
+            score = - self.quiescence(-beta, -alpha, info);
+            self.undo_move();
+
+            if score > alpha {
+                if score >= beta {
+                    if legal == 1 {
+                        info.fail_high_first += 1;
+                    }
+                    info.fail_high += 1;
+                    
+                    return beta;
+                }
+                alpha = score;
+                best_move = Some(smv.mv);
+            }
+        }
+
+        if alpha != old_alpha {
+            self.store_pv_move(best_move.unwrap());
+        }
+
+        alpha
     }
 
     fn is_repetition(&self) -> bool {
@@ -248,7 +306,7 @@ mod tests {
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
-        assert_eq!(info.nodes, 797);
+        assert_eq!(info.nodes, 637);
     }
 
     #[test]
@@ -257,7 +315,7 @@ mod tests {
         let mut board = Board::from_fen(wa_c1);
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
-        assert_eq!(board.pv_array[0].to_string(), "d4c6");
-        assert_eq!(info.nodes, 2098);
+        assert_eq!(board.pv_array[0].to_string(), "f1c4");
+        assert_eq!(info.nodes, 5965);
     }
 }
