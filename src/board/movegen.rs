@@ -67,7 +67,7 @@ impl MoveList {
         self.moves.push(ScoredMove::new(mv, score));
     }
 
-    fn add_en_passant_move(&mut self, b: &board::Board, mv: moves::Move) {
+    fn add_en_passant_move(&mut self, _b: &board::Board, mv: moves::Move) {
         debug_assert!(board::square_on_board(mv.from()));
         debug_assert!(board::square_on_board(mv.to()));
         self.moves.push(ScoredMove::new(mv, 105 + 1_000_000));

@@ -106,7 +106,7 @@ impl Board {
         info.fail_high_first = 0;
     }
 
-    pub fn alpha_beta(&mut self, alpha_in: i32, beta: i32, depth: u32, info: &mut SearchInfo, do_null: bool) -> i32 {
+    pub fn alpha_beta(&mut self, alpha_in: i32, beta: i32, depth: u32, info: &mut SearchInfo, _do_null: bool) -> i32 {
         debug_assert!(self.check());
 
         if depth == 0 {
