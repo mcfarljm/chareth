@@ -120,13 +120,28 @@ impl Board {
             return 0;
         }
 
+        let mut move_list = self.generate_all_moves();
+
+        // Score PV move first if found
+        match self.pv_table.get(&self.hash) {
+            Some(pv_mv) => {
+                for smv in move_list.moves.iter_mut() {
+                    if smv.mv == *pv_mv {
+                        // Prioritize above all other moves
+                        smv.score = 2_000_000;
+                        break;
+                    }
+                }
+            }
+            _ => (),
+        }
+
         let mut legal = 0;
         let mut alpha = alpha_in;
         let mut score;
         // Use option to workaround uninitalized values
         let mut best_move: Option<moves::Move> = None;
 
-        let mut move_list = self.generate_all_moves();
         // Loop is not done with iter, because pick_next_move may swap
         // elements in the move list
         for imove in 0..move_list.moves.len() {
@@ -233,7 +248,7 @@ mod tests {
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
-        assert_eq!(info.nodes, 1098);
+        assert_eq!(info.nodes, 797);
     }
 
     #[test]
@@ -243,6 +258,6 @@ mod tests {
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d4c6");
-        assert_eq!(info.nodes, 2141);
+        assert_eq!(info.nodes, 2098);
     }
 }
