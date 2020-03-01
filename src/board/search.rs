@@ -11,10 +11,11 @@ const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
 
 pub struct SearchInfo {
     start_time: Instant,
+    have_time_limit: bool,
+    time_limit: Duration,
+    
     depth: u32,
-
-    depth_set: u32,
-    time_set: Duration,
+    depth_set: bool,
 
     moves_to_go: u32,
     infinite: bool,
@@ -23,7 +24,7 @@ pub struct SearchInfo {
     nodes: u64,
 
     quit: bool,
-    stopped: bool,
+    pub stopped: bool,
 
     fail_high: u32,
     fail_high_first: u32,
@@ -33,10 +34,11 @@ impl SearchInfo {
     pub fn new(depth: u32) -> SearchInfo {
         SearchInfo{
             start_time: Instant::now(),
+            time_limit: Duration::new(0,0),
+            have_time_limit: false,
+            
             depth: depth,
-
-            depth_set: 0,
-            time_set: Duration::new(0,0),
+            depth_set: false,
 
             moves_to_go: 0,
             infinite: false,
@@ -48,6 +50,20 @@ impl SearchInfo {
 
             fail_high: 0,
             fail_high_first: 0
+        }
+    }
+}
+
+impl SearchInfo {
+    pub fn checkup(&mut self) {
+        if self.have_time_limit && self.start_time.elapsed() > self.time_limit {
+            self.stopped = true;
+        }
+    }
+
+    pub fn maybe_checkup(&mut self) {
+        if self.nodes > 0 && self.nodes % 2000 == 0 {
+            self.checkup();
         }
     }
 }
@@ -69,7 +85,7 @@ fn pick_next_move(move_num: usize, move_list: &mut MoveList) {
 
 impl Board {
     pub fn search(&mut self, info: &mut SearchInfo) {
-        let mut best_move: moves::Move;
+        let mut best_move: Option<moves::Move> = None;
         let mut best_score;
 
         self.clear_for_search(info);
@@ -77,15 +93,27 @@ impl Board {
         // Iterative deepening
         for current_depth in 1..=info.depth {
             best_score = self.alpha_beta(I32_SAFE_MIN, std::i32::MAX, current_depth, info, true);
+
+            if info.stopped {
+                break;
+            }
+            
             self.get_pv_line(current_depth);
-            best_move = self.pv_array[0];
-            print!("Depth:{} score:{} move:{} nodes:{} ", current_depth, best_score, best_move.to_string(), info.nodes);
+            best_move = Some(self.pv_array[0]);
+
+            print!("info score cp score {} depth {} nodes {} time {} ",
+                   best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
+
             print!("pv");
             for mv in &self.pv_array {
                 print!(" {}", mv.to_string());
             }
             println!("");
             println!("Ordering: {:.2}", info.fail_high_first as f32 /info.fail_high as f32);
+        }
+
+        if let Some(mv) = best_move {
+            println!("bestmove {}", mv.to_string());
         }
     }
 
@@ -112,6 +140,8 @@ impl Board {
         if depth == 0 {
             return self.quiescence(alpha_in, beta, info);
         }
+
+        info.maybe_checkup();
 
         info.nodes += 1;
 
@@ -153,6 +183,10 @@ impl Board {
             legal += 1;
             score = - self.alpha_beta(-beta, -alpha, depth-1, info, true);
             self.undo_move();
+
+            if info.stopped {
+                return 0;
+            }
 
             if score > alpha {
                 if score >= beta {
@@ -202,6 +236,8 @@ impl Board {
     pub fn quiescence(&mut self, alpha_in: i32, beta: i32, info: &mut SearchInfo) -> i32 {
         debug_assert!(self.check());
 
+        info.maybe_checkup();
+
         info.nodes += 1;
 
         if self.is_repetition() || self.fifty_move >= 100 {
@@ -238,6 +274,10 @@ impl Board {
             legal += 1;
             score = - self.quiescence(-beta, -alpha, info);
             self.undo_move();
+
+            if info.stopped {
+                return 0;
+            }
 
             if score > alpha {
                 if score >= beta {
