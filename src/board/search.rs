@@ -70,8 +70,7 @@ fn pick_next_move(move_num: usize, move_list: &mut MoveList) {
 impl Board {
     pub fn search(&mut self, info: &mut SearchInfo) {
         let mut best_move: moves::Move;
-        let mut best_score = I32_SAFE_MIN;
-        let pv_num = 0;
+        let mut best_score;
 
         self.clear_for_search(info);
 
@@ -123,7 +122,7 @@ impl Board {
 
         let mut legal = 0;
         let mut alpha = alpha_in;
-        let mut score = I32_SAFE_MIN;
+        let mut score;
         // Use option to workaround uninitalized values
         let mut best_move: Option<moves::Move> = None;
 
@@ -224,8 +223,8 @@ mod tests {
 
     #[test]
     fn search_wac1_depth3() {
-        let WAC1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
-        let mut board = Board::from_fen(WAC1);
+        let wa_c1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+        let mut board = Board::from_fen(wa_c1);
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d4c6");
