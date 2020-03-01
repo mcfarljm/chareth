@@ -10,6 +10,7 @@ pub fn square_string(sq: Square) -> String {
 
 #[derive(Clone)]
 #[derive(Copy)]
+#[derive(PartialEq)]
 pub enum MoveFlag {
     None,
     EnPas,
@@ -19,6 +20,7 @@ pub enum MoveFlag {
 
 #[derive(Clone)]
 #[derive(Copy)]
+#[derive(PartialEq)]
 pub struct Move {
     from: Square,
     to: Square,

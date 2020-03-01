@@ -108,7 +108,11 @@ pub struct Board {
     search_history : [[u32; BOARD_SQ_NUM]; 13],
     // Two most recent moves that recently caused a beta cutoff that
     // aren't captures; vector length is by depth.
-    search_killers: Vec<[moves::Move; 2]>,
+
+    // Store two most recent moves that caused a beta cutoff but
+    // aren't captures.  VICE uses a static array with size MAXDEPTH.
+    // We use a HashMap indexed by depth (ply).
+    search_killers: HashMap<u32, [Option<moves::Move>; 2]>,
 
     // Static arrays:
 
@@ -160,7 +164,7 @@ impl Board {
             pv_array: Vec::new(),
 
             search_history: [[0; BOARD_SQ_NUM]; 13],
-            search_killers: Vec::new(),
+            search_killers: HashMap::new(),
 
             // Static arrays that need to be initialized via code:
             mvv_lva_scores: [[0; 13]; 13],

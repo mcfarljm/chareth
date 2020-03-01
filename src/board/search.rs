@@ -146,6 +146,15 @@ impl Board {
                         info.fail_high_first += 1;
                     }
                     info.fail_high += 1;
+
+                    if ! smv.mv.is_capture() {
+                        // So-called "killer" move (non-capture
+                        // causing beta cutoff)
+                        let killers = self.search_killers.entry(self.ply).or_insert([None, None]);
+                        killers.swap(0,1); // Really just need k[1]=k[0];
+                        killers[0] = Some(smv.mv);
+                    }
+                    
                     return beta;
                 }
                 alpha = score;
@@ -218,7 +227,7 @@ mod tests {
         let mut info = SearchInfo::new(3); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
-        assert_eq!(info.nodes, 2389);
+        assert_eq!(info.nodes, 1224);
     }
 
     #[test]
