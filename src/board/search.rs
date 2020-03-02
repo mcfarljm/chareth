@@ -15,10 +15,10 @@ pub struct SearchInfo {
     time_limit: Duration,
     
     depth: u32,
-    depth_set: bool,
+    // depth_set: bool,
 
     moves_to_go: u32,
-    infinite: bool,
+    // infinite: bool,
 
     // Count of all positioned visited
     nodes: u64,
@@ -38,10 +38,10 @@ impl SearchInfo {
             have_time_limit: false,
             
             depth: depth,
-            depth_set: false,
+            // depth_set: true,
 
             moves_to_go: 0,
-            infinite: false,
+            // infinite: false,
 
             nodes: 0,
             
@@ -52,9 +52,23 @@ impl SearchInfo {
             fail_high_first: 0
         }
     }
-}
 
-impl SearchInfo {
+    // Set the time limit and start counting
+    pub fn set_time_limit(&mut self, duration: Duration) {
+        self.start_time = Instant::now();
+        self.time_limit = duration;
+        self.have_time_limit = true;
+    }
+
+    pub fn unset_time_limit(&mut self) {
+        self.have_time_limit = false;
+    }
+
+    pub fn set_depth(&mut self, depth: u32) {
+        self.depth = depth;
+        // self.depth_set = true;
+    }
+    
     pub fn checkup(&mut self) {
         if self.have_time_limit && self.start_time.elapsed() > self.time_limit {
             self.stopped = true;
@@ -126,7 +140,6 @@ impl Board {
 
         self.ply = 0;
 
-        info.start_time = Instant::now();
         info.stopped = false;
         info.nodes = 0;
 

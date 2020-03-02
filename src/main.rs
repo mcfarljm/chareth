@@ -4,6 +4,7 @@ mod bitboard;
 mod moves;
 mod validate;
 mod simpleloop;
+mod version;
 
 fn main() {
 

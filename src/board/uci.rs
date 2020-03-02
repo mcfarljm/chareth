@@ -1,9 +1,71 @@
 use crate::board::*;
+use crate::version::PROGRAM_NAME;
+
+use std::time::{Duration, Instant};
 
 use std::io::{self, Write};
 
 impl Board {
-    pub fn parse_go(&self, line: &str, info: &SearchInfo) {
+    // go depth <> wtime <> btime <> binc <> winc <> movetime <> movestogo <>
+    pub fn parse_go(&mut self, line: &str, info: &mut SearchInfo) {
+        let mut depth = 64; // Default max depth
+        let mut moves_to_go = 30;  // Default value if not provided
+        let mut move_time: Option<u64> = None;
+        let mut time: Option<u64> = None;
+        let mut inc: Option<u64> = None;
+
+        let words: Vec<&str> = line.split(' ').collect();
+        for (i,word) in words.iter().enumerate() {
+            match *word {
+                "winc" if self.side == WHITE => {
+                    inc = Some(words[i+1].trim().parse().unwrap());
+                }
+                "binc" if self.side == BLACK => {
+                    inc = Some(words[i+1].trim().parse().unwrap());
+                }
+                "wtime" if self.side == WHITE => {
+                    time = Some(words[i+1].trim().parse().unwrap());
+                }
+                "btime" if self.side == BLACK => {
+                    time = Some(words[i+1].trim().parse().unwrap());
+                }
+                "movestogo" => {
+                    moves_to_go = words[i+1].trim().parse().unwrap();
+                }
+                "movetime" => {
+                    move_time = Some(words[i+1].trim().parse().unwrap());
+                }
+                "depth" => {
+                    println!("Parsing depth: '{}'", words[i+1]);
+                    depth = words[i+1].trim().parse().unwrap();
+                }
+                _ => (),
+            }
+        }
+        
+        if let Some(mt) = move_time {
+            time = Some(mt);
+            moves_to_go = 1;
+        }
+
+        info.set_depth(depth);
+
+        if let Some(t) = time {
+            let mut time_val = t;
+            time_val /= moves_to_go;
+            time_val -= 50; // To be safe
+            if let Some(i) = inc {
+                time_val += i;
+            }
+            info.set_time_limit(Duration::from_millis(time_val));
+            println!("time:{:?} depth:{:?}", time_val, depth);
+        } else {
+            info.unset_time_limit();
+            println!("depth:{:?}", depth);
+        }
+
+
+        self.search(info);
     }
 
     // position startpos
@@ -23,11 +85,7 @@ impl Board {
             board = board.update_from_fen(START_FEN);
         }
 
-        println!("Checking: {}", slice);
-
         if let Some(i) = slice.find("moves") {
-            println!("Found moves keyword");
-            println!("Splitting up: {}", &slice[i..]);
             for word in slice[i+6..].split(' ') {
                 match board.parse_move(word) {
                     Some(mv) => {
@@ -48,7 +106,7 @@ impl Board {
 // May make more sense for this function to be outside of the board module...
 
 fn uci_ok() {
-    println!("id name crust");
+    println!("id name {}", PROGRAM_NAME);
     println!("id author John McFarland");
     println!("uciok");
 }
@@ -82,7 +140,7 @@ pub fn uci_loop() {
         } else if input.starts_with("ucinewgame") {
             board = board.parse_pos("position startpos\n");
         } else if input.starts_with("go") {
-            board.parse_go(&input, &info);
+            board.parse_go(&input, &mut info);
         } else if input.starts_with("uci") {
             uci_ok();
         } else if input.starts_with("quit") {
