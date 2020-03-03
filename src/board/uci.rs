@@ -136,7 +136,7 @@ pub fn uci_loop() {
     loop {
         io::stdout().flush();
 
-        match rx.try_recv() {
+        match rx.recv() {
             Ok(input) => {
                 if input.len() == 1 && input.chars().nth(0).unwrap() == '\n' {
                     continue;
@@ -161,7 +161,9 @@ pub fn uci_loop() {
                     break;
                 }
             }
-            _ => (),
+            _ => {
+                panic!("stdin channel closed");
+            }
         }
         
     }
