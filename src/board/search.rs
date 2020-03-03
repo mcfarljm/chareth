@@ -135,7 +135,7 @@ impl Board {
             self.get_pv_line(current_depth);
             best_move = Some(self.pv_array[0]);
 
-            print!("info score cp score {} depth {} nodes {} time {} ",
+            print!("info score cp {} depth {} nodes {} time {} ",
                    best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
 
             print!("pv");
@@ -143,7 +143,7 @@ impl Board {
                 print!(" {}", mv.to_string());
             }
             println!("");
-            println!("Ordering: {:.2}", info.fail_high_first as f32 /info.fail_high as f32);
+            // println!("Ordering: {:.2}", info.fail_high_first as f32 /info.fail_high as f32);
         }
 
         if let Some(mv) = best_move {

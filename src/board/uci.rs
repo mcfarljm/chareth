@@ -38,7 +38,6 @@ impl Board {
                     move_time = Some(words[i+1].trim().parse().unwrap());
                 }
                 "depth" => {
-                    println!("Parsing depth: '{}'", words[i+1]);
                     depth = words[i+1].trim().parse().unwrap();
                 }
                 _ => (),
