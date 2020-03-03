@@ -1,6 +1,8 @@
 use crate::board::*;
 use crate::version::PROGRAM_NAME;
 
+use std::thread;
+use std::sync::mpsc::{self,Receiver};
 use std::time::{Duration, Instant};
 
 use std::io::{self, Write};
@@ -113,38 +115,53 @@ fn uci_ok() {
 
 pub fn uci_loop() {
 
+    let (tx, rx) = mpsc::channel();
+
+    thread::spawn(move || {
+        loop {
+            let mut buffer = String::new();
+            io::stdin().read_line(&mut buffer).unwrap();
+            tx.send(buffer).unwrap();
+        }
+    });
+
     let mut board = Board::new();
     let mut info = SearchInfo::new(5);
+    // Store a receiver in the search info so that it can catch "stop"
+    // messages
+    info.set_receiver(&rx);
 
     uci_ok();
 
     loop {
         io::stdout().flush();
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
+        match rx.try_recv() {
+            Ok(input) => {
+                if input.len() == 1 && input.chars().nth(0).unwrap() == '\n' {
+                    continue;
+                }
 
-        // println!("Got input: {}", input);
-        // io::stdout().flush();
-
-        if input.len() == 1 && input.chars().nth(0).unwrap() == '\n' {
-            continue;
-        }
-
-        if input.starts_with('\n') {
-            continue;
-        } else if input.starts_with("isready") {
-            println!("readyok");
-        } else if input.starts_with("position") {
-            board = board.parse_pos(&input);
-        } else if input.starts_with("ucinewgame") {
-            board = board.parse_pos("position startpos\n");
-        } else if input.starts_with("go") {
-            board.parse_go(&input, &mut info);
-        } else if input.starts_with("uci") {
-            uci_ok();
-        } else if input.starts_with("quit") {
-            break;
+                if input.starts_with('\n') {
+                    continue;
+                } else if input.starts_with("isready") {
+                    println!("readyok");
+                } else if input.starts_with("position") {
+                    board = board.parse_pos(&input);
+                } else if input.starts_with("ucinewgame") {
+                    board = board.parse_pos("position startpos\n");
+                } else if input.starts_with("go") {
+                    board.parse_go(&input, &mut info);
+                } else if input.starts_with("uci") {
+                    uci_ok();
+                } else if input.starts_with("quit") {
+                    break;
+                }
+                if info.quit {
+                    break;
+                }
+            }
+            _ => (),
         }
         
     }

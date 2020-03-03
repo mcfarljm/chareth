@@ -3,13 +3,14 @@ use crate::moves;
 use self::movegen::MoveList;
 
 use std::time::{Duration, Instant};
+use std::sync::mpsc::Receiver;
 
 const MATE: i32 = 29000;
 
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
 
-pub struct SearchInfo {
+pub struct SearchInfo<'a> {
     start_time: Instant,
     have_time_limit: bool,
     time_limit: Duration,
@@ -23,15 +24,17 @@ pub struct SearchInfo {
     // Count of all positioned visited
     nodes: u64,
 
-    quit: bool,
-    pub stopped: bool,
+    pub quit: bool,
+    stopped: bool,
 
     fail_high: u32,
     fail_high_first: u32,
+
+    message_channel: Option<&'a Receiver<String>>,
 }
 
-impl SearchInfo {
-    pub fn new(depth: u32) -> SearchInfo {
+impl<'a> SearchInfo<'a> {
+    pub fn new(depth: u32) -> SearchInfo<'a> {
         SearchInfo{
             start_time: Instant::now(),
             time_limit: Duration::new(0,0),
@@ -49,7 +52,9 @@ impl SearchInfo {
             stopped: false,
 
             fail_high: 0,
-            fail_high_first: 0
+            fail_high_first: 0,
+
+            message_channel: None,
         }
     }
 
@@ -68,10 +73,21 @@ impl SearchInfo {
         self.depth = depth;
         // self.depth_set = true;
     }
-    
+
     pub fn checkup(&mut self) {
         if self.have_time_limit && self.start_time.elapsed() > self.time_limit {
             self.stopped = true;
+        }
+        if let Some(rx) = self.message_channel {
+            if let Ok(m) = rx.try_recv() {
+                // println!("Message received: {}", m);
+                if m.starts_with("quit") {
+                    self.quit = true;
+                    self.stopped = true;
+                } else if m.starts_with("stop") {
+                    self.stopped = true;
+                }
+            }
         }
     }
 
@@ -79,6 +95,10 @@ impl SearchInfo {
         if self.nodes > 0 && self.nodes % 2000 == 0 {
             self.checkup();
         }
+    }
+
+    pub fn set_receiver(&mut self, rx: &'a Receiver<String>) {
+        self.message_channel = Some(rx);
     }
 }
 
