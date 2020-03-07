@@ -11,6 +11,13 @@ pub const MAX_DEPTH: u32 = 64;
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
 
+pub enum GameMode {
+    Uci,
+    Xboard,
+    Console,
+    None,
+}
+
 pub struct SearchInfo<'a> {
     start_time: Instant,
     have_time_limit: bool,
@@ -32,10 +39,12 @@ pub struct SearchInfo<'a> {
     fail_high_first: u32,
 
     message_channel: Option<&'a Receiver<String>>,
+
+    game_mode: GameMode,
 }
 
 impl<'a> SearchInfo<'a> {
-    pub fn new(depth: u32) -> SearchInfo<'a> {
+    pub fn new(depth: u32, game_mode: GameMode) -> SearchInfo<'a> {
         SearchInfo{
             start_time: Instant::now(),
             time_limit: Duration::new(0,0),
@@ -56,6 +65,8 @@ impl<'a> SearchInfo<'a> {
             fail_high_first: 0,
 
             message_channel: None,
+
+            game_mode: game_mode,
         }
     }
 
@@ -377,7 +388,7 @@ mod tests {
     #[test]
     fn search_start_depth3() {
         let mut board = Board::from_fen(START_FEN);
-        let mut info = SearchInfo::new(3); 
+        let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
         assert_eq!(info.nodes, 637);
@@ -387,7 +398,7 @@ mod tests {
     fn search_wac1_depth3() {
         let wa_c1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
         let mut board = Board::from_fen(wa_c1);
-        let mut info = SearchInfo::new(3); 
+        let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "f1c4");
         assert_eq!(info.nodes, 5965);

@@ -21,7 +21,7 @@ pub fn xboard_loop() {
     });
 
     let mut board = Board::new();
-    let mut info = SearchInfo::new(5);
+    let mut info = SearchInfo::new(5, GameMode::Xboard);
     // Store a receiver in the search info so that it can catch "stop"
     // messages
     info.set_receiver(&rx);

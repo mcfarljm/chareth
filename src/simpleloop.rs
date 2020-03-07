@@ -1,4 +1,4 @@
-use crate::board::{Board,START_FEN,SearchInfo};
+use crate::board::{Board,START_FEN,SearchInfo,GameMode};
 
 use std::io::{self, Write};
 
@@ -23,7 +23,7 @@ pub fn simple_loop() {
             'q' => { break; }
             't' => { board.undo_move(); }
             's' => {
-               let mut info = SearchInfo::new(6); 
+                let mut info = SearchInfo::new(6, GameMode::Console); 
                 board.search(&mut info);
             }
             _ => {

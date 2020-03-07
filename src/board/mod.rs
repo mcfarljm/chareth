@@ -14,7 +14,7 @@ use crate::bitboard;
 use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
-pub use search::{SearchInfo,MAX_DEPTH};
+pub use search::{SearchInfo,MAX_DEPTH,GameMode};
 pub use uci::uci_loop;
 
 // Signed integer is used instead of unsigned in order to avoid need
