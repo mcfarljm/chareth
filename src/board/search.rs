@@ -230,7 +230,7 @@ impl Board {
 
         info.nodes += 1;
 
-        if self.is_repetition() || self.fifty_move >= 100 {
+        if (self.is_repetition() || self.fifty_move >= 100) && self.ply > 0 {
             return 0;
         }
 
