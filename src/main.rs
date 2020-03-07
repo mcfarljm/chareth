@@ -5,6 +5,7 @@ mod moves;
 mod validate;
 mod simpleloop;
 mod version;
+mod xboard;
 
 fn main() {
 

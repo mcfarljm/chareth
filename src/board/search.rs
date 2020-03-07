@@ -6,6 +6,7 @@ use std::time::{Duration, Instant};
 use std::sync::mpsc::Receiver;
 
 const MATE: i32 = 29000;
+pub const MAX_DEPTH: u32 = 64;
 
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;

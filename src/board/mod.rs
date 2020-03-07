@@ -14,7 +14,7 @@ use crate::bitboard;
 use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
-pub use search::SearchInfo;
+pub use search::{SearchInfo,MAX_DEPTH};
 pub use uci::uci_loop;
 
 // Signed integer is used instead of unsigned in order to avoid need
@@ -612,6 +612,10 @@ impl Board {
             println!("1/2-1/2 (stalemate (claimed by {}))", PROGRAM_NAME);
         }
         true
+    }
+
+    pub fn reset_ply(&mut self) {
+        self.ply = 0;
     }
 }
 
