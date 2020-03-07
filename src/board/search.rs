@@ -27,7 +27,7 @@ pub struct SearchInfo<'a> {
     depth: u32,
     // depth_set: bool,
 
-    moves_to_go: u32,
+    // moves_to_go: u32,
     // infinite: bool,
 
     // Count of all positioned visited
@@ -55,7 +55,7 @@ impl<'a> SearchInfo<'a> {
             depth: depth,
             // depth_set: true,
 
-            moves_to_go: 0,
+            // moves_to_go: 0,
             // infinite: false,
 
             nodes: 0,
@@ -100,6 +100,10 @@ impl<'a> SearchInfo<'a> {
                     self.quit = true;
                     self.stopped = true;
                 } else if m.starts_with("stop") {
+                    // UCI
+                    self.stopped = true;
+                } else if m.starts_with("?") {
+                    // Used by xboard
                     self.stopped = true;
                 }
             }
@@ -133,7 +137,7 @@ fn pick_next_move(move_num: usize, move_list: &mut MoveList) {
 }
 
 impl Board {
-    pub fn search(&mut self, info: &mut SearchInfo) {
+    pub fn search(&mut self, info: &mut SearchInfo) -> Option<moves::Move> {
         let mut best_move: Option<moves::Move> = None;
         let mut best_score;
 
@@ -185,7 +189,6 @@ impl Board {
             GameMode::Xboard => {
                 if let Some(mv) = best_move {
                     println!("move {}", mv.to_string());
-                    self.make_move(&mv);
                 }
             }
             GameMode::Console => {
@@ -195,6 +198,7 @@ impl Board {
             }
             _ => (),
         }
+        best_move
     }
 
     pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
