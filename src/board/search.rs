@@ -11,6 +11,7 @@ pub const MAX_DEPTH: u32 = 64;
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
 
+#[derive(PartialEq)]
 pub enum GameMode {
     Uci,
     Xboard,
@@ -41,6 +42,7 @@ pub struct SearchInfo<'a> {
     message_channel: Option<&'a Receiver<String>>,
 
     game_mode: GameMode,
+    show_thinking: bool,
 }
 
 impl<'a> SearchInfo<'a> {
@@ -67,6 +69,7 @@ impl<'a> SearchInfo<'a> {
             message_channel: None,
 
             game_mode: game_mode,
+            show_thinking: true,
         }
     }
 
@@ -147,19 +150,50 @@ impl Board {
             self.get_pv_line(current_depth);
             best_move = Some(self.pv_array[0]);
 
-            print!("info score cp {} depth {} nodes {} time {} ",
-                   best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
-
-            print!("pv");
-            for mv in &self.pv_array {
-                print!(" {}", mv.to_string());
+            match info.game_mode {
+                GameMode::Uci => {
+                    print!("info score cp {} depth {} nodes {} time {} ",
+                           best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
+                }
+                GameMode::Xboard if info.show_thinking => {
+                    print!("{} {} {} {} ",
+                            current_depth, best_score, info.start_time.elapsed().as_millis() / 10, info.nodes);
+                }
+                GameMode::Console if info.show_thinking => {
+                    print!("score {} depth {} nodes {} time {} ",
+                           best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
+                }
+                _ => (),
             }
-            println!("");
+            if info.game_mode == GameMode::Uci || info.show_thinking {
+                print!("pv");
+                for mv in &self.pv_array {
+                    print!(" {}", mv.to_string());
+                }
+                println!("");
+            }
+
             // println!("Ordering: {:.2}", info.fail_high_first as f32 /info.fail_high as f32);
         }
 
-        if let Some(mv) = best_move {
-            println!("bestmove {}", mv.to_string());
+        match info.game_mode {
+            GameMode::Uci => {
+                if let Some(mv) = best_move {
+                    println!("bestmove {}", mv.to_string());
+                }
+            }
+            GameMode::Xboard => {
+                if let Some(mv) = best_move {
+                    println!("move {}", mv.to_string());
+                    self.make_move(&mv);
+                }
+            }
+            GameMode::Console => {
+                if let Some(mv) = best_move {
+                    println!("{} makes move: {}", PROGRAM_NAME, mv.to_string());
+                }
+            }
+            _ => (),
         }
     }
 
