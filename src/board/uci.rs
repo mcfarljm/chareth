@@ -10,7 +10,7 @@ use std::io::{self, Write};
 impl Board {
     // go depth <> wtime <> btime <> binc <> winc <> movetime <> movestogo <>
     pub fn parse_go(&mut self, line: &str, info: &mut SearchInfo) {
-        let mut depth = 64; // Default max depth
+        let mut depth = MAX_DEPTH; // Default max depth
         let mut moves_to_go = 30;  // Default value if not provided
         let mut move_time: Option<u64> = None;
         let mut time: Option<u64> = None;
@@ -125,7 +125,7 @@ pub fn uci_loop() {
     });
 
     let mut board = Board::new();
-    let mut info = SearchInfo::new(5);
+    let mut info = SearchInfo::new(5, GameMode::Uci);
     // Store a receiver in the search info so that it can catch "stop"
     // messages
     info.set_receiver(&rx);

@@ -13,7 +13,8 @@ use crate::pieces::*;
 use crate::bitboard;
 use crate::validate;
 use crate::moves;
-pub use search::SearchInfo;
+use crate::version::PROGRAM_NAME;
+pub use search::{SearchInfo,MAX_DEPTH,GameMode};
 pub use uci::uci_loop;
 
 // Signed integer is used instead of unsigned in order to avoid need
@@ -544,6 +545,77 @@ impl Board {
         }
 
         false
+    }
+
+    fn repetition_count(&self) -> u32 {
+        let mut repetitions = 0;
+        for item in &self.history {
+            if item.hash == self.hash {
+                repetitions += 1;
+            }
+        }
+        repetitions
+    }
+
+    // Checks whether the position is a draw because neither side can
+    // give mate
+    fn is_draw_by_material(&self) -> bool {
+        if self.piece_lists[Piece::WP as usize].len() > 0 || self.piece_lists[Piece::BP as usize].len() > 0 { return false; }
+        if self.piece_lists[Piece::WQ as usize].len() > 0 || self.piece_lists[Piece::BQ as usize].len() > 0 || self.piece_lists[Piece::WR as usize].len() > 0 || self.piece_lists[Piece::BR as usize].len() > 0 { return false; }
+        if self.piece_lists[Piece::WB as usize].len() > 1 || self.piece_lists[Piece::BB as usize].len() > 1 { return false; }
+        if self.piece_lists[Piece::WN as usize].len() > 1 || self.piece_lists[Piece::BN as usize].len() > 1 { return false; }
+        if self.piece_lists[Piece::WN as usize].len() > 0 && self.piece_lists[Piece::WB as usize].len() > 0 { return false; }
+        if self.piece_lists[Piece::BN as usize].len() > 0 && self.piece_lists[Piece::BB as usize].len() > 0 { return false; }
+        // Otherwise, it must be a draw:
+        true
+    }
+
+    // Returns true if game is over
+    pub fn check_game_result(&mut self) -> bool {
+        // This move count may not be exact (?)
+        if self.fifty_move > 100 {
+            println!("1/2-1/2 (fifty move rule (claimed by {}))", PROGRAM_NAME);
+            return true;
+        }
+
+        if self.repetition_count() >= 2 {
+            println!("1/2-1/2 (3-fold repetition (claimed by {}))", PROGRAM_NAME);
+            return true;
+        }
+
+        if self.is_draw_by_material() {
+            println!("1/2-1/2 (insufficient material (claimed by {}))", PROGRAM_NAME);
+            return true;
+        }
+
+        // Check for legal move:
+        let mut found = false;
+        let move_list = self.generate_all_moves();
+        for smv in move_list.moves.into_iter() {
+            if ! self.make_move(&smv.mv) {
+                continue;
+            }
+            found = true;
+            self.undo_move();
+            break;
+        }
+        if found { return false; }
+
+        let in_check = self.square_attacked(self.king_sq[self.side], self.side^1);
+        if in_check {
+            if self.side == WHITE {
+                println!("0-1 (black mates (claimed by {}))", PROGRAM_NAME);
+            } else {
+                println!("1-0 (white mates (claimed by {}))", PROGRAM_NAME);
+            }
+        } else {
+            println!("1/2-1/2 (stalemate (claimed by {}))", PROGRAM_NAME);
+        }
+        true
+    }
+
+    pub fn reset_ply(&mut self) {
+        self.ply = 0;
     }
 }
 

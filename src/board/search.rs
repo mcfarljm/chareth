@@ -6,9 +6,18 @@ use std::time::{Duration, Instant};
 use std::sync::mpsc::Receiver;
 
 const MATE: i32 = 29000;
+pub const MAX_DEPTH: u32 = 64;
 
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
+
+#[derive(PartialEq)]
+pub enum GameMode {
+    Uci,
+    Xboard,
+    Console,
+    None,
+}
 
 pub struct SearchInfo<'a> {
     start_time: Instant,
@@ -18,7 +27,7 @@ pub struct SearchInfo<'a> {
     depth: u32,
     // depth_set: bool,
 
-    moves_to_go: u32,
+    // moves_to_go: u32,
     // infinite: bool,
 
     // Count of all positioned visited
@@ -31,10 +40,13 @@ pub struct SearchInfo<'a> {
     fail_high_first: u32,
 
     message_channel: Option<&'a Receiver<String>>,
+
+    game_mode: GameMode,
+    show_thinking: bool,
 }
 
 impl<'a> SearchInfo<'a> {
-    pub fn new(depth: u32) -> SearchInfo<'a> {
+    pub fn new(depth: u32, game_mode: GameMode) -> SearchInfo<'a> {
         SearchInfo{
             start_time: Instant::now(),
             time_limit: Duration::new(0,0),
@@ -43,7 +55,7 @@ impl<'a> SearchInfo<'a> {
             depth: depth,
             // depth_set: true,
 
-            moves_to_go: 0,
+            // moves_to_go: 0,
             // infinite: false,
 
             nodes: 0,
@@ -55,6 +67,9 @@ impl<'a> SearchInfo<'a> {
             fail_high_first: 0,
 
             message_channel: None,
+
+            game_mode: game_mode,
+            show_thinking: true,
         }
     }
 
@@ -85,6 +100,10 @@ impl<'a> SearchInfo<'a> {
                     self.quit = true;
                     self.stopped = true;
                 } else if m.starts_with("stop") {
+                    // UCI
+                    self.stopped = true;
+                } else if m.starts_with("?") {
+                    // Used by xboard
                     self.stopped = true;
                 }
             }
@@ -118,7 +137,7 @@ fn pick_next_move(move_num: usize, move_list: &mut MoveList) {
 }
 
 impl Board {
-    pub fn search(&mut self, info: &mut SearchInfo) {
+    pub fn search(&mut self, info: &mut SearchInfo) -> Option<moves::Move> {
         let mut best_move: Option<moves::Move> = None;
         let mut best_score;
 
@@ -135,20 +154,53 @@ impl Board {
             self.get_pv_line(current_depth);
             best_move = Some(self.pv_array[0]);
 
-            print!("info score cp {} depth {} nodes {} time {} ",
-                   best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
-
-            print!("pv");
-            for mv in &self.pv_array {
-                print!(" {}", mv.to_string());
+            match info.game_mode {
+                GameMode::Uci => {
+                    print!("info score cp {} depth {} nodes {} time {} ",
+                           best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
+                }
+                GameMode::Xboard if info.show_thinking => {
+                    print!("{} {} {} {} ",
+                            current_depth, best_score, info.start_time.elapsed().as_millis() / 10, info.nodes);
+                }
+                GameMode::Console if info.show_thinking => {
+                    print!("score {} depth {} nodes {} time {} ",
+                           best_score, current_depth, info.nodes, info.start_time.elapsed().as_millis());
+                }
+                _ => (),
             }
-            println!("");
+            if info.game_mode == GameMode::Uci || info.show_thinking {
+                if info.game_mode != GameMode::Xboard {
+                    print!("pv");
+                }
+                for mv in &self.pv_array {
+                    print!(" {}", mv.to_string());
+                }
+                println!("");
+            }
+
             // println!("Ordering: {:.2}", info.fail_high_first as f32 /info.fail_high as f32);
         }
 
-        if let Some(mv) = best_move {
-            println!("bestmove {}", mv.to_string());
+        match info.game_mode {
+            GameMode::Uci => {
+                if let Some(mv) = best_move {
+                    println!("bestmove {}", mv.to_string());
+                }
+            }
+            GameMode::Xboard => {
+                if let Some(mv) = best_move {
+                    println!("move {}", mv.to_string());
+                }
+            }
+            GameMode::Console => {
+                if let Some(mv) = best_move {
+                    println!("{} makes move: {}", PROGRAM_NAME, mv.to_string());
+                }
+            }
+            _ => (),
         }
+        best_move
     }
 
     pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
@@ -376,7 +428,7 @@ mod tests {
     #[test]
     fn search_start_depth3() {
         let mut board = Board::from_fen(START_FEN);
-        let mut info = SearchInfo::new(3); 
+        let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
         assert_eq!(info.nodes, 637);
@@ -386,7 +438,7 @@ mod tests {
     fn search_wac1_depth3() {
         let wa_c1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
         let mut board = Board::from_fen(wa_c1);
-        let mut info = SearchInfo::new(3); 
+        let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "f1c4");
         assert_eq!(info.nodes, 5965);
