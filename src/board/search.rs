@@ -170,7 +170,9 @@ impl Board {
                 _ => (),
             }
             if info.game_mode == GameMode::Uci || info.show_thinking {
-                print!("pv");
+                if info.game_mode != GameMode::Xboard {
+                    print!("pv");
+                }
                 for mv in &self.pv_array {
                     print!(" {}", mv.to_string());
                 }

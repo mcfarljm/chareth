@@ -1,5 +1,6 @@
 use crate::board::*;
 use crate::pieces::{BLACK,BOTH};
+use crate::version::PROGRAM_NAME;
 
 use std::thread;
 use std::sync::mpsc;
@@ -91,6 +92,9 @@ pub fn xboard_loop() {
                     }
                     Some("protover") => {
                         println!("feature ping=1 setboard=1 colors=0 usermove=1");
+                        // sigint=0 needed on Linux
+                        println!("feature sigint=0");
+                        println!("feature myname=\"{}\"", PROGRAM_NAME);
                         println!("feature done=1");
                     }
                     Some("sd") => {
@@ -159,6 +163,8 @@ pub fn xboard_loop() {
                             if let Some(mv) = board.parse_move(move_str) {
                                 board.make_move(&mv);
                                 board.reset_ply();
+                            } else {
+                                println!("invalid user move detected: {}", move_str);
                             }
                         }
                     }
