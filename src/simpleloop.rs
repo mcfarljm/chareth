@@ -5,10 +5,10 @@ use std::io::{self, Write};
 // A simple io loop for text based moves and searches
 pub fn simple_loop() {
 
-    let wa_c1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
+    // let wa_c1 = "r1b1k2r/ppppnppp/2n2q2/2b5/3NP3/2P1B3/PP3PPP/RN1QKB1R w KQkq - 0 1";
 
-    let mut board = Board::from_fen(wa_c1);
-    // let mut board = Board::from_fen(START_FEN);
+    // let mut board = Board::from_fen(wa_c1);
+    let mut board = Board::from_fen(START_FEN);
 
     loop {
         board.print();
