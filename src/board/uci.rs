@@ -2,8 +2,8 @@ use crate::board::*;
 use crate::version::PROGRAM_NAME;
 
 use std::thread;
-use std::sync::mpsc::{self,Receiver};
-use std::time::{Duration, Instant};
+use std::sync::mpsc;
+use std::time::Duration;
 
 use std::io::{self, Write};
 
