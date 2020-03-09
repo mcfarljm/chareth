@@ -1,5 +1,5 @@
 [package]
-name = "crust"
+name = "chareth"
 version = "0.1.0"
 authors = ["John McFarland <mcfarljm@gmail.com>"]
 edition = "2018"
