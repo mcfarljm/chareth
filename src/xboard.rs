@@ -168,6 +168,13 @@ pub fn xboard_loop() {
                             }
                         }
                     }
+                    Some("remove") => {
+                        // User asked to undo move (happens during
+                        // user turn).  Undo last 2 moves and continue
+                        // playing the same color.
+                        board.undo_move();
+                        board.undo_move();
+                    }
                     _ => (),
                 }
             }
