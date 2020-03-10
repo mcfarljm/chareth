@@ -32,7 +32,13 @@ impl Board {
 mod tests {
     use crate::board::*;
 
+    use std::io::{self, BufReader};
+    use std::io::prelude::*;
+    use std::fs::File;
+
     const PERFT_FEN: &'static str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+
+    // A couple fast-running examples:
     
     #[test]
     fn perft_init_3() {
@@ -47,4 +53,40 @@ mod tests {
         let count = board.perft(2, false);
         assert_eq!(count, 2039);
     }
+
+    // Full test suite:
+
+    #[test]
+    #[ignore]
+    fn perft_test_all() {
+        // Largest depth in suite is 6
+        const MAX_DEPTH: u32 = 6;
+        let f = File::open("perftsuite.txt").expect("error opening perftsuite.txt");
+        let f = BufReader::new(f);        
+        for line in f.lines() {
+            perft_test_line(line.unwrap().as_str(), MAX_DEPTH);
+        }
+    }
+
+    // Run perft test on an individual line from the test suite
+    fn perft_test_line(line: &str, max_depth: u32) {
+        println!("Testing: {}", line);
+        let mut items = line.split(';');
+        let fen = items.next().unwrap();
+        let mut board = Board::from_fen(fen);
+
+        for depth_entry in items {
+            let vals: Vec<&str> = depth_entry.split_whitespace().collect();
+            let depth: u32 = vals[0][1..].parse().unwrap();
+            let expected: u64 = vals[1].parse().unwrap();
+            if depth > max_depth {
+                break;
+            }
+            println!("Depth: {}, {}", depth, expected);
+
+            let got = board.perft(depth, false);
+            assert_eq!(expected, got);
+        }
+    }
+
 }
