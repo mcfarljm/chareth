@@ -74,10 +74,50 @@ impl<'a> SearchInfo<'a> {
     }
 
     // Set the time limit and start counting
-    pub fn set_time_limit(&mut self, duration: Duration) {
+    fn set_time_limit(&mut self, duration: Duration) {
         self.start_time = Instant::now();
         self.time_limit = duration;
         self.have_time_limit = true;
+    }
+
+    // Set search time based on current clock conditions, and start counting
+    //
+    // If time_left and move_time are both None, then unset the clock.
+    // move_time should be mutually exclusive with time_left and inc
+    pub fn set_search_time(&mut self, time_left: Option<u64>, move_time: Option<u64>, moves_to_go: u32, increment: Option<u64>) {
+        const BUFFER: Duration = Duration::from_millis(50);
+        // Lower limit to make sure we have enough time to at least find a move
+        const MIN_TIME: Duration = Duration::from_millis(50);
+
+        let mut time_avail: Duration = MIN_TIME;
+
+        if let Some(mt) = move_time {
+            time_avail = Duration::from_millis(mt);
+        } else if let Some(tl) = time_left {
+            if let Some(inc) = increment {
+                // This is different from VICE.  VICE adds the
+                // increment to the current move, but don't believe
+                // that is correct.  With a large increment relative
+                // to time left, the time allocated to thinking could
+                // exceed the time left.
+                time_avail = Duration::from_millis(tl + (moves_to_go as u64 - 1) * inc);
+            } else {
+                time_avail = Duration::from_millis(tl);
+            }
+            time_avail /= moves_to_go;
+        } else {
+            // Don't have any time settings, so just make sure the
+            // time limit is not set
+            self.unset_time_limit();
+            return;
+        }
+        if time_avail > BUFFER {
+            time_avail -= BUFFER;
+        }
+        time_avail = std::cmp::max(MIN_TIME, time_avail);
+
+        self.set_time_limit(time_avail);
+        println!("Search time set: {:?}", time_avail);
     }
 
     pub fn unset_time_limit(&mut self) {

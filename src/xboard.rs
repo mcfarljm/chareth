@@ -43,18 +43,9 @@ pub fn xboard_loop() {
 
         if board.side == engine_side && ! board.check_game_result() {
             info.set_depth(depth);
-
-            if let Some(mt) = move_time {
-                info.set_time_limit(Duration::from_millis(mt));
-            } else if let Some(t) = time {
-                let mut time_val = t;
-                time_val /= moves_to_go[board.side] as u64;
-                time_val -= 50; // To be safe
-                if let Some(i) = inc {
-                    time_val += i;
-                }
-                info.set_time_limit(Duration::from_millis(time_val));
-            }
+            // Todo: is there a case with only depth and no time limit
+            // that needs to be handled?
+            info.set_search_time(time, move_time, moves_to_go[board.side], inc);
 
             println!("time:{:?} depth:{} mvoestogo:{:?} mps:{}", time, depth, moves_to_go, moves_per_session);
             // Unlike vice, we have search return the move and make it

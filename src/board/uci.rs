@@ -44,27 +44,13 @@ impl Board {
             }
         }
         
-        if let Some(mt) = move_time {
-            time = Some(mt);
-            moves_to_go = 1;
-        }
-
         info.set_depth(depth);
-
-        if let Some(t) = time {
-            let mut time_val = t;
-            time_val /= moves_to_go;
-            time_val -= 50; // To be safe
-            if let Some(i) = inc {
-                time_val += i;
-            }
-            info.set_time_limit(Duration::from_millis(time_val));
-            println!("time:{:?} depth:{:?}", time_val, depth);
-        } else {
-            info.unset_time_limit();
-            println!("depth:{:?}", depth);
+        
+        // Safe to call if time and move_time are both None
+        info.set_search_time(time, move_time, moves_to_go, inc);
+        if time == None && move_time == None {
+            println!("depth:{}", depth);
         }
-
 
         self.search(info);
     }
