@@ -140,10 +140,7 @@ pub fn xboard_loop() {
                         moves_per_session = 0;
                     }
                     Some("setboard") => {
-                        if let Some(fen) = words.next() {
-                            engine_side = BOTH;
-                            board = board.update_from_fen(fen);
-                        }
+                        board = board.update_from_fen(&input[9..].trim_right());
                     }
                     Some("go") => {
                         engine_side = board.side;
