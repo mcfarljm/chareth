@@ -259,8 +259,23 @@ impl Board {
         info.fail_high_first = 0;
     }
 
-    pub fn alpha_beta(&mut self, alpha_in: i32, beta: i32, depth: u32, info: &mut SearchInfo, _do_null: bool) -> i32 {
+    pub fn alpha_beta(&mut self, alpha_in: i32, beta: i32, depth_in: u32, info: &mut SearchInfo, _do_null: bool) -> i32 {
         debug_assert!(self.check());
+
+        let mut depth = depth_in;
+
+        // Check extension.  See also VICE video 76.  I am somewhat
+        // unclear on the different types of check extensions
+        // discussed online ("extending check evasion" vs "extending
+        // checking move").  Seems that there are three places this
+        // could be done:  prior to quiescence, directly after
+        // quiescence (VICE and tscp), or after make_move.  Don't like
+        // the idea of doing it after quiescence because then we could
+        // enter quiescence while in check.
+        let in_check = self.square_attacked(self.king_sq[self.side], self.side^1);
+        if in_check {
+            depth += 1;
+        }
 
         if depth == 0 {
             return self.quiescence(alpha_in, beta, info);
@@ -342,7 +357,7 @@ impl Board {
         }
 
         if legal == 0 {
-            if self.square_attacked(self.king_sq[self.side], self.side^1) {
+            if in_check {
                 return -MATE + self.ply as i32;
             } else {
                 return 0;
@@ -471,7 +486,7 @@ mod tests {
         let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
-        assert_eq!(info.nodes, 637);
+        assert_eq!(info.nodes, 664);
     }
 
     #[test]
@@ -481,6 +496,6 @@ mod tests {
         let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "f1c4");
-        assert_eq!(info.nodes, 5965);
+        assert_eq!(info.nodes, 6605);
     }
 }
