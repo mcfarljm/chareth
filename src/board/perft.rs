@@ -1,33 +1,3 @@
-use crate::board::*;
-
-impl Board {
-    pub fn perft(&mut self, depth: u32, verbose: bool) -> u64 {
-        debug_assert!(self.check());
-
-        if depth == 0 {
-            return 1;
-        }
-
-        let move_list = self.generate_all_moves();
-
-        let mut count: u64 = 0;
-        let mut new: u64;
-        for smv in move_list.moves.iter() {
-            if ! self.make_move(&smv.mv) {
-                continue;
-            }
-            new = self.perft(depth - 1, false);
-            if verbose {
-                println!("move {} : {}", smv.mv.to_string(), new);
-            }
-            count += new;
-            self.undo_move();
-        }
-
-        count
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::board::*;
@@ -37,6 +7,34 @@ mod tests {
     use std::fs::File;
 
     const PERFT_FEN: &'static str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+
+    impl Board {
+        fn perft(&mut self, depth: u32, verbose: bool) -> u64 {
+            debug_assert!(self.check());
+
+            if depth == 0 {
+                return 1;
+            }
+
+            let move_list = self.generate_all_moves();
+
+            let mut count: u64 = 0;
+            let mut new: u64;
+            for smv in move_list.moves.iter() {
+                if ! self.make_move(&smv.mv) {
+                    continue;
+                }
+                new = self.perft(depth - 1, false);
+                if verbose {
+                    println!("move {} : {}", smv.mv.to_string(), new);
+                }
+                count += new;
+                self.undo_move();
+            }
+
+            count
+        }
+    }
 
     // A couple fast-running examples:
     

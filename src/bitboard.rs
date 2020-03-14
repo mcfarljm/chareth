@@ -44,6 +44,7 @@ impl Bitboard {
         BIT_TABLE[i]
     }
 
+    #[allow(dead_code)]
     pub fn to_string(&self) -> String {
         let one: u64 = 1;
         let mut sq;

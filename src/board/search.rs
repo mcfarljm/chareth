@@ -11,6 +11,7 @@ pub const MAX_DEPTH: u32 = 64;
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
 
+#[allow(dead_code)]
 #[derive(PartialEq)]
 pub enum GameMode {
     Uci,

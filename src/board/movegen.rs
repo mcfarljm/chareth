@@ -119,6 +119,7 @@ impl MoveList {
         }
     }
 
+    #[allow(dead_code)]
     pub fn print(&self) {
         println!("Move list: {}", self.moves.len());
         for (i, smv) in self.moves.iter().enumerate() {

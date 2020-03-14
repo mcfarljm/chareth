@@ -18,6 +18,7 @@ impl Piece {
         }
     }
 
+    #[allow(dead_code)]
     pub fn not_offboard(&self) -> bool {
         match *self {
             Piece::Offboard => false,
@@ -33,6 +34,7 @@ impl Piece {
         }
     }
             
+    #[allow(dead_code)]
     pub fn slides(&self) -> bool {
         match *self {
             Piece::WB | Piece::WR | Piece::WQ => true,
