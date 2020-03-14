@@ -14,7 +14,7 @@ pub fn simple_loop() {
         board.print();
         
         print!("Enter a move > ");
-        io::stdout().flush();
+        io::stdout().flush().unwrap();
 
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();

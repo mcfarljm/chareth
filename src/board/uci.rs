@@ -3,7 +3,6 @@ use crate::version::PROGRAM_NAME;
 
 use std::thread;
 use std::sync::mpsc;
-use std::time::Duration;
 
 use std::io::{self, Write};
 
@@ -119,7 +118,7 @@ pub fn uci_loop() {
     uci_ok();
 
     loop {
-        io::stdout().flush();
+        io::stdout().flush().unwrap();
 
         match rx.recv() {
             Ok(input) => {

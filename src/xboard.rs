@@ -4,7 +4,6 @@ use crate::version::PROGRAM_NAME;
 
 use std::thread;
 use std::sync::mpsc;
-use std::time::Duration;
 
 use std::io::{self, Write};
 
@@ -39,7 +38,7 @@ pub fn xboard_loop() {
     let mut moves_per_session = 0;
 
     loop {
-        io::stdout().flush();
+        io::stdout().flush().unwrap();
 
         if board.side == engine_side && ! board.check_game_result() {
             info.set_depth(depth);
@@ -62,7 +61,7 @@ pub fn xboard_loop() {
                 }
             }
 
-            io::stdout().flush();
+            io::stdout().flush().unwrap();
 
             if info.quit {
                 break;
@@ -140,7 +139,7 @@ pub fn xboard_loop() {
                         moves_per_session = 0;
                     }
                     Some("setboard") => {
-                        board = board.update_from_fen(&input[9..].trim_right());
+                        board = board.update_from_fen(&input[9..].trim_end());
                     }
                     Some("go") => {
                         engine_side = board.side;

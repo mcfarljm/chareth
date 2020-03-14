@@ -32,7 +32,7 @@ impl Board {
 mod tests {
     use crate::board::*;
 
-    use std::io::{self, BufReader};
+    use std::io::BufReader;
     use std::io::prelude::*;
     use std::fs::File;
 

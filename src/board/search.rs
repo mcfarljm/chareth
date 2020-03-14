@@ -89,7 +89,7 @@ impl<'a> SearchInfo<'a> {
         // Lower limit to make sure we have enough time to at least find a move
         const MIN_TIME: Duration = Duration::from_millis(50);
 
-        let mut time_avail: Duration = MIN_TIME;
+        let mut time_avail: Duration;
 
         if let Some(mt) = move_time {
             time_avail = Duration::from_millis(mt);
