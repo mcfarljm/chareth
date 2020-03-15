@@ -45,6 +45,8 @@ pub struct SearchInfo<'a> {
 
     game_mode: GameMode,
     show_thinking: bool,
+
+    difficulty: u8,
 }
 
 impl<'a> SearchInfo<'a> {
@@ -72,6 +74,8 @@ impl<'a> SearchInfo<'a> {
 
             game_mode: game_mode,
             show_thinking: true,
+
+            difficulty: 1,
         }
     }
 
@@ -129,6 +133,10 @@ impl<'a> SearchInfo<'a> {
     pub fn set_depth(&mut self, depth: u32) {
         self.depth = depth;
         // self.depth_set = true;
+    }
+
+    pub fn set_difficulty(&mut self, difficulty: u8) {
+        self.difficulty = difficulty;
     }
 
     pub fn checkup(&mut self) {

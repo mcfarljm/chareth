@@ -85,6 +85,8 @@ pub fn xboard_loop() {
                         // sigint=0 needed on Linux
                         println!("feature sigint=0");
                         println!("feature myname=\"{}\"", PROGRAM_NAME);
+                        // Engine options:
+                        println!("feature option=\"difficulty -spin 1 1 9\"");
                         println!("feature done=1");
                     }
                     Some("sd") => {
@@ -161,6 +163,16 @@ pub fn xboard_loop() {
                         // playing the same color.
                         board.undo_move();
                         board.undo_move();
+                    }
+                    Some("option") => {
+                        if let Some(opt_arg) = words.next() {
+                            if opt_arg.starts_with("difficulty") {
+                                let args: Vec<&str> = opt_arg.split('=').collect();
+                                let difficulty = args[1].parse().unwrap();
+                                println!("Found difficulty setting: {}", difficulty);
+                                info.set_difficulty(difficulty);
+                            }
+                        }
                     }
                     _ => (),
                 }
