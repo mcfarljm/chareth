@@ -51,7 +51,7 @@ impl Board {
             println!("depth:{}", depth);
         }
 
-        self.search(info);
+        self.maybe_search(info);
     }
 
     // position startpos

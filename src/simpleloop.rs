@@ -24,7 +24,7 @@ pub fn simple_loop() {
             't' => { board.undo_move(); }
             's' => {
                 let mut info = SearchInfo::new(6, GameMode::Console); 
-                board.search(&mut info);
+                board.maybe_search(&mut info);
             }
             _ => {
                 match board.parse_move(&input) {

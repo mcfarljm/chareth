@@ -49,7 +49,7 @@ pub fn xboard_loop() {
             println!("time:{:?} depth:{} mvoestogo:{:?} mps:{}", time, depth, moves_to_go, moves_per_session);
             // Unlike vice, we have search return the move and make it
             // here, for clarity
-            let best_move = board.search(&mut info);
+            let best_move = board.maybe_search(&mut info);
             if let Some(mv) = best_move {
                 board.make_move(&mv);
             }

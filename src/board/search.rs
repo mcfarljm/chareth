@@ -4,6 +4,7 @@ use self::movegen::MoveList;
 
 use std::time::{Duration, Instant};
 use std::sync::mpsc::Receiver;
+use rand::{thread_rng,Rng};
 
 const MATE: i32 = 29000;
 pub const MAX_DEPTH: u32 = 64;
@@ -178,6 +179,46 @@ fn pick_next_move(move_num: usize, move_list: &mut MoveList) {
 }
 
 impl Board {
+    // Select move using easy mode
+    pub fn maybe_search(&mut self, info: &mut SearchInfo) -> Option<moves::Move> {
+        let mut best_move: Option<moves::Move> = None;
+        let move_list = self.generate_all_moves();
+
+        // Basic implementation of selecting a random legal move.
+        // Keep trying a random choice until we get one that is legal.
+        let n = move_list.moves.len();
+        loop {
+            let choice: usize = thread_rng().gen_range(0,n);
+            
+            if self.make_move(&move_list.moves[choice].mv) {
+                self.undo_move();
+                best_move = Some(move_list.moves[choice].mv);
+                break;
+            }
+        }
+
+        match info.game_mode {
+            GameMode::Uci => {
+                if let Some(mv) = best_move {
+                    println!("bestmove {}", mv.to_string());
+                }
+            }
+            GameMode::Xboard => {
+                if let Some(mv) = best_move {
+                    println!("move {}", mv.to_string());
+                }
+            }
+            GameMode::Console => {
+                if let Some(mv) = best_move {
+                    println!("{} makes move: {}", PROGRAM_NAME, mv.to_string());
+                }
+            }
+            _ => (),
+        }
+
+        best_move
+    }
+    
     pub fn search(&mut self, info: &mut SearchInfo) -> Option<moves::Move> {
         let mut best_move: Option<moves::Move> = None;
         let mut best_score;
@@ -223,24 +264,6 @@ impl Board {
             // println!("Ordering: {:.2}", info.fail_high_first as f32 /info.fail_high as f32);
         }
 
-        match info.game_mode {
-            GameMode::Uci => {
-                if let Some(mv) = best_move {
-                    println!("bestmove {}", mv.to_string());
-                }
-            }
-            GameMode::Xboard => {
-                if let Some(mv) = best_move {
-                    println!("move {}", mv.to_string());
-                }
-            }
-            GameMode::Console => {
-                if let Some(mv) = best_move {
-                    println!("{} makes move: {}", PROGRAM_NAME, mv.to_string());
-                }
-            }
-            _ => (),
-        }
         best_move
     }
 
