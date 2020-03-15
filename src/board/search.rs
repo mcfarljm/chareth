@@ -5,6 +5,7 @@ use self::movegen::MoveList;
 use std::time::{Duration, Instant};
 use std::sync::mpsc::Receiver;
 use rand::{thread_rng,Rng};
+use rand::distributions::Standard;
 
 const MATE: i32 = 29000;
 pub const MAX_DEPTH: u32 = 64;
@@ -50,11 +51,15 @@ pub struct SearchInfo<'a> {
     // Determined by difficulty level.  When set, this reverses the
     // evaluation so that it is effectively finding bad moves.
     reverse_evaluate: bool,
+    // To avoid needing to worry about the existing logic for setting
+    // the depth, we just use a different variable for easy mode
+    easy_depth: u32,
+    rand_move_probability: f32,
 }
 
 impl<'a> SearchInfo<'a> {
     pub fn new(depth: u32, game_mode: GameMode) -> SearchInfo<'a> {
-        SearchInfo{
+        let mut info = SearchInfo{
             start_time: Instant::now(),
             time_limit: Duration::new(0,0),
             have_time_limit: false,
@@ -78,9 +83,16 @@ impl<'a> SearchInfo<'a> {
             game_mode: game_mode,
             show_thinking: true,
 
+            // Values here are not used, as we call set_difficulty to
+            // have a consistent way of determining the defaults
             difficulty: 1,
             reverse_evaluate: true,
-        }
+            easy_depth: 1,
+            rand_move_probability: 0.5,
+        };
+
+        info.set_difficulty(1); // The real defaults defined here
+        info
     }
 
     // Set the time limit and start counting
@@ -139,13 +151,41 @@ impl<'a> SearchInfo<'a> {
         // self.depth_set = true;
     }
 
+    // 1: Reverse evaluation (deliberately plays bad moves)
+    // 2: Random moves
+    // 3: Depth 1, 50% random
+    // 4: Depth 1, 10% random
+    // 5: Depth 2, 50% random
+    // 6: Depth 2, 20% random
+    // 7: Depth 3, 50% random
+    // 8: Depth 3, 25% random
+    // 9: Depth 3, 10% random
     pub fn set_difficulty(&mut self, difficulty: u8) {
         self.difficulty = difficulty;
+
         if difficulty <= 1 {
             self.reverse_evaluate = true;
         } else {
             self.reverse_evaluate = false;
         }
+
+        self.easy_depth = match difficulty {
+            3 | 4 => 1,
+            5 | 6 => 2,
+            7 | 8 | 9 => 3,
+            _ => 1 // Not used
+        };
+
+        self.rand_move_probability = match difficulty {
+            1 => 0.0, // Use reverse evaluator instead
+            2 => 1.0,
+            3 | 5 | 7 => 0.5,
+            6 => 0.2,
+            8 => 0.25,
+            4 | 9 => 0.1,
+            _ => 0.0 // Not used
+        };
+        println!("Difficulty set: reverse:{}, depth:{}, rand:{}", self.reverse_evaluate, self.easy_depth, self.rand_move_probability);
     }
 
     pub fn checkup(&mut self) {
@@ -201,8 +241,11 @@ impl Board {
         let mut best_move: Option<moves::Move> = None;
         let move_list = self.generate_all_moves();
 
+        let u: f32 = thread_rng().sample(Standard);
+        println!("Random value: {} vs {}", u, info.rand_move_probability);
+
         let mut random_move;
-        if info.difficulty >= 2 {
+        if u < info.rand_move_probability {
             random_move = true;
         } else {
             random_move = false;
@@ -255,7 +298,7 @@ impl Board {
         self.clear_for_search(info);
 
         // Iterative deepening
-        for current_depth in 1..=info.depth {
+        for current_depth in 1..=info.easy_depth {
             best_score = self.alpha_beta(I32_SAFE_MIN, std::i32::MAX, current_depth, info, true);
 
             if info.stopped {
