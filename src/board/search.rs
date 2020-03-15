@@ -47,6 +47,9 @@ pub struct SearchInfo<'a> {
     show_thinking: bool,
 
     difficulty: u8,
+    // Determined by difficulty level.  When set, this reverses the
+    // evaluation so that it is effectively finding bad moves.
+    reverse_evaluate: bool,
 }
 
 impl<'a> SearchInfo<'a> {
@@ -76,6 +79,7 @@ impl<'a> SearchInfo<'a> {
             show_thinking: true,
 
             difficulty: 1,
+            reverse_evaluate: true,
         }
     }
 
@@ -137,6 +141,11 @@ impl<'a> SearchInfo<'a> {
 
     pub fn set_difficulty(&mut self, difficulty: u8) {
         self.difficulty = difficulty;
+        if difficulty <= 1 {
+            self.reverse_evaluate = true;
+        } else {
+            self.reverse_evaluate = false;
+        }
     }
 
     pub fn checkup(&mut self) {
@@ -192,17 +201,29 @@ impl Board {
         let mut best_move: Option<moves::Move> = None;
         let move_list = self.generate_all_moves();
 
-        // Basic implementation of selecting a random legal move.
-        // Keep trying a random choice until we get one that is legal.
-        let n = move_list.moves.len();
-        loop {
-            let choice: usize = thread_rng().gen_range(0,n);
-            
-            if self.make_move(&move_list.moves[choice].mv) {
-                self.undo_move();
-                best_move = Some(move_list.moves[choice].mv);
-                break;
+        let mut random_move;
+        if info.difficulty >= 2 {
+            random_move = true;
+        } else {
+            random_move = false;
+        }
+
+        if random_move {
+            // Basic implementation of selecting a random legal move.
+            // Keep trying a random choice until we get one that is legal.
+            let n = move_list.moves.len();
+            loop {
+                let choice: usize = thread_rng().gen_range(0,n);
+                
+                if self.make_move(&move_list.moves[choice].mv) {
+                    self.undo_move();
+                    best_move = Some(move_list.moves[choice].mv);
+                    break;
+                }
             }
+        } else {
+            // Do an actual search
+            best_move = self.search(info);
         }
 
         match info.game_mode {
@@ -419,6 +440,10 @@ impl Board {
         let mut alpha = alpha_in;
 
         let mut score = self.evaluate();
+        if info.reverse_evaluate {
+            score = -score;
+        }
+        
         if score >= beta {
             return beta;
         }
