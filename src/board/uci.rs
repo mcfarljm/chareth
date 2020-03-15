@@ -94,6 +94,8 @@ impl Board {
 fn uci_ok() {
     println!("id name {}", PROGRAM_NAME);
     println!("id author John McFarland");
+    // Engine options
+    println!("option name difficulty type spin default 1 min 1 max 9");
     println!("uciok");
 }
 
@@ -140,6 +142,14 @@ pub fn uci_loop() {
                     uci_ok();
                 } else if input.starts_with("quit") {
                     break;
+                } else if input.starts_with("setoption") {
+                    // setoption name <name> value <val>
+                    let words: Vec<&str> = input.split_whitespace().collect();
+                    if words[2] == "difficulty" {
+                        let difficulty = words[4].parse().unwrap();
+                        println!("Found difficulty setting: {}", difficulty);
+                        info.set_difficulty(difficulty);
+                    }
                 }
                 if info.quit {
                     break;
