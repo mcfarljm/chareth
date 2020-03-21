@@ -1,6 +1,15 @@
-use crate::board::{RANKS_ITER,FILES_ITER,fr_to_sq,SQUARE_120_TO_64};
+use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
 
 const BIT_TABLE: [usize; 64] = [63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35, 62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8];
+
+static mut FILE_BB_MASKS: [u64; 8] = [0; 8];
+static mut RANK_BB_MASKS: [u64; 8] = [0; 8];
+
+static mut BLACK_PASSED_MASK: [u64; 64] = [0; 64];
+static mut WHITE_PASSED_MASK: [u64; 64] = [0; 64];
+// Believe this one only depends on the file, and so could be stored
+// with 8 values instead of 64.
+static mut ISOLATED_MASK: [u64; 64] = [0; 64];
 
 #[derive(Clone)]
 pub struct Bitboard {
@@ -67,6 +76,97 @@ impl Bitboard {
     }
 }
 
+pub fn init_eval_masks() {
+    let mut sq;
+    let mut sq64: usize;
+    for rank in RANKS_ITER.rev() {
+        for file in FILES_ITER {
+            sq = fr_to_sq(file, rank);
+            sq64 = SQUARE_120_TO_64[sq as usize];
+            unsafe {
+                FILE_BB_MASKS[file as usize] |= 1 << sq64;
+                RANK_BB_MASKS[rank as usize] |= 1 << sq64;
+            }
+        }
+    }
+
+    let mut tsq: i32;
+    for sq64 in 0..64 as usize {
+        tsq = sq64 as i32 + 8;
+        while tsq < 64 {
+            unsafe {
+                WHITE_PASSED_MASK[sq64] |= 1 << tsq;
+            }
+            tsq += 8;
+        }
+
+        tsq = sq64 as i32 - 8;
+        while tsq >= 0 {
+            unsafe {
+                BLACK_PASSED_MASK[sq64] |= 1 << tsq;
+            }
+            tsq -= 8;
+        }
+
+        if FILES[SQUARE_64_TO_120[sq64] as usize] > board::FILE_A {
+            unsafe {
+                ISOLATED_MASK[sq64] |= FILE_BB_MASKS[(FILES[SQUARE_64_TO_120[sq64] as usize] - 1) as usize];
+            }
+
+            tsq = sq64 as i32 + 7;
+            while tsq < 64 {
+                unsafe {
+                    WHITE_PASSED_MASK[sq64] |= 1 << tsq;
+                }
+                tsq += 8;
+            }
+
+            tsq = sq64 as i32 - 9;
+            while tsq >= 0 {
+                unsafe {
+                    BLACK_PASSED_MASK[sq64] |= 1 << tsq;
+                }
+                tsq -= 8;
+            }
+        }
+
+        if FILES[SQUARE_64_TO_120[sq64] as usize] < board::FILE_H {
+            unsafe {
+                ISOLATED_MASK[sq64] |= FILE_BB_MASKS[(FILES[SQUARE_64_TO_120[sq64] as usize] + 1) as usize];
+            }
+
+            tsq = sq64 as i32 + 9;
+            while tsq < 64 {
+                unsafe {
+                    WHITE_PASSED_MASK[sq64] |= 1 << tsq;
+                }
+                tsq += 8;
+            }
+
+            tsq = sq64 as i32 - 7;
+            while tsq >= 0 {
+                unsafe {
+                    BLACK_PASSED_MASK[sq64] |= 1 << tsq;
+                }
+                tsq -= 8;
+            }
+        }
+    }
+
+    // let mut bb = Bitboard::new();
+    // for sq64 in 0..64 as usize {
+    //     unsafe {
+    //         bb.val = ISOLATED_MASK[sq64];
+    //     }
+    //     println!("{}", bb.to_string());
+    // }
+
+    // let mut bb = Bitboard::new();
+    // unsafe {
+    //     bb.val = RANK_BB_MASKS[1];
+    //     println!("{}", bb.to_string());
+    // }
+}
 
 #[cfg(test)]
 mod tests {

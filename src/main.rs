@@ -11,6 +11,8 @@ use std::io::{self, Write};
 
 fn main() {
 
+    bitboard::init_eval_masks();
+
     loop {
         io::stdout().flush().unwrap();
 
