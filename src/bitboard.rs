@@ -260,4 +260,67 @@ mod tests {
         assert_eq!(bb.to_string(), s);
     }  
 
+    // Originally was going to break this up, but don't like that idea
+    // because these tests all rely on mutable static (global) data
+    // that gets written during init_eval_masks, and by default rust
+    // runs tests in parallel
+    //
+    // Todo: if any further tests rely on these masks, they may need
+    // to be reviewed
+    #[test]
+    fn bb_masks() {
+        init_eval_masks(); 
+
+        // File masks:
+        let mut bb = Bitboard::new();
+        unsafe {
+            bb.val = FILE_BB_MASKS[1];
+        }
+        assert_eq!(bb.val, 0x202020202020202);
+        unsafe {
+            bb.val = FILE_BB_MASKS[7];
+        }
+        assert_eq!(bb.val, 0x8080808080808080);
+
+        // Rank masks:
+        unsafe {
+            bb.val = RANK_BB_MASKS[1];
+        }
+        assert_eq!(bb.val, 0xff00);
+        unsafe {
+            bb.val = RANK_BB_MASKS[7];
+        }
+        assert_eq!(bb.val, 0xff00000000000000);
+
+        // White pawn passed:
+        unsafe {
+            bb.val = WHITE_PASSED_MASK[0];
+        }
+        assert_eq!(bb.val, 0x303030303030300);
+
+        unsafe {
+            bb.val = WHITE_PASSED_MASK[37];
+        }
+        assert_eq!(bb.val, 0x7070700000000000);
+
+        // Black pawn passed:
+        unsafe {
+            bb.val = BLACK_PASSED_MASK[63];
+        }
+        assert_eq!(bb.val, 0xc0c0c0c0c0c0c0);
+
+        // Isolated pawn:
+        unsafe {
+            bb.val = ISOLATED_MASK[0];
+        }
+        assert_eq!(bb.val, 0x202020202020202);
+
+        unsafe {
+            bb.val = ISOLATED_MASK[55];
+        }
+        // println!("{}", bb.to_string());
+        // println!("{:x}", bb.val);
+        assert_eq!(bb.val, 0x4040404040404040);
+    }
+
 }
