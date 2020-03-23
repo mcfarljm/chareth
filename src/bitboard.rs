@@ -2,14 +2,25 @@ use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQ
 
 const BIT_TABLE: [usize; 64] = [63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35, 62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8];
 
-static mut FILE_BB_MASKS: [u64; 8] = [0; 8];
-static mut RANK_BB_MASKS: [u64; 8] = [0; 8];
+// A return value to facilitate a single function that initializes
+// multiple bitboard arrays
+struct BitboardArrays([u64; 8], [u64; 8], [u64; 64], [u64; 64], [u64; 64]);
 
-static mut BLACK_PASSED_MASK: [u64; 64] = [0; 64];
-static mut WHITE_PASSED_MASK: [u64; 64] = [0; 64];
-// Believe this one only depends on the file, and so could be stored
-// with 8 values instead of 64.
-static mut ISOLATED_MASK: [u64; 64] = [0; 64];
+// Enable initialization of static arrays.  Once it becomes part of
+// stable rust, a better approach may be to use const_fn.
+lazy_static! {
+    // Tuple struct instance serves only as a holder to retrieve the
+    // values from a single function.
+    static ref BITBOARD_ARRAYS: BitboardArrays = get_eval_masks();
+
+    // This can also be done without using references (&'static), but
+    // believe that would result in additional memory
+    static ref FILE_BB_MASKS: &'static[u64; 8] = &BITBOARD_ARRAYS.0;
+    static ref RANK_BB_MASKS: &'static[u64; 8] = &BITBOARD_ARRAYS.1;
+    static ref WHITE_PASSED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.2;
+    static ref BLACK_PASSED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.3;
+    static ref ISOLATED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.4;
+}
 
 #[derive(Clone)]
 pub struct Bitboard {
@@ -76,17 +87,29 @@ impl Bitboard {
     }
 }
 
+// This isn't strictly necessary, as the statics will be automatically
+// initialized, but this way we can force them to be initialized at
+// the start of the program
 pub fn init_eval_masks() {
+    lazy_static::initialize(&BITBOARD_ARRAYS);
+}
+
+// Initialize and return pawn evaluation mask arrays
+fn get_eval_masks() -> BitboardArrays {
+    let mut file_bb_masks: [u64; 8] = [0; 8];
+    let mut rank_bb_masks: [u64; 8] = [0; 8];
+    let mut white_passed_mask: [u64; 64] = [0; 64];
+    let mut black_passed_mask: [u64; 64] = [0; 64];
+    let mut isolated_mask: [u64; 64] = [0; 64];
+    
     let mut sq;
     let mut sq64: usize;
     for rank in RANKS_ITER.rev() {
         for file in FILES_ITER {
             sq = fr_to_sq(file, rank);
             sq64 = SQUARE_120_TO_64[sq as usize];
-            unsafe {
-                FILE_BB_MASKS[file as usize] |= 1 << sq64;
-                RANK_BB_MASKS[rank as usize] |= 1 << sq64;
-            }
+            file_bb_masks[file as usize] |= 1 << sq64;
+            rank_bb_masks[rank as usize] |= 1 << sq64;
         }
     }
 
@@ -94,60 +117,44 @@ pub fn init_eval_masks() {
     for sq64 in 0..64 as usize {
         tsq = sq64 as i32 + 8;
         while tsq < 64 {
-            unsafe {
-                WHITE_PASSED_MASK[sq64] |= 1 << tsq;
-            }
+            white_passed_mask[sq64] |= 1 << tsq;
             tsq += 8;
         }
 
         tsq = sq64 as i32 - 8;
         while tsq >= 0 {
-            unsafe {
-                BLACK_PASSED_MASK[sq64] |= 1 << tsq;
-            }
+            black_passed_mask[sq64] |= 1 << tsq;
             tsq -= 8;
         }
 
         if FILES[SQUARE_64_TO_120[sq64] as usize] > board::FILE_A {
-            unsafe {
-                ISOLATED_MASK[sq64] |= FILE_BB_MASKS[(FILES[SQUARE_64_TO_120[sq64] as usize] - 1) as usize];
-            }
+            isolated_mask[sq64] |= file_bb_masks[(FILES[SQUARE_64_TO_120[sq64] as usize] - 1) as usize];
 
             tsq = sq64 as i32 + 7;
             while tsq < 64 {
-                unsafe {
-                    WHITE_PASSED_MASK[sq64] |= 1 << tsq;
-                }
+                white_passed_mask[sq64] |= 1 << tsq;
                 tsq += 8;
             }
 
             tsq = sq64 as i32 - 9;
             while tsq >= 0 {
-                unsafe {
-                    BLACK_PASSED_MASK[sq64] |= 1 << tsq;
-                }
+                black_passed_mask[sq64] |= 1 << tsq;
                 tsq -= 8;
             }
         }
 
         if FILES[SQUARE_64_TO_120[sq64] as usize] < board::FILE_H {
-            unsafe {
-                ISOLATED_MASK[sq64] |= FILE_BB_MASKS[(FILES[SQUARE_64_TO_120[sq64] as usize] + 1) as usize];
-            }
+            isolated_mask[sq64] |= file_bb_masks[(FILES[SQUARE_64_TO_120[sq64] as usize] + 1) as usize];
 
             tsq = sq64 as i32 + 9;
             while tsq < 64 {
-                unsafe {
-                    WHITE_PASSED_MASK[sq64] |= 1 << tsq;
-                }
+                white_passed_mask[sq64] |= 1 << tsq;
                 tsq += 8;
             }
 
             tsq = sq64 as i32 - 7;
             while tsq >= 0 {
-                unsafe {
-                    BLACK_PASSED_MASK[sq64] |= 1 << tsq;
-                }
+                black_passed_mask[sq64] |= 1 << tsq;
                 tsq -= 8;
             }
         }
@@ -156,16 +163,18 @@ pub fn init_eval_masks() {
     // let mut bb = Bitboard::new();
     // for sq64 in 0..64 as usize {
     //     unsafe {
-    //         bb.val = ISOLATED_MASK[sq64];
+    //         bb.val = isolated_mask[sq64];
     //     }
     //     println!("{}", bb.to_string());
     // }
 
     // let mut bb = Bitboard::new();
     // unsafe {
-    //     bb.val = RANK_BB_MASKS[1];
+    //     bb.val = rank_bb_masks[1];
     //     println!("{}", bb.to_string());
     // }
+
+    BitboardArrays(file_bb_masks, rank_bb_masks, white_passed_mask, black_passed_mask, isolated_mask)
 }
 
 #[cfg(test)]
@@ -260,67 +269,49 @@ mod tests {
         assert_eq!(bb.to_string(), s);
     }  
 
-    // Originally was going to break this up, but don't like that idea
-    // because these tests all rely on mutable static (global) data
-    // that gets written during init_eval_masks, and by default rust
-    // runs tests in parallel
-    //
-    // Todo: if any further tests rely on these masks, they may need
-    // to be reviewed
     #[test]
-    fn bb_masks() {
-        init_eval_masks(); 
-
-        // File masks:
+    fn file_bb_masks() {
         let mut bb = Bitboard::new();
-        unsafe {
-            bb.val = FILE_BB_MASKS[1];
-        }
-        assert_eq!(bb.val, 0x202020202020202);
-        unsafe {
-            bb.val = FILE_BB_MASKS[7];
-        }
+        bb.val = FILE_BB_MASKS[1];
+        assert_eq!(bb.val, 0x202020202020202);        
+        bb.val = FILE_BB_MASKS[7];
         assert_eq!(bb.val, 0x8080808080808080);
-
-        // Rank masks:
-        unsafe {
-            bb.val = RANK_BB_MASKS[1];
-        }
-        assert_eq!(bb.val, 0xff00);
-        unsafe {
-            bb.val = RANK_BB_MASKS[7];
-        }
-        assert_eq!(bb.val, 0xff00000000000000);
-
-        // White pawn passed:
-        unsafe {
-            bb.val = WHITE_PASSED_MASK[0];
-        }
-        assert_eq!(bb.val, 0x303030303030300);
-
-        unsafe {
-            bb.val = WHITE_PASSED_MASK[37];
-        }
-        assert_eq!(bb.val, 0x7070700000000000);
-
-        // Black pawn passed:
-        unsafe {
-            bb.val = BLACK_PASSED_MASK[63];
-        }
-        assert_eq!(bb.val, 0xc0c0c0c0c0c0c0);
-
-        // Isolated pawn:
-        unsafe {
-            bb.val = ISOLATED_MASK[0];
-        }
-        assert_eq!(bb.val, 0x202020202020202);
-
-        unsafe {
-            bb.val = ISOLATED_MASK[55];
-        }
         // println!("{}", bb.to_string());
         // println!("{:x}", bb.val);
-        assert_eq!(bb.val, 0x4040404040404040);
     }
+
+    #[test]
+    fn rank_bb_masks() {
+        let mut bb = Bitboard::new();
+        bb.val = RANK_BB_MASKS[1];
+        assert_eq!(bb.val, 0xff00);
+        bb.val = RANK_BB_MASKS[7];
+        assert_eq!(bb.val, 0xff00000000000000);        
+    }
+
+    #[test]
+    fn white_pawn_passed() {
+        let mut bb = Bitboard::new();
+        bb.val = WHITE_PASSED_MASK[0];
+        assert_eq!(bb.val, 0x303030303030300);
+        bb.val = WHITE_PASSED_MASK[37];
+        assert_eq!(bb.val, 0x7070700000000000);        
+    }
+
+    #[test]
+    fn black_pawn_passed() {
+        let mut bb = Bitboard::new();
+        bb.val = BLACK_PASSED_MASK[63];
+        assert_eq!(bb.val, 0xc0c0c0c0c0c0c0);        
+    }
+
+    #[test]
+    fn isolated_pawn() {
+        let mut bb = Bitboard::new();
+        bb.val = ISOLATED_MASK[0];
+        assert_eq!(bb.val, 0x202020202020202);
+        bb.val = ISOLATED_MASK[55];
+        assert_eq!(bb.val, 0x4040404040404040);
+    }        
 
 }

@@ -9,6 +9,9 @@ mod xboard;
 
 use std::io::{self, Write};
 
+#[macro_use]
+extern crate lazy_static;
+
 fn main() {
 
     bitboard::init_eval_masks();
