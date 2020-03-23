@@ -16,6 +16,7 @@ use crate::moves;
 use crate::version::PROGRAM_NAME;
 pub use search::{SearchInfo,MAX_DEPTH,GameMode};
 pub use uci::uci_loop;
+pub use movegen::init_mvv_lva;
 
 // Signed integer is used instead of unsigned in order to avoid need
 // to cast when adding with signed directions.  i8 goes up to 128,
@@ -116,11 +117,6 @@ pub struct Board {
     // aren't captures.  VICE uses a static array with size MAXDEPTH.
     // We use a HashMap indexed by depth (ply).
     search_killers: HashMap<u32, [Option<moves::Move>; 2]>,
-
-    // Static arrays:
-
-    // Scores for most valuable victim, least valuable attacker
-    mvv_lva_scores: [[i32; 13]; 13],
 }
 
 impl Board {
@@ -168,16 +164,11 @@ impl Board {
 
             search_history: [[0; BOARD_SQ_NUM]; 13],
             search_killers: HashMap::new(),
-
-            // Static arrays that need to be initialized via code:
-            mvv_lva_scores: [[0; 13]; 13],
         };
 
         for i in 0..64 {
             board.pieces[SQUARE_64_TO_120[i] as usize] = Piece::Empty;
         }
-
-        board.init_mvv_lva();
 
         board
     }

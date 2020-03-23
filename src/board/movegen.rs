@@ -6,6 +6,10 @@ use crate::pieces::Piece;
 
 const VICTIM_SCORE: [i32; 13] = [0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600];
 
+lazy_static! {
+    static ref MVV_LVA_SCORES: [[i32; 13]; 13] = get_mvv_lva();
+}
+
 pub struct ScoredMove {
     pub mv: moves::Move,
     pub score: i32,
@@ -63,7 +67,7 @@ impl MoveList {
         debug_assert!(board::square_on_board(mv.from()));
         debug_assert!(board::square_on_board(mv.to()));
         debug_assert!(mv.capture.exists());
-        let score = b.mvv_lva_scores[mv.capture as usize][b.pieces[mv.from() as usize] as usize] + 1_000_000;
+        let score = MVV_LVA_SCORES[mv.capture as usize][b.pieces[mv.from() as usize] as usize] + 1_000_000;
         self.moves.push(ScoredMove::new(mv, score));
     }
 
@@ -304,16 +308,23 @@ impl board::Board {
         }
         move_list
     }
+}
 
-    // Initialize most valuable victim, least valuable attacker array
-    pub fn init_mvv_lva(&mut self) {
-        for attacker in Piece::WP as usize..=Piece::BK as usize {
-            for victim in Piece::WP as usize..=Piece::BK as usize {
-                self.mvv_lva_scores[victim][attacker] = VICTIM_SCORE[victim] + 6 - VICTIM_SCORE[attacker]/100;
-            }
+// Not necessary as the lazy static is automatically initialized, but
+// provides a way to force initialization when the program starts
+pub fn init_mvv_lva() {
+    lazy_static::initialize(&MVV_LVA_SCORES);
+}
+
+// Initialize most valuable victim, least valuable attacker array
+fn get_mvv_lva() -> [[i32; 13]; 13] {
+    let mut mvv_lva_scores: [[i32; 13]; 13] = [[0; 13]; 13];
+    for attacker in Piece::WP as usize..=Piece::BK as usize {
+        for victim in Piece::WP as usize..=Piece::BK as usize {
+            mvv_lva_scores[victim][attacker] = VICTIM_SCORE[victim] + 6 - VICTIM_SCORE[attacker]/100;
         }
     }
-
+    mvv_lva_scores
 }
 
 #[cfg(test)]

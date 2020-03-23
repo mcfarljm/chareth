@@ -14,6 +14,7 @@ extern crate lazy_static;
 
 fn main() {
 
+    board::init_mvv_lva();
     bitboard::init_eval_masks();
 
     loop {
