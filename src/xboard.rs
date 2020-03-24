@@ -162,6 +162,15 @@ pub fn xboard_loop() {
                         board.undo_move();
                         board.undo_move();
                     }
+                    Some("mirror") => {
+                        // For testing board.mirror.  May be removed.
+                        board.print();
+                        println!("Eval: {}", board.evaluate());
+                        board = board.mirror();
+                        board.print();
+                        println!("Eval: {}", board.evaluate());
+                        board = board.mirror();
+                    }
                     _ => (),
                 }
             }

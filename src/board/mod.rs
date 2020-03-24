@@ -14,6 +14,8 @@ use crate::bitboard;
 use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
+
+use evaluate::MIRROR64;
 pub use search::{SearchInfo,MAX_DEPTH,GameMode};
 pub use uci::uci_loop;
 pub use movegen::init_mvv_lva;
@@ -607,6 +609,45 @@ impl Board {
 
     pub fn reset_ply(&mut self) {
         self.ply = 0;
+    }
+
+    // Mirror the board, for verifying that the evaluation function is
+    // symmetrical
+    pub fn mirror(&mut self) -> Board {
+
+        let swap_piece: [Piece; 13] = [Piece::Empty, Piece::BP, Piece::BN, Piece::BB, Piece::BR, Piece::BQ, Piece::BK, Piece::WP, Piece::WN, Piece::WB, Piece::WR, Piece::WQ, Piece::WK];
+        
+        let mut board = Board::new();
+
+        if self.castle_perm & Castling::WK != 0 {
+            board.castle_perm |= Castling::BK;
+        }
+        if self.castle_perm & Castling::WQ != 0 {
+            board.castle_perm |= Castling::BQ;
+        }
+
+        if self.castle_perm & Castling::BK != 0 {
+            board.castle_perm |= Castling::WK;
+        }
+        if self.castle_perm & Castling::BQ != 0 {
+            board.castle_perm |= Castling::WQ;
+        }
+
+        if self.en_pas != Position::NONE as Square {
+            board.en_pas = SQUARE_64_TO_120[MIRROR64[SQUARE_120_TO_64[self.en_pas as usize]]];
+        }
+
+        for sq64 in 0..64 {
+            board.pieces[SQUARE_64_TO_120[sq64] as usize] = swap_piece[self.pieces[SQUARE_64_TO_120[MIRROR64[sq64]] as usize] as usize];
+        }
+
+        board.side = self.side^1;
+        board.hash = board.get_position_hash();
+        board.update_lists_and_material();
+
+        debug_assert!(board.check());
+        
+        board
     }
 }
 
