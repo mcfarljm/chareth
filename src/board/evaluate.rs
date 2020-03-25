@@ -112,3 +112,32 @@ pub const MIRROR64: [usize; 64] = [
     8 , 9 , 10 , 11 , 12 , 13 , 14 , 15 ,
     0 , 1 , 2 , 3 , 4 , 5 , 6 , 7
 ];
+
+
+#[cfg(test)]
+mod tests {
+    use crate::board::*;
+
+    use std::io::BufReader;
+    use std::io::prelude::*;
+    use std::fs::File;
+
+    fn mirror_test(fen: &str) {
+        let mut board = Board::from_fen(fen);
+        let score = board.evaluate();
+        board = board.mirror();
+        assert_eq!(score, board.evaluate())
+    }
+
+    // Test to make sure that evaluation function is symmetric.
+    // Similar idea to what is shown in VICE videos 79 and 80,
+    // although it is a much smaller set of positions.
+    #[test]
+    fn mirror_test_suite() {
+        let f = File::open("perftsuite.txt").expect("error opening perftsuite.txt in mirror_test_suite");
+        let f = BufReader::new(f);        
+        for line in f.lines() {
+            mirror_test(line.unwrap().as_str());
+        }
+    }
+}
