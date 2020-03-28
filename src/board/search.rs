@@ -244,7 +244,7 @@ impl Board {
         let u: f32 = thread_rng().sample(Standard);
         println!("Random value: {} vs {}", u, info.rand_move_probability);
 
-        let mut random_move;
+        let random_move;
         if u < info.rand_move_probability {
             random_move = true;
         } else {
