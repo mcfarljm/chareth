@@ -9,3 +9,7 @@ Chareth is an xboard and UCI compatible chess engine written in Rust, based on t
 * Run `cargo build --release` from the root directory
 
 This will create the executable `chareth` in the `target/release` directory.  Now simply configure your chess GUI application to point to this executable.
+
+## Easy mode
+
+This branch implements an "easy mode" of the chess engine with 9 difficulty levels, suitable for even complete beginners.  The difficulty setting should be accessible within the GUI within a menu such as "chess engine options".
