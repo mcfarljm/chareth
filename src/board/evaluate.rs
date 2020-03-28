@@ -1,6 +1,5 @@
 use crate::board::*;
 use crate::pieces::Piece;
-use crate::moves::square_string;
 
 const PAWN_ISOLATED_SCORE: i32 = -10;
 // Passed pawn bonus indexed by rank
@@ -21,12 +20,10 @@ impl Board {
             score += PAWN_TABLE[sq64];
 
             if self.pawns[WHITE].isolated_pawn(sq64) {
-                // println!("wP Iso: {}", square_string(*sq));
                 score += PAWN_ISOLATED_SCORE;
             }
 
             if self.pawns[BLACK].passed_pawn(sq64, WHITE) {
-                // println!("wP Passed: {}", square_string(*sq));
                 score += PAWN_PASSED_SCORE[RANKS[*sq as usize] as usize];
             }
         }
@@ -37,12 +34,10 @@ impl Board {
             score -= PAWN_TABLE[MIRROR64[sq64]];
 
             if self.pawns[BLACK].isolated_pawn(sq64) {
-                // println!("bP Iso: {}", square_string(*sq));
                 score -= PAWN_ISOLATED_SCORE;
             }
 
             if self.pawns[WHITE].passed_pawn(sq64, BLACK) {
-                // println!("bP Passed: {}", square_string(*sq));
                 score -= PAWN_PASSED_SCORE[7 - RANKS[*sq as usize] as usize];
             }
         }
