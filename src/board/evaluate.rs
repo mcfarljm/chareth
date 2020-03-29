@@ -5,6 +5,8 @@ const PAWN_ISOLATED_SCORE: i32 = -10;
 // Passed pawn bonus indexed by rank
 const PAWN_PASSED_SCORE: [i32; 8] = [0, 5, 10, 20, 35, 60, 100, 200];
 
+const ENDGAME_MATERIAL: i32 = ROOK_VAL + 2*KNIGHT_VAL + 2*PAWN_VAL + KING_VAL;
+
 impl Board {
     // Evaluate position for side to move
     pub fn evaluate(&self) -> i32 {
@@ -72,6 +74,18 @@ impl Board {
             score -= ROOK_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
         }
 
+        if self.material[BLACK] <= ENDGAME_MATERIAL {
+            score += KING_END_TABLE[SQUARE_120_TO_64[self.king_sq[WHITE] as usize]];
+        } else {
+            score += KING_OPEN_TABLE[SQUARE_120_TO_64[self.king_sq[WHITE] as usize]];
+        }
+
+        if self.material[WHITE] <= ENDGAME_MATERIAL {
+            score -= KING_END_TABLE[MIRROR64[SQUARE_120_TO_64[self.king_sq[BLACK] as usize]]];
+        } else {
+            score -= KING_OPEN_TABLE[MIRROR64[SQUARE_120_TO_64[self.king_sq[BLACK] as usize]]];
+        }
+
         if self.side == WHITE {
             return score;
         } else {
@@ -124,6 +138,28 @@ const ROOK_TABLE: [i32; 64] = [
     0 , 0 , 5 , 10 , 10 , 5 , 0 , 0  
 ];
 
+const KING_END_TABLE: [i32; 64] = [
+    -50 , -10 , 0 , 0 , 0 , 0 , -10 , -50 ,
+    -10, 0 , 10 , 10 , 10 , 10 , 0 , -10 ,
+    0 , 10 , 15 , 15 , 15 , 15 , 10 , 0 ,
+    0 , 10 , 15 , 20 , 20 , 15 , 10 , 0 ,
+    0 , 10 , 15 , 20 , 20 , 15 , 10 , 0 ,
+    0 , 10 , 15 , 15 , 15 , 15 , 10 , 0 ,
+    -10, 0 , 10 , 10 , 10 , 10 , 0 , -10 ,
+    -50 , -10 , 0 , 0 , 0 , 0 , -10 , -50
+];
+
+const KING_OPEN_TABLE: [i32; 64] = [
+    0 , 5 , 5 , -10 , -10 , 0 , 10 , 5 ,
+    -30 , -30 , -30 , -30 , -30 , -30 , -30 , -30 ,
+    -50 , -50 , -50 , -50 , -50 , -50 , -50 , -50 ,
+    -70 , -70 , -70 , -70 , -70 , -70 , -70 , -70 ,
+    -70 , -70 , -70 , -70 , -70 , -70 , -70 , -70 ,
+    -70 , -70 , -70 , -70 , -70 , -70 , -70 , -70 ,
+    -70 , -70 , -70 , -70 , -70 , -70 , -70 , -70 ,
+    -70 , -70 , -70 , -70 , -70 , -70 , -70 , -70
+];
+
 pub const MIRROR64: [usize; 64] = [
     56 , 57 , 58 , 59 , 60 , 61 , 62 , 63 ,
     48 , 49 , 50 , 51 , 52 , 53 , 54 , 55 ,
@@ -167,8 +203,8 @@ mod tests {
     fn pawn_eval() {
         let fen = "2k1r2r/Bpq3pp/3b4/3Bp3/8/7b/PPP1QP2/R3R1K1 w - - 0 1";
         let mut board = Board::from_fen(fen);
-        assert_eq!(-20, board.evaluate());
+        assert_eq!(-15, board.evaluate());
         board = board.mirror();
-        assert_eq!(-20, board.evaluate());
+        assert_eq!(-15, board.evaluate());
     }
 }

@@ -1,3 +1,10 @@
+pub const PAWN_VAL: i32 = 100;
+pub const KNIGHT_VAL: i32 = 325;
+pub const BISHOP_VAL: i32 = 325;
+pub const ROOK_VAL: i32 = 550;
+pub const QUEEN_VAL: i32 = 1000;
+pub const KING_VAL: i32 = 50000;
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
@@ -100,12 +107,12 @@ impl Piece {
 
     pub fn value(&self) -> i32 {
         match *self {
-            Piece::WP | Piece::BP => 100,
-            Piece::WN | Piece::BN => 325,
-            Piece::WB | Piece::BB => 325,
-            Piece::WR | Piece::BR => 550,
-            Piece::WQ | Piece::BQ => 1000,
-            Piece::WK | Piece::BK => 50000,
+            Piece::WP | Piece::BP => PAWN_VAL,
+            Piece::WN | Piece::BN => KNIGHT_VAL,
+            Piece::WB | Piece::BB => BISHOP_VAL,
+            Piece::WR | Piece::BR => ROOK_VAL,
+            Piece::WQ | Piece::BQ => QUEEN_VAL,
+            Piece::WK | Piece::BK => KING_VAL,
             Piece::Empty | Piece::Offboard => 0,
         }
     }
