@@ -61,8 +61,8 @@ pub fn fr_to_sq(file: FileRank, rank: FileRank) -> Square {
     21 + file + rank * 10
 }
 
-pub const RANKS_ITER: std::ops::Range<FileRank> = (RANK_1..RANK_8+1);
-pub const FILES_ITER: std::ops::Range<FileRank> = (FILE_A..FILE_H+1);
+pub const RANKS_ITER: std::ops::Range<FileRank> = RANK_1..RANK_8+1;
+pub const FILES_ITER: std::ops::Range<FileRank> = FILE_A..FILE_H+1;
 
 pub fn square_on_board(sq: Square) -> bool {
     SQUARE_120_TO_64[sq as usize] <= 63
