@@ -8,6 +8,7 @@ mod version;
 mod xboard;
 
 use std::io::{self, Write};
+use std::env;
 
 #[macro_use]
 extern crate lazy_static;
@@ -16,6 +17,14 @@ fn main() {
 
     board::init_mvv_lva();
     bitboard::init_eval_masks();
+
+    // Run a benchmark search if indicated by the command arguments:
+    let args: Vec<String> = env::args().collect();
+    if args.len() == 3 && args[1] == "b" {
+        let nodes = board::benchmark_search(args[2].parse().unwrap());
+        println!("nodes: {}", nodes);
+        std::process::exit(0);
+    }
 
     loop {
         io::stdout().flush().unwrap();

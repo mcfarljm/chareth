@@ -477,6 +477,15 @@ impl Board {
     }
 }
 
+
+pub fn benchmark_search(depth: u32) -> u64 {
+    let mut board = Board::from_fen(START_FEN);
+    let mut info = SearchInfo::new(depth, GameMode::None); 
+    board.search(&mut info);
+    info.nodes
+}
+
+
 #[cfg(test)]
 mod tests {
     use crate::board::*;

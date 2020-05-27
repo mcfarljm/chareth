@@ -16,7 +16,7 @@ use crate::moves;
 use crate::version::PROGRAM_NAME;
 
 use evaluate::MIRROR64;
-pub use search::{SearchInfo,MAX_DEPTH,GameMode};
+pub use search::{SearchInfo,MAX_DEPTH,GameMode,benchmark_search};
 pub use uci::uci_loop;
 pub use movegen::init_mvv_lva;
 
