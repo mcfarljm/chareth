@@ -78,48 +78,56 @@ impl MoveList {
     }
 
     fn add_white_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
-        // VICE uses two separate functions for capture/no-capture,
-        // but by using a closure, we can handle both cases here.
-        let mut adder: Box<dyn FnMut(Piece)>;
-        if capture.exists() {
-            adder = Box::new(|promote: Piece| self.add_capture_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
-        }
-        else {
-            adder = Box::new(|promote: Piece| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
-        }
         
         if board::RANKS[from as usize] == board::RANK_7 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::WN, Piece::WB, Piece::WR, Piece::WQ] {
-                adder(*promote);
+                self.add_quiet_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
             }
         }
         else {
-            adder(Piece::Empty);
+            self.add_quiet_move(b, moves::Move::new(from, to, capture, Piece::Empty, moves::MoveFlag::None));
         }
     }
 
-    // Todo: this could be consolidated with above function.  Only
-    // difference is RANK_2 and BN,BQ
-    fn add_black_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
-        // VICE uses two separate functions for capture/no-capture,
-        // but by using a closure, we can handle both cases here.
-        let mut adder: Box<dyn FnMut(Piece)>;
-        if capture != Piece::Empty {
-            adder = Box::new(|promote: Piece| self.add_capture_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
+    
+    fn add_white_pawn_capture_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
+        
+        if board::RANKS[from as usize] == board::RANK_7 {
+            // Add a version of the move with each possible promotion
+            for promote in &[Piece::WN, Piece::WB, Piece::WR, Piece::WQ] {
+                self.add_capture_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
+            }
         }
         else {
-            adder = Box::new(|promote: Piece| self.add_quiet_move(b, moves::Move::new(from, to, capture, promote, moves::MoveFlag::None)));
+            self.add_capture_move(b, moves::Move::new(from, to, capture, Piece::Empty, moves::MoveFlag::None));
         }
+    }
+
+    fn add_black_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         
         if board::RANKS[from as usize] == board::RANK_2 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::BN, Piece::BB, Piece::BR, Piece::BQ] {
-                adder(*promote);
+                self.add_quiet_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
             }
         }
         else {
-            adder(Piece::Empty);
+            self.add_quiet_move(b, moves::Move::new(from, to, capture, Piece::Empty, moves::MoveFlag::None));
+        }
+    }
+
+    
+    fn add_black_pawn_capture_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
+        
+        if board::RANKS[from as usize] == board::RANK_2 {
+            // Add a version of the move with each possible promotion
+            for promote in &[Piece::BN, Piece::BB, Piece::BR, Piece::BQ] {
+                self.add_capture_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
+            }
+        }
+        else {
+            self.add_capture_move(b, moves::Move::new(from, to, capture, Piece::Empty, moves::MoveFlag::None));
         }
     }
 
@@ -167,7 +175,7 @@ impl board::Board {
                 for dir in &dirs {
                     t_sq = sq + dir;
                     if board::square_on_board(t_sq) && self.pieces[t_sq as usize].color() == pieces::BLACK {
-                        move_list.add_white_pawn_move(self, *sq, t_sq, self.pieces[t_sq as usize]);
+                        move_list.add_white_pawn_capture_move(self, *sq, t_sq, self.pieces[t_sq as usize]);
                     }
                 }
 
@@ -216,7 +224,7 @@ impl board::Board {
                 for dir in &dirs {
                     t_sq = sq - dir;
                     if board::square_on_board(t_sq) && self.pieces[t_sq as usize].color() == pieces::WHITE {
-                        move_list.add_black_pawn_move(self, *sq, t_sq, self.pieces[t_sq as usize]);
+                        move_list.add_black_pawn_capture_move(self, *sq, t_sq, self.pieces[t_sq as usize]);
                     }
                 }
 
