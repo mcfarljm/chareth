@@ -151,6 +151,8 @@ impl board::Board {
         debug_assert!(self.check());
 
         let mut move_list = MoveList::new();
+        // Speed up by avoiding reallocation
+        move_list.moves.reserve(256);
 
         let mut t_sq: Square;
 
