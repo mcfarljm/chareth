@@ -16,7 +16,7 @@ use crate::moves;
 use crate::version::PROGRAM_NAME;
 
 use evaluate::MIRROR64;
-pub use search::{SearchInfo,MAX_DEPTH,GameMode,benchmark_search};
+pub use search::{SearchInfo,GameMode,benchmark_search};
 pub use uci::uci_loop;
 pub use movegen::init_mvv_lva;
 
@@ -27,6 +27,7 @@ pub type Square = i8;
 type FileRank = Square;
 
 const BOARD_SQ_NUM: usize = 120;
+pub const MAX_DEPTH: u32 = 64;
 
 pub const FILE_A: FileRank = 0;
 // pub const FILE_B: FileRank = 1;
@@ -116,9 +117,8 @@ pub struct Board {
     // aren't captures; vector length is by depth.
 
     // Store two most recent moves that caused a beta cutoff but
-    // aren't captures.  VICE uses a static array with size MAXDEPTH.
-    // We use a HashMap indexed by depth (ply).
-    search_killers: HashMap<u32, [Option<moves::Move>; 2]>,
+    // aren't captures.  
+    search_killers: [[Option<moves::Move>; 2]; MAX_DEPTH as usize],
 }
 
 impl Board {
@@ -165,7 +165,7 @@ impl Board {
             pv_array: Vec::new(),
 
             search_history: [[0; BOARD_SQ_NUM]; 13],
-            search_killers: HashMap::new(),
+            search_killers: [[None, None]; MAX_DEPTH as usize],
         };
 
         for i in 0..64 {

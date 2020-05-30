@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 use std::sync::mpsc::Receiver;
 
 const MATE: i32 = 29000;
-pub const MAX_DEPTH: u32 = 64;
 
 // Avoid overflow when negating
 const I32_SAFE_MIN: i32 = std::i32::MIN + 1;
@@ -246,7 +245,7 @@ impl Board {
 
     pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
         self.search_history = [[0; BOARD_SQ_NUM]; 13];
-        self.search_killers.clear();
+        self.search_killers = [[None, None]; MAX_DEPTH as usize];
 
         self.pv_table.clear();
         self.pv_array.clear();
@@ -339,9 +338,8 @@ impl Board {
                     if ! smv.mv.is_capture() {
                         // So-called "killer" move (non-capture
                         // causing beta cutoff)
-                        let killers = self.search_killers.entry(self.ply).or_insert([None, None]);
-                        killers.swap(0,1); // Really just need k[1]=k[0];
-                        killers[0] = Some(smv.mv);
+                        self.search_killers[self.ply as usize][1] = self.search_killers[self.ply as usize][0];
+                        self.search_killers[self.ply as usize][0] = Some(smv.mv);
                     }
                     
                     return beta;
