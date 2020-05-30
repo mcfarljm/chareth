@@ -25,7 +25,8 @@ fn main() {
         // let nodes = board::benchmark_search(args[2].parse().unwrap());
         // println!("nodes: {}", nodes);
 
-        benchmarks::benchmark_move_gen(args[2].parse().unwrap());
+        // benchmarks::benchmark_move_gen(args[2].parse().unwrap());
+        benchmarks::benchmark_eval(args[2].parse().unwrap());
         
         std::process::exit(0);
     }
