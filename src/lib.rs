@@ -1,6 +1,6 @@
 mod pieces;
 pub mod board;
-pub mod bitboard;
+mod bitboard;
 mod moves;
 mod validate;
 pub mod simpleloop;
@@ -10,3 +10,8 @@ pub mod benchmarks;
 
 #[macro_use]
 extern crate lazy_static;
+
+pub fn initialize() {
+    board::init_mvv_lva();
+    bitboard::init_eval_masks();
+}

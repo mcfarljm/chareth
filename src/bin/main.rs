@@ -1,12 +1,11 @@
-use chareth::{board,bitboard,benchmarks,xboard,simpleloop};
+use chareth::{board,benchmarks,xboard,simpleloop};
 
 use std::io::{self, Write};
 use std::env;
 
 fn main() {
 
-    board::init_mvv_lva();
-    bitboard::init_eval_masks();
+    chareth::initialize();
 
     // Run a benchmark search if indicated by the command arguments:
     let args: Vec<String> = env::args().collect();
