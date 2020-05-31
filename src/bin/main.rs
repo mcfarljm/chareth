@@ -1,18 +1,7 @@
-mod pieces;
-mod board;
-mod bitboard;
-mod moves;
-mod validate;
-mod simpleloop;
-mod version;
-mod xboard;
-mod benchmarks;
+use chareth::{board,bitboard,benchmarks,xboard,simpleloop};
 
 use std::io::{self, Write};
 use std::env;
-
-#[macro_use]
-extern crate lazy_static;
 
 fn main() {
 
