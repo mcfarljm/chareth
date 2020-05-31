@@ -15,5 +15,15 @@ pub fn benchmark_eval(c: &mut Criterion) {
     c.bench_function("evaluate", |b| b.iter(|| board.evaluate()));
 }
 
-criterion_group!(benches, benchmark_move_gen, benchmark_eval);
+pub fn benchmark_search(c: &mut Criterion) {
+    chareth::initialize();
+    
+    let mut board = board::Board::from_fen(board::START_FEN);
+    let mut info = board::SearchInfo::new(4, board::GameMode::None);
+    info.set_show_thinking(false);
+
+    c.bench_function("search", |b| b.iter(|| board.search(&mut info)));
+}
+
+criterion_group!(benches, benchmark_move_gen, benchmark_eval, benchmark_search);
 criterion_main!(benches);

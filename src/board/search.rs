@@ -129,6 +129,10 @@ impl<'a> SearchInfo<'a> {
         // self.depth_set = true;
     }
 
+    pub fn set_show_thinking(&mut self, show: bool) {
+        self.show_thinking = show;
+    }
+
     pub fn checkup(&mut self) {
         if self.have_time_limit && self.start_time.elapsed() > self.time_limit {
             self.stopped = true;
