@@ -1,6 +1,6 @@
 use crate::board;
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 pub fn benchmark_move_gen(iterations: u64) {
     let board = board::Board::from_fen(board::START_FEN);
