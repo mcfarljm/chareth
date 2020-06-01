@@ -511,7 +511,7 @@ impl Board {
             }
         }
 
-        // rooks, queens
+        // bishops, queens
         for dir in &BISHOP_DIR {
             t_sq = sq + *dir;
             piece = self.pieces[t_sq as usize];
