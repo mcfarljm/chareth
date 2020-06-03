@@ -37,7 +37,8 @@ pub struct MoveList {
 
 impl MoveList {
     fn new() -> MoveList {
-        MoveList{moves: Vec::<ScoredMove>::new()}
+        // Speed up by avoiding reallocation
+        MoveList{moves: Vec::<ScoredMove>::with_capacity(256)}
     }
 
     fn add_quiet_move(&mut self, b: &board::Board, mv: moves::Move) {
@@ -151,8 +152,6 @@ impl board::Board {
         debug_assert!(self.check());
 
         let mut move_list = MoveList::new();
-        // Speed up by avoiding reallocation
-        move_list.moves.reserve(256);
 
         let mut t_sq: Square;
 
