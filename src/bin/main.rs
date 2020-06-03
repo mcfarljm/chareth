@@ -1,4 +1,5 @@
-use chareth::{board,benchmarks,xboard,simpleloop};
+use chareth::{board,xboard,simpleloop};
+// use chareth::benchmarks;
 
 use std::io::{self, Write};
 use std::env;
