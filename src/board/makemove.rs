@@ -217,16 +217,10 @@ impl Board {
         }
 
         // Remove from piece list
-        let mut i_piece = 0;
-        let mut found = false;
-        for (i, t_sq) in self.piece_lists[piece as usize].iter().enumerate() {
-            if *t_sq == sq {
-                found = true;
-                i_piece = i;
-                break;
-            }
-        }
-        assert!(found);
+        let i_piece = self.piece_lists[piece as usize]
+            .iter()
+            .position(|x| *x == sq)
+            .expect("piece must exist in piece list");
         self.piece_lists[piece as usize].swap_remove(i_piece);
     }
 
@@ -277,15 +271,11 @@ impl Board {
             self.pawns[BOTH].set_bit(to64);
         }
 
-        let mut found = false;
-        for (i, t_sq) in self.piece_lists[piece as usize].iter().enumerate() {
-            if *t_sq == from {
-                found = true;
-                self.piece_lists[piece as usize][i] = to;
-                break;
-            }
-        }
-        assert!(found);
+        let sq = self.piece_lists[piece as usize]
+            .iter_mut()
+            .find(|sq| **sq == from)
+            .expect("from square must have a piece");
+        *sq = to;
     }
 
     fn hash_piece(&mut self, piece: Piece, sq: Square) {
