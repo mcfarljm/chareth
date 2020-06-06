@@ -334,7 +334,7 @@ impl Board {
         }
 
         s.push('\n');
-        s.push_str(&format!("side: {}\n", side_chars.chars().nth(self.side as usize).unwrap()));
+        s.push_str(&format!("side: {}\n", side_chars.chars().nth(self.side).unwrap()));
         s.push_str(&format!("enPas: {}\n", self.en_pas));
 
         s.push_str(&format!("castle: {}{}{}{}\n",
@@ -492,7 +492,7 @@ impl Board {
                 continue;
             }
             piece = self.pieces[t_sq as usize];
-            if piece.is_knight() && piece.color() == side as usize {
+            if piece.is_knight() && piece.color() == side {
                 return true;
             }
         }
@@ -503,7 +503,7 @@ impl Board {
             piece = self.pieces[t_sq as usize];
             while piece != Piece::Offboard {
                 if piece.exists() {
-                    if piece.is_rook_or_queen() && piece.color() == side as usize { return true; }
+                    if piece.is_rook_or_queen() && piece.color() == side { return true; }
                     break;
                 }
                 t_sq += *dir;
@@ -517,7 +517,7 @@ impl Board {
             piece = self.pieces[t_sq as usize];
             while piece != Piece::Offboard {
                 if piece.exists() {
-                    if piece.is_bishop_or_queen() && piece.color() == side as usize { return true; }
+                    if piece.is_bishop_or_queen() && piece.color() == side { return true; }
                     break;
                 }
                 t_sq += *dir;
