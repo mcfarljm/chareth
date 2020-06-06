@@ -7,25 +7,28 @@ impl Board {
         if input.len() < 4 {
             return None;
         }
-        if input.chars().nth(0).unwrap() as u8 > 'h' as u8 ||
-            (input.chars().nth(0).unwrap() as u8) < 'a' as u8 {
+
+        let mut chars = input.chars();
+        let c0 = chars.next().unwrap();
+        let c1 = chars.next().unwrap();
+        let c2 = chars.next().unwrap();
+        let c3 = chars.next().unwrap();
+        
+        if c0 as u8 > 'h' as u8 || (c0 as u8) < 'a' as u8 {
             return None;
         }
-        if input.chars().nth(2).unwrap() as u8 > 'h' as u8 ||
-            (input.chars().nth(2).unwrap() as u8) < 'a' as u8 {
+        if c2 as u8 > 'h' as u8 || (c2 as u8) < 'a' as u8 {
             return None;
         }
-        if input.chars().nth(1).unwrap() as u8 > '8' as u8 ||
-            (input.chars().nth(1).unwrap() as u8) < '1' as u8 {
+        if c1 as u8 > '8' as u8 || (c1 as u8) < '1' as u8 {
             return None;
         }
-        if input.chars().nth(3).unwrap() as u8 > '8' as u8 ||
-            (input.chars().nth(3).unwrap() as u8) < '1' as u8 {
+        if c3 as u8 > '8' as u8 || (c3 as u8) < '1' as u8 {
             return None;
         }
 
-        let from = fr_to_sq(input.chars().nth(0).unwrap() as Square - 'a' as Square, input.chars().nth(1).unwrap() as Square - '1' as Square);
-        let to = fr_to_sq(input.chars().nth(2).unwrap() as Square - 'a' as Square, input.chars().nth(3).unwrap() as Square - '1' as Square);
+        let from = fr_to_sq(c0 as Square - 'a' as Square, c1 as Square - '1' as Square);
+        let to = fr_to_sq(c2 as Square - 'a' as Square, c3 as Square - '1' as Square);
         assert!(square_on_board(from));
         assert!(square_on_board(to));
 
@@ -36,11 +39,14 @@ impl Board {
             if mv.from() == from && mv.to() == to {
                 let prom_piece = mv.promote;
                 if prom_piece.exists() {
+                    // Instead of panicking, return None if the input
+                    // is missing a promotion character
+                    let c4 = input.chars().nth(4)?;
                     match prom_piece {
-                        Piece::WR | Piece::BR if input.chars().nth(4).unwrap() == 'r' => { return Some(mv); }
-                        Piece::WB | Piece::BB if input.chars().nth(4).unwrap() == 'b' => { return Some(mv); }
-                        Piece::WQ | Piece::BQ if input.chars().nth(4).unwrap() == 'q' => { return Some(mv); }
-                        Piece::WN | Piece::BN if input.chars().nth(4).unwrap() == 'n' => { return Some(mv); }
+                        Piece::WR | Piece::BR if c4 == 'r' => { return Some(mv); }
+                        Piece::WB | Piece::BB if c4 == 'b' => { return Some(mv); }
+                        Piece::WQ | Piece::BQ if c4 == 'q' => { return Some(mv); }
+                        Piece::WN | Piece::BN if c4 == 'n' => { return Some(mv); }
                         _ => continue,
                     }
                 } else {
