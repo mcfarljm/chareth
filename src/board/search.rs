@@ -218,7 +218,7 @@ impl Board {
                     print!("pv");
                 }
                 for mv in &self.pv_array {
-                    print!(" {}", mv.to_string());
+                    print!(" {}", mv);
                 }
                 println!("");
             }
@@ -229,17 +229,17 @@ impl Board {
         match info.game_mode {
             GameMode::Uci => {
                 if let Some(mv) = best_move {
-                    println!("bestmove {}", mv.to_string());
+                    println!("bestmove {}", mv);
                 }
             }
             GameMode::Xboard => {
                 if let Some(mv) = best_move {
-                    println!("move {}", mv.to_string());
+                    println!("move {}", mv);
                 }
             }
             GameMode::Console => {
                 if let Some(mv) = best_move {
-                    println!("{} makes move: {}", PROGRAM_NAME, mv.to_string());
+                    println!("{} makes move: {}", PROGRAM_NAME, mv);
                 }
             }
             _ => (),

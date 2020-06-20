@@ -2,6 +2,8 @@ use crate::board;
 use crate::board::Square;
 use crate::pieces::Piece;
 
+use std::fmt;
+
 pub fn square_string(sq: Square) -> String {
     String::from(format!("{}{}",
                          ('a' as u8 + board::FILES[sq as usize] as u8) as char,
@@ -80,12 +82,14 @@ impl Move {
             _ => false,
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
+impl fmt::Display for Move {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let from = self.from();
         let to = self.to();
 
-        let mut s = String::from(format!("{}{}", square_string(from), square_string(to)));
+        write!(f, "{}{}", square_string(from), square_string(to))?;
 
         if self.promote.exists() {
             let mut pchar = 'q';
@@ -98,10 +102,10 @@ impl Move {
             else if self.promote.is_bishop_or_queen() && ! self.promote.is_rook_or_queen() {
                 pchar = 'b';
             }
-            s.push(pchar);
+            write!(f, "{}", pchar)?;
         }
 
-        s
+        Ok(())
     }
 }
 
@@ -112,7 +116,6 @@ mod tests {
     #[test]
     fn move_string() {
         let mv = Move::new(board::Position::C1 as Square, board::Position::C3 as Square, Piece::Empty, Piece::WR, MoveFlag::None);
-        let s = mv.to_string();
-        assert_eq!(s, "c1c3r");
+        assert_eq!(mv.to_string(), "c1c3r");
     }
 }

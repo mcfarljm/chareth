@@ -132,7 +132,7 @@ impl MoveList {
     pub fn print(&self) {
         println!("Move list: {}", self.moves.len());
         for (i, smv) in self.moves.iter().enumerate() {
-            println!("Move: {} > {} (score: {})", i+1, smv.mv.to_string(), smv.score);
+            println!("Move: {} > {} (score: {})", i+1, smv.mv, smv.score);
         }
     }
 

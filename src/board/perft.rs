@@ -26,7 +26,7 @@ mod tests {
                 }
                 new = self.perft(depth - 1, false);
                 if verbose {
-                    println!("move {} : {}", smv.mv.to_string(), new);
+                    println!("move {} : {}", smv.mv, new);
                 }
                 count += new;
                 self.undo_move();
