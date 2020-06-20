@@ -8,6 +8,7 @@ mod uci;
 
 use rand::Rng;
 use std::collections::HashMap;
+use std::fmt;
 
 use crate::pieces::*;
 use crate::bitboard;
@@ -307,48 +308,9 @@ impl Board {
         hash
     }
 
-    pub fn to_string(&self) -> String {
-        // Todo: change to list of chars to simplify indexing
-        let piece_chars = ".PNBRQKpnbrqk";
-        let side_chars = "wb-";
-        let file_chars = "abcdefgh";
-
-        let mut s = String::new();
-
-        let mut sq;
-        let mut piece;
-        for rank in RANKS_ITER.rev() {
-            s.push_str(&format!("{}     ", rank+1));
-            for file in FILES_ITER {
-                sq = fr_to_sq(file, rank);
-                piece = self.pieces[sq as usize];
-                s.push_str(&format!("{:3}", piece_chars.chars().nth(piece as usize).unwrap()))
-            }
-            s.push('\n');
-        }
-        // s.push('\n');
-        s.push_str(&"\n      ");
-
-        for file in FILES_ITER {
-            s.push_str(&format!("{:3}", file_chars.chars().nth(file as usize).unwrap()));
-        }
-
-        s.push('\n');
-        s.push_str(&format!("side: {}\n", side_chars.chars().nth(self.side).unwrap()));
-        s.push_str(&format!("enPas: {}\n", self.en_pas));
-
-        s.push_str(&format!("castle: {}{}{}{}\n",
-                            if self.castle_perm & Castling::WK != 0 {'K'} else {'-'},
-                            if self.castle_perm & Castling::WQ != 0 {'Q'} else {'-'},
-                            if self.castle_perm & Castling::BK != 0 {'k'} else {'-'},
-                            if self.castle_perm & Castling::BQ != 0 {'q'} else {'-'}));
-
-        s
-    }
-
-    // Print to stdout.  Unlike to_string, this includes the position key
+    // Print to stdout.  Unlike fmt, this includes the position key
     pub fn print(&self) {
-        println!("{}Hash: {:x}", self.to_string(), self.hash);
+        println!("{}Hash: {:x}", self, self.hash);
     }
 
     fn update_lists_and_material(&mut self) {
@@ -648,6 +610,44 @@ impl Board {
         debug_assert!(board.check());
         
         board
+    }
+}
+
+impl fmt::Display for Board {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Todo: change to list of chars to simplify indexing
+        let piece_chars = ".PNBRQKpnbrqk";
+        let side_chars = "wb-";
+        let file_chars = "abcdefgh";
+
+        let mut sq;
+        let mut piece;
+        for rank in RANKS_ITER.rev() {
+            write!(f, "{}     ", rank+1)?;
+            for file in FILES_ITER {
+                sq = fr_to_sq(file, rank);
+                piece = self.pieces[sq as usize];
+                write!(f, "{:3}", piece_chars.chars().nth(piece as usize).unwrap())?;
+            }
+            write!(f, "\n")?;
+        }
+        write!(f, "\n      ")?;
+
+        for file in FILES_ITER {
+            write!(f, "{:3}", file_chars.chars().nth(file as usize).unwrap())?;
+        }
+
+        write!(f, "\n")?;
+        write!(f, "side: {}\n", side_chars.chars().nth(self.side).unwrap())?;
+        write!(f, "enPas: {}\n", self.en_pas)?;
+
+        write!(f, "castle: {}{}{}{}\n",
+                            if self.castle_perm & Castling::WK != 0 {'K'} else {'-'},
+                            if self.castle_perm & Castling::WQ != 0 {'Q'} else {'-'},
+                            if self.castle_perm & Castling::BK != 0 {'k'} else {'-'},
+                            if self.castle_perm & Castling::BQ != 0 {'q'} else {'-'})?;
+
+        Ok(())
     }
 }
 
