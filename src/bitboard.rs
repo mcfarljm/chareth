@@ -1,3 +1,5 @@
+use std::fmt;
+
 use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
 use crate::pieces::WHITE;
 
@@ -90,27 +92,26 @@ impl Bitboard {
             }
         }
     }
+}
 
-    #[allow(dead_code)]
-    pub fn to_string(&self) -> String {
-        let one: u64 = 1;
+impl fmt::Display for Bitboard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut sq;
         let mut sq64: usize;
 
-        let mut s = String::new();
         for rank in RANKS_ITER.rev() {
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
                 sq64 = SQUARE_120_TO_64[sq as usize];
-                if (one << sq64) & self.val != 0 {
-                    s.push('x');
+                if (1 << sq64) & self.val != 0 {
+                    write!(f, "x")?;
                 } else {
-                    s.push('-');
+                    write!(f, "-")?;
                 }
             }
-            s.push('\n');
+            write!(f, "\n")?;
         }
-        s
+        Ok(())
     }
 }
 
@@ -192,13 +193,13 @@ fn get_eval_masks() -> BitboardArrays {
     //     unsafe {
     //         bb.val = isolated_mask[sq64];
     //     }
-    //     println!("{}", bb.to_string());
+    //     println!("{}", bb);
     // }
 
     // let mut bb = Bitboard::new();
     // unsafe {
     //     bb.val = rank_bb_masks[1];
-    //     println!("{}", bb.to_string());
+    //     println!("{}", bb);
     // }
 
     BitboardArrays(file_bb_masks, rank_bb_masks, white_passed_mask, black_passed_mask, isolated_mask)
@@ -303,7 +304,7 @@ mod tests {
         assert_eq!(bb.val, 0x202020202020202);        
         bb.val = FILE_BB_MASKS[7];
         assert_eq!(bb.val, 0x8080808080808080);
-        // println!("{}", bb.to_string());
+        // println!("{}", bb);
         // println!("{:x}", bb.val);
     }
 
