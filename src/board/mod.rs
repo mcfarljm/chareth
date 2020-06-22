@@ -336,11 +336,7 @@ impl Board {
                 if piece.is_king() {
                     self.king_sq[color] = sq120;
                 }
-                let sq64;
-                if let Piece::WP | Piece::BP = piece {
-                    sq64 = SQUARE_120_TO_64[sq120 as usize];
-                    self.bitboards[piece as usize].set_bit(sq64);
-                }
+                self.bitboards[piece as usize].set_bit(SQUARE_120_TO_64[sq120 as usize]);
             }
         }
     }
@@ -417,6 +413,8 @@ impl Board {
 
         assert_eq!(self.pieces[self.king_sq[WHITE] as usize], Piece::WK);
         assert_eq!(self.pieces[self.king_sq[BLACK] as usize], Piece::BK);
+        assert_eq!(SQUARE_120_TO_64[self.king_sq[WHITE] as usize], self.bitboards[Piece::WK as usize].clone().pop_bit());
+        assert_eq!(SQUARE_120_TO_64[self.king_sq[BLACK] as usize], self.bitboards[Piece::BK as usize].clone().pop_bit());
         
         true
     }

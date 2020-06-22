@@ -210,10 +210,10 @@ impl Board {
             } else {
                 self.num_minor_piece[color] -= 1;
             }
-        } else {
-            let sq64 = SQUARE_120_TO_64[sq as usize];
-            self.bitboards[piece as usize].clear_bit(sq64);
         }
+
+        let sq64 = SQUARE_120_TO_64[sq as usize];
+        self.bitboards[piece as usize].clear_bit(sq64);
 
         // Remove from piece list
         let i_piece = self.piece_lists[piece as usize]
@@ -239,10 +239,10 @@ impl Board {
             } else {
                 self.num_minor_piece[color] += 1;
             }
-        } else {
-            let sq64 = SQUARE_120_TO_64[sq as usize];
-            self.bitboards[piece as usize].set_bit(sq64);
         }
+
+        let sq64 = SQUARE_120_TO_64[sq as usize];
+        self.bitboards[piece as usize].set_bit(sq64);
 
         self.material[color] += piece.value();
         self.piece_lists[piece as usize].push(sq);
@@ -260,12 +260,10 @@ impl Board {
         self.hash_piece(piece, to);
         self.pieces[to as usize] = piece;
 
-        if ! piece.is_big() {
-            let from64 = SQUARE_120_TO_64[from as usize];
-            let to64 = SQUARE_120_TO_64[to as usize];
-            self.bitboards[piece as usize].clear_bit(from64);
-            self.bitboards[piece as usize].set_bit(to64);
-        }
+        let from64 = SQUARE_120_TO_64[from as usize];
+        let to64 = SQUARE_120_TO_64[to as usize];
+        self.bitboards[piece as usize].clear_bit(from64);
+        self.bitboards[piece as usize].set_bit(to64);
 
         let sq = self.piece_lists[piece as usize]
             .iter_mut()
