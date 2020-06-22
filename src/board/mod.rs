@@ -82,6 +82,8 @@ pub struct Board {
     pub pieces: [Piece; BOARD_SQ_NUM],
 
     pub bitboards: [Bitboard; NUM_PIECE_TYPES_BOTH],
+    // White and black bitboards for all pieces
+    pub bb_side: [Bitboard; 2],
 
     num_big_piece: [i32; 2],
     num_major_piece: [i32; 2],
@@ -133,6 +135,7 @@ impl Board {
             pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
             bitboards : Default::default(),
+            bb_side: Default::default(),
 
             num_big_piece: [0; 2],
             num_major_piece: [0; 2],
@@ -336,7 +339,8 @@ impl Board {
                 if piece.is_king() {
                     self.king_sq[color] = sq120;
                 }
-                self.bitboards[piece as usize].set_bit(SQUARE_120_TO_64[sq120 as usize]);
+                self.bitboards[piece as usize].set_bit(sq);
+                self.bb_side[color].set_bit(sq);
             }
         }
     }
@@ -415,6 +419,10 @@ impl Board {
         assert_eq!(self.pieces[self.king_sq[BLACK] as usize], Piece::BK);
         assert_eq!(SQUARE_120_TO_64[self.king_sq[WHITE] as usize], self.bitboards[Piece::WK as usize].clone().pop_bit());
         assert_eq!(SQUARE_120_TO_64[self.king_sq[BLACK] as usize], self.bitboards[Piece::BK as usize].clone().pop_bit());
+
+        // Check side piece bitboards:
+        assert_eq!(self.bb_side[WHITE].count(), PIECE_TYPES.iter().filter(|p| p.color()==WHITE).map(|&p| self.bitboards[p as usize].count()).sum());
+        assert_eq!(self.bb_side[BLACK].count(), PIECE_TYPES.iter().filter(|p| p.color()==BLACK).map(|&p| self.bitboards[p as usize].count()).sum());
         
         true
     }
