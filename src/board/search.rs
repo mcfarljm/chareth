@@ -248,7 +248,7 @@ impl Board {
     }
 
     pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
-        self.search_history = [[0; BOARD_SQ_NUM]; 13];
+        self.search_history = [[0; BOARD_SQ_NUM]; NUM_PIECE_TYPES_BOTH];
         self.search_killers = [[None, None]; MAX_DEPTH as usize];
 
         self.pv_table.clear();

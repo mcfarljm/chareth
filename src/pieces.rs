@@ -1,3 +1,5 @@
+use std::fmt;
+
 pub const PAWN_VAL: i32 = 100;
 pub const KNIGHT_VAL: i32 = 325;
 pub const BISHOP_VAL: i32 = 325;
@@ -5,14 +7,17 @@ pub const ROOK_VAL: i32 = 550;
 pub const QUEEN_VAL: i32 = 1000;
 pub const KING_VAL: i32 = 50000;
 
+pub const NUM_PIECE_TYPES_BOTH: usize = 12;
+pub const PIECE_TYPES: [Piece; NUM_PIECE_TYPES_BOTH] = [Piece::WP, Piece::WN, Piece::WB, Piece::WR, Piece::WQ, Piece::WK, Piece::BP, Piece::BN, Piece::BB, Piece::BR, Piece::BQ, Piece::BK];
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(Copy)]
 pub enum Piece {
-    Empty,
     WP, WN, WB, WR, WQ, WK,
     BP, BN, BB, BR, BQ, BK,
+    Empty,
     Offboard,
 }
 
@@ -116,6 +121,48 @@ impl Piece {
             Piece::Empty | Piece::Offboard => 0,
         }
     }
+
+    pub fn swap(&self) -> Piece {
+        match *self {
+            Piece::WP => Piece::BP,
+            Piece::WN => Piece::BN,
+            Piece::WB => Piece::BB,
+            Piece::WR => Piece::BR,
+            Piece::WQ => Piece::BQ,
+            Piece::WK => Piece::BK,
+
+            Piece::BP => Piece::WP,
+            Piece::BN => Piece::WN,
+            Piece::BB => Piece::WB,
+            Piece::BR => Piece::WR,
+            Piece::BQ => Piece::WQ,
+            Piece::BK => Piece::WK,
+
+            Piece::Empty => Piece::Empty,
+            Piece::Offboard => Piece::Offboard,
+        }
+    }
+}
+
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Piece::WP => { write!(f, "P") }
+            Piece::WN => { write!(f, "N") }
+            Piece::WB => { write!(f, "B") }
+            Piece::WR => { write!(f, "R") }
+            Piece::WQ => { write!(f, "Q") }
+            Piece::WK => { write!(f, "K") }
+            Piece::BP => { write!(f, "p") }
+            Piece::BN => { write!(f, "n") }
+            Piece::BB => { write!(f, "b") }
+            Piece::BR => { write!(f, "r") }
+            Piece::BQ => { write!(f, "q") }
+            Piece::BK => { write!(f, "k") }
+            Piece::Empty => { write!(f, ".") }
+            _ => { Err(fmt::Error) }
+        }
+    }
 }
 
 pub const WHITE: usize = 0;
@@ -137,9 +184,8 @@ pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Pi
 // piece.  A zero value is used to indicate the end, since the counts
 // are not the same.  Pawns are not included.  Storing with vectors
 // would make more sense but can't be statically allocated.
-pub const DIRECTIONS: [[i8; 9]; 13] =
+pub const DIRECTIONS: [[i8; 9]; NUM_PIECE_TYPES_BOTH] =
     [ [0; 9],
-       [0; 9],
        [ -8, -19, -21, -12, 8, 19, 21, 12, 0 ],
        [ -9, -11, 11, 9, 0, 0, 0, 0, 0 ],
        [ -1, -10, 1, 10, 0, 0, 0, 0, 0 ],

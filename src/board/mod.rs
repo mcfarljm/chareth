@@ -113,7 +113,7 @@ pub struct Board {
     pub pv_array: Vec<moves::Move>,
 
     // Incremented for piece type and its to square when move beats alpha
-    search_history : [[u32; BOARD_SQ_NUM]; 13],
+    search_history : [[u32; BOARD_SQ_NUM]; NUM_PIECE_TYPES_BOTH],
     // Two most recent moves that recently caused a beta cutoff that
     // aren't captures; vector length is by depth.
 
@@ -125,7 +125,7 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         let mut piece_lists: Vec<Vec<Square>> = Vec::new();
-        for _i in 0..13 {
+        for _i in 0..NUM_PIECE_TYPES_BOTH {
             piece_lists.push(Vec::new());
         }
         
@@ -165,7 +165,7 @@ impl Board {
             pv_table: HashMap::new(),
             pv_array: Vec::new(),
 
-            search_history: [[0; BOARD_SQ_NUM]; 13],
+            search_history: [[0; BOARD_SQ_NUM]; NUM_PIECE_TYPES_BOTH],
             search_killers: [[None, None]; MAX_DEPTH as usize],
         };
 
@@ -347,14 +347,14 @@ impl Board {
     }
 
     pub fn check(&self) -> bool {
-        let mut piece_count: [i32; 13] = [0; 13];
+        let mut piece_count: [i32; NUM_PIECE_TYPES_BOTH] = [0; NUM_PIECE_TYPES_BOTH];
         let mut num_big_piece = [0; 2];
         let mut num_major_piece = [0; 2];
         let mut num_minor_piece = [0; 2];
         let mut material = [0; 2];
 
         // Check piece lists:
-        for piece in 1..13 {
+        for piece in 0..NUM_PIECE_TYPES_BOTH {
             for sq in &self.piece_lists[piece as usize] {
                 assert_eq!(self.pieces[*sq as usize] as usize, piece);
             }
@@ -383,7 +383,7 @@ impl Board {
             }
         }
 
-        for piece in 1..13 {
+        for piece in 0..NUM_PIECE_TYPES_BOTH {
             assert_eq!(piece_count[piece as usize] as usize, self.piece_lists[piece as usize].len());
         }
 
@@ -576,8 +576,6 @@ impl Board {
     // Mirror the board, for verifying that the evaluation function is
     // symmetrical
     pub fn mirror(&mut self) -> Board {
-
-        let swap_piece: [Piece; 13] = [Piece::Empty, Piece::BP, Piece::BN, Piece::BB, Piece::BR, Piece::BQ, Piece::BK, Piece::WP, Piece::WN, Piece::WB, Piece::WR, Piece::WQ, Piece::WK];
         
         let mut board = Board::new();
 
@@ -600,7 +598,7 @@ impl Board {
         }
 
         for sq64 in 0..64 {
-            board.pieces[SQUARE_64_TO_120[sq64] as usize] = swap_piece[self.pieces[SQUARE_64_TO_120[MIRROR64[sq64]] as usize] as usize];
+            board.pieces[SQUARE_64_TO_120[sq64] as usize] = self.pieces[SQUARE_64_TO_120[MIRROR64[sq64]] as usize].swap();
         }
 
         board.side = self.side^1;
@@ -616,7 +614,6 @@ impl Board {
 impl fmt::Display for Board {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // Todo: change to list of chars to simplify indexing
-        let piece_chars = ".PNBRQKpnbrqk";
         let side_chars = "wb-";
         let file_chars = "abcdefgh";
 
@@ -627,7 +624,7 @@ impl fmt::Display for Board {
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
                 piece = self.pieces[sq as usize];
-                write!(f, "{:3}", piece_chars.chars().nth(piece as usize).unwrap())?;
+                write!(f, "{:3}", piece.to_string())?;
             }
             write!(f, "\n")?;
         }
@@ -652,7 +649,8 @@ impl fmt::Display for Board {
 }
 
 struct HashKeys {
-    piece_keys: [[u64; 120]; 13],
+    // Hashing also includes EMPTY pieces
+    piece_keys: [[u64; 120]; NUM_PIECE_TYPES_BOTH+1],
     side_key: u64,
     castle_keys: [u64; 16],
 }
@@ -660,13 +658,13 @@ struct HashKeys {
 impl HashKeys {
     fn new() -> HashKeys {
         let mut hasher = HashKeys {
-            piece_keys: [[0; 120]; 13],
+            piece_keys: [[0; 120]; NUM_PIECE_TYPES_BOTH+1],
             side_key: 0,
             castle_keys: [0; 16],
         };
 
         hasher.side_key = rand::thread_rng().gen::<u64>();
-        for i in 0..13 {
+        for i in 0..NUM_PIECE_TYPES_BOTH+1 {
             for j in 0..120 {
                 hasher.piece_keys[i][j] = rand::thread_rng().gen::<u64>();
             }

@@ -1,13 +1,24 @@
 use crate::moves;
 use crate::board;
 use crate::board::{Castling,Square};
-use crate::pieces;
-use crate::pieces::Piece;
+use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH};
 
-const VICTIM_SCORE: [i32; 13] = [0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600];
+// Could be a method of Piece, but nice to have it here for
+// organizational purposes
+fn victim_score(piece: &Piece) -> i32 {
+    match piece {
+        Piece::WP | Piece::BP => 100,
+        Piece::WN | Piece::BN => 200,
+        Piece::WB | Piece::BB => 300,
+        Piece::WR | Piece::BR => 400,
+        Piece::WQ | Piece::BQ => 500,
+        Piece::WK | Piece::BK => 600,
+        _ => 0,
+    }
+}
 
 lazy_static! {
-    static ref MVV_LVA_SCORES: [[i32; 13]; 13] = get_mvv_lva();
+    static ref MVV_LVA_SCORES: [[i32; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH] = get_mvv_lva();
 }
 
 pub struct ScoredMove {
@@ -326,11 +337,11 @@ pub fn init_mvv_lva() {
 }
 
 // Initialize most valuable victim, least valuable attacker array
-fn get_mvv_lva() -> [[i32; 13]; 13] {
-    let mut mvv_lva_scores: [[i32; 13]; 13] = [[0; 13]; 13];
-    for attacker in Piece::WP as usize..=Piece::BK as usize {
-        for victim in Piece::WP as usize..=Piece::BK as usize {
-            mvv_lva_scores[victim][attacker] = VICTIM_SCORE[victim] + 6 - VICTIM_SCORE[attacker]/100;
+fn get_mvv_lva() -> [[i32; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH] {
+    let mut mvv_lva_scores: [[i32; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH] = [[0; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH];
+    for attacker in &PIECE_TYPES {
+        for victim in &PIECE_TYPES {
+            mvv_lva_scores[*victim as usize][*attacker as usize] = victim_score(victim) + 6 - victim_score(attacker)/100;
         }
     }
     mvv_lva_scores
