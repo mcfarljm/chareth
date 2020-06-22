@@ -26,6 +26,7 @@ lazy_static! {
 }
 
 #[derive(Clone)]
+#[derive(Copy)]
 pub struct Bitboard {
     val: u64,
 }

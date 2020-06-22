@@ -16,9 +16,7 @@ impl Board {
 
         let mut piece;
 
-        piece = Piece::WP;
-        for sq in &self.piece_lists[piece as usize] {
-            let sq64 = SQUARE_120_TO_64[*sq as usize];
+        for sq64 in self.pawns[WHITE].into_iter() {
             score += PAWN_TABLE[sq64];
 
             if self.pawns[WHITE].isolated_pawn(sq64) {
@@ -26,13 +24,12 @@ impl Board {
             }
 
             if self.pawns[BLACK].passed_pawn(sq64, WHITE) {
-                score += PAWN_PASSED_SCORE[RANKS[*sq as usize] as usize];
+                // Todo: formalize RANKS for sq64
+                score += PAWN_PASSED_SCORE[sq64/8];
             }
         }
 
-        piece = Piece::BP;
-        for sq in &self.piece_lists[piece as usize] {
-            let sq64 = SQUARE_120_TO_64[*sq as usize];
+        for sq64 in self.pawns[BLACK].into_iter() {
             score -= PAWN_TABLE[MIRROR64[sq64]];
 
             if self.pawns[BLACK].isolated_pawn(sq64) {
@@ -40,7 +37,8 @@ impl Board {
             }
 
             if self.pawns[WHITE].passed_pawn(sq64, BLACK) {
-                score -= PAWN_PASSED_SCORE[7 - RANKS[*sq as usize] as usize];
+                // Todo: formalize RANKS for sq64
+                score -= PAWN_PASSED_SCORE[7 - sq64/8];
             }
         }
 
