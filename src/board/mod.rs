@@ -81,7 +81,7 @@ pub struct Undo {
 pub struct Board {
     pub pieces: [Piece; BOARD_SQ_NUM],
 
-    pub pawns: Vec<bitboard::Bitboard>,
+    pub pawns: [bitboard::Bitboard; 3],
 
     num_big_piece: [i32; 2],
     num_major_piece: [i32; 2],
@@ -132,7 +132,7 @@ impl Board {
         let mut board = Board{
             pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
-            pawns: vec![bitboard::Bitboard::new(); 3],
+            pawns: [bitboard::Bitboard::new(), bitboard::Bitboard::new(), bitboard::Bitboard::new()],
 
             num_big_piece: [0; 2],
             num_major_piece: [0; 2],
