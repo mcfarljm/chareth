@@ -1,9 +1,8 @@
 use std::fmt;
+use bitintr::Tzcnt;
 
 use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
 use crate::pieces::WHITE;
-
-const BIT_TABLE: [usize; 64] = [63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35, 62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8];
 
 // A return value to facilitate a single function that initializes
 // multiple bitboard arrays
@@ -61,11 +60,9 @@ impl Bitboard {
     }
 
     pub fn pop_bit(&mut self) -> usize {
-        let b: u64 = self.val ^ (self.val-1);
-        let fold: u32 = ((b & 0xffffffff) ^ (b >> 32)) as u32;
+        let sq = self.val.tzcnt();
         self.val &= self.val - 1;
-        let i: usize = (fold.wrapping_mul(0x783a9b23) >> 26) as usize;
-        BIT_TABLE[i]
+        sq as usize
     }
 
     pub fn isolated_pawn(&self, sq64: usize) -> bool {
