@@ -171,8 +171,9 @@ impl board::Board {
                 let dirs: [i8; 2] = [9, 11];
                 for dir in &dirs {
                     t_sq = sq + dir;
-                    if board::square_on_board(t_sq) && self.pieces[t_sq as usize].color() == pieces::BLACK {
-                        move_list.add_white_pawn_capture_move(self, *sq, t_sq, self.pieces[t_sq as usize]);
+                    let t_piece = self.pieces[t_sq as usize];
+                    if board::square_on_board(t_sq) && t_piece.color() == pieces::BLACK {
+                        move_list.add_white_pawn_capture_move(self, *sq, t_sq, t_piece);
                     }
                 }
 
@@ -220,8 +221,9 @@ impl board::Board {
                 let dirs: [i8; 2] = [9, 11];
                 for dir in &dirs {
                     t_sq = sq - dir;
-                    if board::square_on_board(t_sq) && self.pieces[t_sq as usize].color() == pieces::WHITE {
-                        move_list.add_black_pawn_capture_move(self, *sq, t_sq, self.pieces[t_sq as usize]);
+                    let t_piece = self.pieces[t_sq as usize];
+                    if board::square_on_board(t_sq) && t_piece.color() == pieces::WHITE {
+                        move_list.add_black_pawn_capture_move(self, *sq, t_sq, t_piece);
                     }
                 }
 
@@ -269,9 +271,10 @@ impl board::Board {
 
                     while board::square_on_board(t_sq) {
                         // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
-                        if self.pieces[t_sq as usize] != Piece::Empty {
-                            if self.pieces[t_sq as usize].color() == self.side ^ 1 {
-                                move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, self.pieces[t_sq as usize], Piece::Empty, moves::MoveFlag::None));
+                        let t_piece = self.pieces[t_sq as usize];
+                        if t_piece != Piece::Empty {
+                            if t_piece.color() == self.side ^ 1 {
+                                move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
                             }
                             break;
                         }
@@ -299,9 +302,10 @@ impl board::Board {
                     }
 
                     // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
-                    if self.pieces[t_sq as usize] != Piece::Empty {
-                        if self.pieces[t_sq as usize].color() == self.side ^ 1 {
-                            move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, self.pieces[t_sq as usize], Piece::Empty, moves::MoveFlag::None));
+                    let t_piece = self.pieces[t_sq as usize];
+                    if t_piece != Piece::Empty {
+                        if t_piece.color() == self.side ^ 1 {
+                            move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
                         }
                         continue;
                     }
