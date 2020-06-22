@@ -82,7 +82,6 @@ pub struct Board {
     pub pieces: [Piece; BOARD_SQ_NUM],
 
     pub bitboards: [Bitboard; NUM_PIECE_TYPES_BOTH],
-    pub pawns: [Bitboard; 3],
 
     num_big_piece: [i32; 2],
     num_major_piece: [i32; 2],
@@ -134,7 +133,6 @@ impl Board {
             pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
             bitboards : Default::default(),
-            pawns: Default::default(),
 
             num_big_piece: [0; 2],
             num_major_piece: [0; 2],
@@ -341,8 +339,6 @@ impl Board {
                 let sq64;
                 if let Piece::WP | Piece::BP = piece {
                     sq64 = SQUARE_120_TO_64[sq120 as usize];
-                    self.pawns[color].set_bit(sq64);
-                    self.pawns[BOTH].set_bit(sq64);
                     self.bitboards[piece as usize].set_bit(sq64);
                 }
             }
@@ -391,28 +387,11 @@ impl Board {
         }
 
         // Check pawn bitboards:
-        let mut pawns = self.pawns.clone();
-        assert_eq!(piece_count[Piece::WP as usize], pawns[WHITE].count());
-        assert_eq!(piece_count[Piece::BP as usize], pawns[BLACK].count());
         assert_eq!(piece_count[Piece::WP as usize], self.bitboards[Piece::WP as usize].count());
         assert_eq!(piece_count[Piece::BP as usize], self.bitboards[Piece::BP as usize].count());
-        assert_eq!(piece_count[Piece::WP as usize] + piece_count[Piece::BP as usize], self.pawns[BOTH].count());
 
         // Check pawn bitboard squares:
         let bitboards = self.bitboards.clone();
-        let mut sq64;
-        while pawns[WHITE].nonzero() {
-            sq64 = pawns[WHITE].pop_bit();
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::WP);
-        }
-        while pawns[BLACK].nonzero() {
-            sq64 = pawns[BLACK].pop_bit();
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::BP);
-        }
-        while pawns[BOTH].nonzero() {
-            sq64 = pawns[BOTH].pop_bit();
-            assert!(self.pieces[SQUARE_64_TO_120[sq64] as usize] == Piece::WP || self.pieces[SQUARE_64_TO_120[sq64] as usize] == Piece::BP);
-        }
         for sq64 in bitboards[Piece::WP as usize].into_iter() {
             assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::WP);
         }

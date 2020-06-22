@@ -16,27 +16,27 @@ impl Board {
 
         let mut piece;
 
-        for sq64 in self.pawns[WHITE].into_iter() {
+        for sq64 in self.bitboards[Piece::WP as usize].into_iter() {
             score += PAWN_TABLE[sq64];
 
-            if self.pawns[WHITE].isolated_pawn(sq64) {
+            if self.bitboards[Piece::WP as usize].isolated_pawn(sq64) {
                 score += PAWN_ISOLATED_SCORE;
             }
 
-            if self.pawns[BLACK].passed_pawn(sq64, WHITE) {
+            if self.bitboards[Piece::BP as usize].passed_pawn(sq64, WHITE) {
                 // Todo: formalize RANKS for sq64
                 score += PAWN_PASSED_SCORE[sq64/8];
             }
         }
 
-        for sq64 in self.pawns[BLACK].into_iter() {
+        for sq64 in self.bitboards[Piece::BP as usize].into_iter() {
             score -= PAWN_TABLE[MIRROR64[sq64]];
 
-            if self.pawns[BLACK].isolated_pawn(sq64) {
+            if self.bitboards[Piece::BP as usize].isolated_pawn(sq64) {
                 score -= PAWN_ISOLATED_SCORE;
             }
 
-            if self.pawns[WHITE].passed_pawn(sq64, BLACK) {
+            if self.bitboards[Piece::WP as usize].passed_pawn(sq64, BLACK) {
                 // Todo: formalize RANKS for sq64
                 score -= PAWN_PASSED_SCORE[7 - sq64/8];
             }

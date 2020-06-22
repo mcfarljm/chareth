@@ -212,8 +212,6 @@ impl Board {
             }
         } else {
             let sq64 = SQUARE_120_TO_64[sq as usize];
-            self.pawns[color].clear_bit(sq64);
-            self.pawns[BOTH].clear_bit(sq64);
             self.bitboards[piece as usize].clear_bit(sq64);
         }
 
@@ -243,8 +241,6 @@ impl Board {
             }
         } else {
             let sq64 = SQUARE_120_TO_64[sq as usize];
-            self.pawns[color].set_bit(sq64);
-            self.pawns[BOTH].set_bit(sq64);
             self.bitboards[piece as usize].set_bit(sq64);
         }
 
@@ -267,10 +263,6 @@ impl Board {
         if ! piece.is_big() {
             let from64 = SQUARE_120_TO_64[from as usize];
             let to64 = SQUARE_120_TO_64[to as usize];
-            self.pawns[color].clear_bit(from64);
-            self.pawns[BOTH].clear_bit(from64);
-            self.pawns[color].set_bit(to64);
-            self.pawns[BOTH].set_bit(to64);
             self.bitboards[piece as usize].clear_bit(from64);
             self.bitboards[piece as usize].set_bit(to64);
         }
