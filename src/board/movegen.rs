@@ -273,11 +273,7 @@ impl board::Board {
         for piece in pieces::SLIDERS[self.side].iter() {
             for sq in &self.piece_lists[*piece as usize] {
 
-                for dir in &pieces::DIRECTIONS[*piece as usize] {
-                    if *dir == 0 {
-                        // dir==0 indicates end of list
-                        break;
-                    }
+                for dir in piece.directions() {
                     t_sq = *sq + dir;
 
                     while board::square_on_board(t_sq) {
@@ -302,11 +298,7 @@ impl board::Board {
         for piece in &pieces::NON_SLIDERS[self.side] {
             for sq in &self.piece_lists[*piece as usize] {
 
-                for dir in &pieces::DIRECTIONS[*piece as usize] {
-                    if *dir == 0 {
-                        // dir==0 indicates end of list
-                        break;
-                    }
+                for dir in piece.directions() {
                     t_sq = *sq + dir;
                     if ! board::square_on_board(t_sq) {
                         continue;

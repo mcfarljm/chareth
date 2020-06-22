@@ -142,6 +142,18 @@ impl Piece {
             Piece::Offboard => Piece::Offboard,
         }
     }
+
+    // Move directions, not including pawns
+    pub fn directions(&self) -> &'static [i8] {
+        match * self {
+            Piece::WN | Piece::BN => &[-8, -19, -21, -12, 8, 19, 21, 12],
+            Piece::WB | Piece::BB => &[-9, -11, 11, 9],
+            Piece::WR | Piece::BR => &[-1, -10, 1, 10],
+            Piece::WQ | Piece::BQ => &[-1, -10, 1, 10, -9, -11, 11, 9],
+            Piece::WK | Piece::BK => &[-1, -10, 1, 10, -9, -11, 11, 9],
+            _ => &[],
+        }
+    }
 }
 
 impl fmt::Display for Piece {
@@ -177,24 +189,3 @@ pub const KING_DIR: [i8; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
 // SLIDERS[color] produces an array that can be iterated through
 pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
 pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Piece::BK]];
-
-// Todo: replace DIRECTIONS array with methods
-
-// PIECE_DIRS[piece] will give an array of move directions for that
-// piece.  A zero value is used to indicate the end, since the counts
-// are not the same.  Pawns are not included.  Storing with vectors
-// would make more sense but can't be statically allocated.
-pub const DIRECTIONS: [[i8; 9]; NUM_PIECE_TYPES_BOTH] =
-    [ [0; 9],
-       [ -8, -19, -21, -12, 8, 19, 21, 12, 0 ],
-       [ -9, -11, 11, 9, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ],
-       [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-       [ -8, -19, -21, -12, 8, 19, 21, 12, 0 ],
-       [ -9, -11, 11, 9, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ]
-    ];
