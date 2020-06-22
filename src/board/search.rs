@@ -480,11 +480,10 @@ impl Board {
 }
 
 
-pub fn benchmark_search(depth: u32) -> u64 {
+pub fn benchmark_search(depth: u32) {
     let mut board = Board::from_fen(START_FEN);
-    let mut info = SearchInfo::new(depth, GameMode::None); 
+    let mut info = SearchInfo::new(depth, GameMode::Console); 
     board.search(&mut info);
-    info.nodes
 }
 
 
