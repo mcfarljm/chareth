@@ -26,41 +26,39 @@ lazy_static! {
 
 #[derive(Clone)]
 #[derive(Copy)]
-pub struct Bitboard {
-    val: u64,
-}
+pub struct Bitboard(u64);
 
 impl Bitboard {
     pub fn new() -> Bitboard {
-        Bitboard{ val: 0 }
+        Bitboard(0)
     }
 
     pub fn nonzero(&self) -> bool {
-        self.val != 0
+        self.0 != 0
     }
 
     pub fn set_bit(&mut self, index: usize) {
         let mask: u64 = 1 << index;
-        self.val |= mask;
+        self.0 |= mask;
     }
 
     pub fn clear_bit(&mut self, index: usize) {
         let mask: u64 = !(1 << index);
-        self.val &= mask;
+        self.0 &= mask;
     }
 
     pub fn count(&self) -> i32 {
-        self.val.popcnt() as i32
+        self.0.popcnt() as i32
     }
 
     pub fn pop_bit(&mut self) -> usize {
-        let sq = self.val.tzcnt();
-        self.val &= self.val - 1;
+        let sq = self.0.tzcnt();
+        self.0 &= self.0 - 1;
         sq as usize
     }
 
     pub fn isolated_pawn(&self, sq64: usize) -> bool {
-        if ISOLATED_MASK[sq64] & self.val == 0 {
+        if ISOLATED_MASK[sq64] & self.0 == 0 {
             return true;
         } else {
             return false;
@@ -71,13 +69,13 @@ impl Bitboard {
     // opposing side's pawn bitboard (self)
     pub fn passed_pawn(&self, sq64: usize, side: usize) -> bool {
         if side == WHITE {
-            if WHITE_PASSED_MASK[sq64] & self.val == 0 {
+            if WHITE_PASSED_MASK[sq64] & self.0 == 0 {
                 return true;
             } else {
                 return false;
             }
         } else {
-            if BLACK_PASSED_MASK[sq64] & self.val == 0 {
+            if BLACK_PASSED_MASK[sq64] & self.0 == 0 {
                 return true;
             } else {
                 return false;
@@ -101,7 +99,7 @@ impl fmt::Display for Bitboard {
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
                 sq64 = SQUARE_120_TO_64[sq as usize];
-                if (1 << sq64) & self.val != 0 {
+                if (1 << sq64) & self.0 != 0 {
                     write!(f, "x")?;
                 } else {
                     write!(f, "-")?;
@@ -216,14 +214,14 @@ fn get_eval_masks() -> BitboardArrays {
     // let mut bb = Bitboard::new();
     // for sq64 in 0..64 as usize {
     //     unsafe {
-    //         bb.val = isolated_mask[sq64];
+    //         bb.0 = isolated_mask[sq64];
     //     }
     //     println!("{}", bb);
     // }
 
     // let mut bb = Bitboard::new();
     // unsafe {
-    //     bb.val = rank_bb_masks[1];
+    //     bb.0 = rank_bb_masks[1];
     //     println!("{}", bb);
     // }
 
@@ -325,46 +323,46 @@ mod tests {
     #[test]
     fn file_bb_masks() {
         let mut bb = Bitboard::new();
-        bb.val = FILE_BB_MASKS[1];
-        assert_eq!(bb.val, 0x202020202020202);        
-        bb.val = FILE_BB_MASKS[7];
-        assert_eq!(bb.val, 0x8080808080808080);
+        bb.0 = FILE_BB_MASKS[1];
+        assert_eq!(bb.0, 0x202020202020202);        
+        bb.0 = FILE_BB_MASKS[7];
+        assert_eq!(bb.0, 0x8080808080808080);
         // println!("{}", bb);
-        // println!("{:x}", bb.val);
+        // println!("{:x}", bb.0);
     }
 
     #[test]
     fn rank_bb_masks() {
         let mut bb = Bitboard::new();
-        bb.val = RANK_BB_MASKS[1];
-        assert_eq!(bb.val, 0xff00);
-        bb.val = RANK_BB_MASKS[7];
-        assert_eq!(bb.val, 0xff00000000000000);        
+        bb.0 = RANK_BB_MASKS[1];
+        assert_eq!(bb.0, 0xff00);
+        bb.0 = RANK_BB_MASKS[7];
+        assert_eq!(bb.0, 0xff00000000000000);        
     }
 
     #[test]
     fn white_pawn_passed() {
         let mut bb = Bitboard::new();
-        bb.val = WHITE_PASSED_MASK[0];
-        assert_eq!(bb.val, 0x303030303030300);
-        bb.val = WHITE_PASSED_MASK[37];
-        assert_eq!(bb.val, 0x7070700000000000);        
+        bb.0 = WHITE_PASSED_MASK[0];
+        assert_eq!(bb.0, 0x303030303030300);
+        bb.0 = WHITE_PASSED_MASK[37];
+        assert_eq!(bb.0, 0x7070700000000000);        
     }
 
     #[test]
     fn black_pawn_passed() {
         let mut bb = Bitboard::new();
-        bb.val = BLACK_PASSED_MASK[63];
-        assert_eq!(bb.val, 0xc0c0c0c0c0c0c0);        
+        bb.0 = BLACK_PASSED_MASK[63];
+        assert_eq!(bb.0, 0xc0c0c0c0c0c0c0);        
     }
 
     #[test]
     fn isolated_pawn() {
         let mut bb = Bitboard::new();
-        bb.val = ISOLATED_MASK[0];
-        assert_eq!(bb.val, 0x202020202020202);
-        bb.val = ISOLATED_MASK[55];
-        assert_eq!(bb.val, 0x4040404040404040);
+        bb.0 = ISOLATED_MASK[0];
+        assert_eq!(bb.0, 0x202020202020202);
+        bb.0 = ISOLATED_MASK[55];
+        assert_eq!(bb.0, 0x4040404040404040);
     }
 
     #[test]
