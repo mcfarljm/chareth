@@ -14,8 +14,6 @@ impl Board {
         // black is to move
         let mut score = self.material[WHITE] - self.material[BLACK];
 
-        let mut piece;
-
         for sq64 in self.bitboards[Piece::WP as usize].into_iter() {
             score += PAWN_TABLE[sq64];
 
@@ -42,34 +40,28 @@ impl Board {
             }
         }
 
-        piece = Piece::WN;
-        for sq in &self.piece_lists[piece as usize] {
-            score += KNIGHT_TABLE[SQUARE_120_TO_64[*sq as usize]];
+        for sq64 in self.bitboards[Piece::WN as usize].into_iter() {
+            score += KNIGHT_TABLE[sq64];
         }
 
-        piece = Piece::BN;
-        for sq in &self.piece_lists[piece as usize] {
-            score -= KNIGHT_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
+        for sq64 in self.bitboards[Piece::BN as usize].into_iter() {
+            score -= KNIGHT_TABLE[MIRROR64[sq64]];
         }
 
-        piece = Piece::WB;
-        for sq in &self.piece_lists[piece as usize] {
-            score += BISHOP_TABLE[SQUARE_120_TO_64[*sq as usize]];
+        for sq64 in self.bitboards[Piece::WB as usize].into_iter() {
+            score += BISHOP_TABLE[sq64];
         }
 
-        piece = Piece::BB;
-        for sq in &self.piece_lists[piece as usize] {
-            score -= BISHOP_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
+        for sq64 in self.bitboards[Piece::BB as usize].into_iter() {
+            score -= BISHOP_TABLE[MIRROR64[sq64]];
         }
 
-        piece = Piece::WR;
-        for sq in &self.piece_lists[piece as usize] {
-            score += ROOK_TABLE[SQUARE_120_TO_64[*sq as usize]];
+        for sq64 in self.bitboards[Piece::WR as usize].into_iter() {
+            score += ROOK_TABLE[sq64];
         }
 
-        piece = Piece::BR;
-        for sq in &self.piece_lists[piece as usize] {
-            score -= ROOK_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
+        for sq64 in self.bitboards[Piece::BR as usize].into_iter() {
+            score -= ROOK_TABLE[MIRROR64[sq64]];
         }
 
         if self.material[BLACK] <= ENDGAME_MATERIAL {
