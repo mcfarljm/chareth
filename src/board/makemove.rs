@@ -214,6 +214,7 @@ impl Board {
             let sq64 = SQUARE_120_TO_64[sq as usize];
             self.pawns[color].clear_bit(sq64);
             self.pawns[BOTH].clear_bit(sq64);
+            self.bitboards[piece as usize].clear_bit(sq64);
         }
 
         // Remove from piece list
@@ -244,6 +245,7 @@ impl Board {
             let sq64 = SQUARE_120_TO_64[sq as usize];
             self.pawns[color].set_bit(sq64);
             self.pawns[BOTH].set_bit(sq64);
+            self.bitboards[piece as usize].set_bit(sq64);
         }
 
         self.material[color] += piece.value();
@@ -269,6 +271,8 @@ impl Board {
             self.pawns[BOTH].clear_bit(from64);
             self.pawns[color].set_bit(to64);
             self.pawns[BOTH].set_bit(to64);
+            self.bitboards[piece as usize].clear_bit(from64);
+            self.bitboards[piece as usize].set_bit(to64);
         }
 
         let sq = self.piece_lists[piece as usize]
