@@ -1,7 +1,7 @@
 use crate::moves;
-use crate::board;
+use crate::board::{self,SQUARE_64_TO_120};
 use crate::board::{Castling,Square};
-use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH};
+use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH,KNIGHT_MOVES,KING_MOVES};
 
 // Could be a method of Piece, but nice to have it here for
 // organizational purposes
@@ -296,24 +296,25 @@ impl board::Board {
 
         // Non-sliders
         for piece in &pieces::NON_SLIDERS[self.side] {
-            for sq in &self.piece_lists[*piece as usize] {
-
-                for dir in piece.directions() {
-                    t_sq = *sq + dir;
-                    if ! board::square_on_board(t_sq) {
-                        continue;
-                    }
-
+            for sq64 in self.bitboards[*piece as usize].into_iter() {
+                let sq = SQUARE_64_TO_120[sq64];
+                let iterator = match *piece {
+                    Piece::WN | Piece::BN => KNIGHT_MOVES[sq64].into_iter(),
+                    Piece::WK | Piece::BK => KING_MOVES[sq64].into_iter(),
+                    _ => { unreachable!() },
+                };
+                for t_sq64 in iterator {
+                    t_sq = SQUARE_64_TO_120[t_sq64];
                     // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
                     let t_piece = self.pieces[t_sq as usize];
                     if t_piece != Piece::Empty {
                         if t_piece.color() == self.side ^ 1 {
-                            move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
+                            move_list.add_capture_move(self, moves::Move::new(sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
                         }
                         continue;
                     }
                     if non_captures {
-                        move_list.add_quiet_move(self, moves::Move::new(*sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
+                        move_list.add_quiet_move(self, moves::Move::new(sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
                     }
                 }
             }

@@ -1,5 +1,7 @@
 use std::fmt;
 
+use crate::bitboard::Bitboard;
+
 pub const PAWN_VAL: i32 = 100;
 pub const KNIGHT_VAL: i32 = 325;
 pub const BISHOP_VAL: i32 = 325;
@@ -189,3 +191,123 @@ pub const KING_DIR: [i8; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
 // SLIDERS[color] produces an array that can be iterated through
 pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
 pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Piece::BK]];
+
+
+lazy_static! {
+    pub static ref KING_MOVES: [Bitboard; 64] = get_king_moves();
+    pub static ref KNIGHT_MOVES: [Bitboard; 64] = get_knight_moves();
+}
+
+pub fn init_move_tables() {
+    lazy_static::initialize(&KING_MOVES);
+    lazy_static::initialize(&KNIGHT_MOVES);
+}
+
+fn get_king_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+
+    for sq in 0..64 {
+        let rank = sq/8;
+        let file = sq%8;
+
+        // N
+        if rank<7 {
+            bitboards[sq].set_bit(sq+8);
+        }
+        // NE
+        if rank<7 && file<7 {
+            bitboards[sq].set_bit(sq+9);
+        }
+        // E
+        if file<7 {
+            bitboards[sq].set_bit(sq+1);
+        }
+        // SE
+        if file<7 && rank>0 {
+            bitboards[sq].set_bit(sq-7);
+        }
+        // S
+        if rank>0 {
+            bitboards[sq].set_bit(sq-8);
+        }
+        // SW
+        if rank>0 && file>0 {
+            bitboards[sq].set_bit(sq-9);
+        }
+        // W
+        if file>0 {
+            bitboards[sq].set_bit(sq-1);
+        }
+        // NW
+        if file>0 && rank<7 {
+            bitboards[sq].set_bit(sq+7);
+        }
+    }
+    
+    bitboards
+}
+
+fn get_knight_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+
+    for sq in 0..64 {
+        let rank = sq/8;
+        let file = sq%8;
+
+        // NNE
+        if rank<6 && file<7 {
+            bitboards[sq].set_bit(sq+17);
+        }
+        // ENE
+        if rank<7 && file<6 {
+            bitboards[sq].set_bit(sq+10);
+        }
+        // ESE
+        if rank>0 && file<6 {
+            bitboards[sq].set_bit(sq-6);
+        }
+        // SSE
+        if rank>1 && file<7 {
+            bitboards[sq].set_bit(sq-15);
+        }
+        // SSW
+        if rank>1 && file>0 {
+            bitboards[sq].set_bit(sq-17);
+        }
+        // WSW
+        if rank>0 && file>1 {
+            bitboards[sq].set_bit(sq-10);
+        }
+        // WNW
+        if rank<7 && file>1 {
+            bitboards[sq].set_bit(sq+6);
+        }
+        // NNW
+        if rank<6 && file>0 {
+            bitboards[sq].set_bit(sq+15);
+        }
+    }
+    
+    bitboards
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn king_moves() {
+        let mut m9: Vec<_> = KING_MOVES[9].clone().into_iter().collect();
+        m9.sort();
+        assert_eq!(m9, &[0, 1, 2, 8, 10, 16, 17, 18]);
+
+        let mut m0: Vec<_> = KING_MOVES[0].clone().into_iter().collect();
+        m0.sort();
+        assert_eq!(m0, &[1, 8, 9]);
+        
+        let mut m63: Vec<_> = KING_MOVES[63].clone().into_iter().collect();
+        m63.sort();
+        assert_eq!(m63, &[54, 55, 62]);
+    }
+
+}

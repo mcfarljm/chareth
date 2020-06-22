@@ -507,6 +507,6 @@ mod tests {
         let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "f1c4");
-        assert_eq!(info.nodes, 7804);
+        assert_eq!(info.nodes, 7809);
     }
 }
