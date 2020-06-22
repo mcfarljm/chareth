@@ -115,6 +115,33 @@ impl fmt::Display for Bitboard {
     }
 }
 
+impl IntoIterator for Bitboard {
+    type Item = usize;
+    type IntoIter = BitboardIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BitboardIterator {
+            bitboard: self,
+        }
+    }
+}
+
+pub struct BitboardIterator {
+    bitboard : Bitboard,
+}
+
+impl Iterator for BitboardIterator {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<usize> {
+        if self.bitboard.nonzero() {
+            Some(self.bitboard.pop_bit())
+        } else {
+            None
+        }
+    }
+}
+
 // This isn't strictly necessary, as the statics will be automatically
 // initialized, but this way we can force them to be initialized at
 // the start of the program
@@ -340,6 +367,24 @@ mod tests {
         assert_eq!(bb.val, 0x202020202020202);
         bb.val = ISOLATED_MASK[55];
         assert_eq!(bb.val, 0x4040404040404040);
-    }        
+    }
+
+    #[test]
+    fn empty_iter() {
+        let bb = Bitboard::new();
+        let squares: Vec<_> = bb.into_iter().collect();
+        assert_eq!(squares.len(), 0);
+    }
+
+    #[test]
+    fn iter() {
+        let mut bb = Bitboard::new();
+        bb.set_bit(9);
+        bb.set_bit(25);
+        bb.set_bit(44);
+        let mut squares: Vec<_> = bb.into_iter().collect();
+        squares.sort();
+        assert_eq!(squares, &[9, 25, 44]);
+    }
 
 }
