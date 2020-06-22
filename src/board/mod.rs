@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::pieces::*;
-use crate::bitboard;
+use crate::bitboard::Bitboard;
 use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
@@ -81,7 +81,7 @@ pub struct Undo {
 pub struct Board {
     pub pieces: [Piece; BOARD_SQ_NUM],
 
-    pub pawns: [bitboard::Bitboard; 3],
+    pub pawns: [Bitboard; 3],
 
     num_big_piece: [i32; 2],
     num_major_piece: [i32; 2],
@@ -132,7 +132,7 @@ impl Board {
         let mut board = Board{
             pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
-            pawns: [bitboard::Bitboard::new(), bitboard::Bitboard::new(), bitboard::Bitboard::new()],
+            pawns: Default::default(),
 
             num_big_piece: [0; 2],
             num_major_piece: [0; 2],

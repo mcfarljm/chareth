@@ -92,6 +92,12 @@ impl Bitboard {
     }
 }
 
+impl Default for Bitboard {
+    fn default() -> Self {
+        Bitboard::new()
+    }
+}
+
 impl fmt::Display for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut sq;
