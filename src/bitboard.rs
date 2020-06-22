@@ -1,5 +1,5 @@
 use std::fmt;
-use bitintr::Tzcnt;
+use bitintr::{Tzcnt,Popcnt};
 
 use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
 use crate::pieces::WHITE;
@@ -50,13 +50,7 @@ impl Bitboard {
     }
 
     pub fn count(&self) -> i32 {
-        let mut b = self.val;
-        let mut r = 0;
-        while b != 0 {
-            r += 1;
-            b &= b - 1;
-        }
-        r
+        self.val.popcnt() as i32
     }
 
     pub fn pop_bit(&mut self) -> usize {
