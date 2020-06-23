@@ -25,6 +25,7 @@ lazy_static! {
 }
 
 pub const BB_RANK_4: u64 = 0x00000000FF000000;
+pub const BB_RANK_5: u64 = 0x000000FF00000000;
 pub const BB_FILE_A: u64 = 0x0101010101010101;
 pub const BB_FILE_H: u64 = 0x8080808080808080;
 
