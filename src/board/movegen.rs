@@ -1,7 +1,8 @@
 use crate::moves;
-use crate::board::{self,SQUARE_64_TO_120};
+use crate::board::{self,SQUARE_64_TO_120,SQUARE_120_TO_64,WHITE,BLACK,BOTH};
 use crate::board::{Castling,Square};
 use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH,KNIGHT_MOVES,KING_MOVES};
+use crate::bitboard::{Bitboard,BB_RANK_4,BB_FILE_A,BB_FILE_H};
 
 // Could be a method of Piece, but nice to have it here for
 // organizational purposes
@@ -167,37 +168,46 @@ impl board::Board {
         let mut t_sq: Square;
 
         if self.side == pieces::WHITE {
-            for sq in &self.piece_lists[Piece::WP as usize] {
 
-                if non_captures && self.pieces[(sq+10) as usize] == Piece::Empty {
-                    // pawn forward one square
-                    move_list.add_white_pawn_move(self, *sq, sq+10, Piece::Empty);
-                    if board::RANKS[*sq as usize] == board::RANK_2 && self.pieces[(sq+20) as usize] == Piece::Empty {
-                        // pawn forward two squares
-                        move_list.add_quiet_move(self, moves::Move::new(*sq, sq+20, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
-                    }
+            if non_captures {
+
+                let to_step1 = (self.bitboards[Piece::WP as usize].0 << 8) & (!self.bb_sides[BOTH].0);
+                let to_step2 = (to_step1 << 8) & BB_RANK_4 & (!self.bb_sides[BOTH].0);
+
+                for to64 in Bitboard(to_step1).into_iter() {
+                    move_list.add_white_pawn_move(self, SQUARE_64_TO_120[to64 - 8], SQUARE_64_TO_120[to64], Piece::Empty); 
                 }
-
-                // Check pawn captures in both directions
-                let dirs: [i8; 2] = [9, 11];
-                for dir in &dirs {
-                    t_sq = sq + dir;
-                    let t_piece = self.pieces[t_sq as usize];
-                    if board::square_on_board(t_sq) && t_piece.color() == pieces::BLACK {
-                        move_list.add_white_pawn_capture_move(self, *sq, t_sq, t_piece);
-                    }
-                }
-
-                // Check en passant captures
-                if self.en_pas != board::Position::NONE as Square {
-                    if sq + 9 == self.en_pas {
-                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq+9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                    }
-                    if sq + 11 == self.en_pas {
-                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq+11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                    }
+                for to64 in Bitboard(to_step2).into_iter() {
+                    move_list.add_quiet_move(self, moves::Move::new(SQUARE_64_TO_120[to64 - 2*8], SQUARE_64_TO_120[to64], Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
                 }
             }
+
+            let to_cap_left = ((self.bitboards[Piece::WP as usize].0 & !BB_FILE_A) << 7) & self.bb_sides[BLACK].0;
+            let to_cap_right = ((self.bitboards[Piece::WP as usize].0 & !BB_FILE_H) << 9) & self.bb_sides[BLACK].0;
+
+            for to64 in Bitboard(to_cap_left).into_iter() {
+                let to120 = SQUARE_64_TO_120[to64];
+                move_list.add_white_pawn_capture_move(self, SQUARE_64_TO_120[to64 - 7], to120, self.pieces[to120 as usize]); 
+            }
+            for to64 in Bitboard(to_cap_right).into_iter() {
+                let to120 = SQUARE_64_TO_120[to64];
+                move_list.add_white_pawn_capture_move(self, SQUARE_64_TO_120[to64 - 9], to120, self.pieces[to120 as usize]); 
+            }
+
+            // Check en passant captures
+            if self.en_pas != board::Position::NONE as Square {
+                let ep_bb = Bitboard(1 << SQUARE_120_TO_64[self.en_pas as usize]);
+                let ep_to_left = ((self.bitboards[Piece::WP as usize].0 & ! BB_FILE_A) << 7) & ep_bb.0;
+                let ep_to_right = ((self.bitboards[Piece::WP as usize].0 & ! BB_FILE_H) << 9) & ep_bb.0;
+
+                for to64 in Bitboard(ep_to_left).into_iter() {
+                    move_list.add_en_passant_move(self, moves::Move::new(SQUARE_64_TO_120[to64-7], SQUARE_64_TO_120[to64], Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                }
+                for to64 in Bitboard(ep_to_right).into_iter() {
+                    move_list.add_en_passant_move(self, moves::Move::new(SQUARE_64_TO_120[to64-9], SQUARE_64_TO_120[to64], Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                }
+            }
+
 
             // Castling
             if non_captures && self.castle_perm & Castling::WK != 0 {

@@ -24,9 +24,13 @@ lazy_static! {
     static ref ISOLATED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.4;
 }
 
+pub const BB_RANK_4: u64 = 0x00000000FF000000;
+pub const BB_FILE_A: u64 = 0x0101010101010101;
+pub const BB_FILE_H: u64 = 0x8080808080808080;
+
 #[derive(Clone)]
 #[derive(Copy)]
-pub struct Bitboard(u64);
+pub struct Bitboard(pub u64);
 
 impl Bitboard {
     pub fn new() -> Bitboard {
