@@ -318,22 +318,20 @@ impl board::Board {
         for piece in &pieces::NON_SLIDERS[self.side] {
             for sq64 in self.bitboards[*piece as usize].into_iter() {
                 let sq = SQUARE_64_TO_120[sq64];
-                let iterator = match *piece {
-                    Piece::WN | Piece::BN => KNIGHT_MOVES[sq64].into_iter(),
-                    Piece::WK | Piece::BK => KING_MOVES[sq64].into_iter(),
+                let bb = match *piece {
+                    Piece::WN | Piece::BN => KNIGHT_MOVES[sq64],
+                    Piece::WK | Piece::BK => KING_MOVES[sq64],
                     _ => { unreachable!() },
                 };
+                // Take moves bitboard and filter out side's pieces
+                let iterator = Bitboard(bb.0 & !self.bb_sides[self.side].0).into_iter();
                 for t_sq64 in iterator {
                     t_sq = SQUARE_64_TO_120[t_sq64];
-                    // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
                     let t_piece = self.pieces[t_sq as usize];
                     if t_piece != Piece::Empty {
-                        if t_piece.color() == self.side ^ 1 {
-                            move_list.add_capture_move(self, moves::Move::new(sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
-                        }
-                        continue;
-                    }
-                    if non_captures {
+                        // Have already filtered out own side's pieces on target square
+                        move_list.add_capture_move(self, moves::Move::new(sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
+                    } else if non_captures {
                         move_list.add_quiet_move(self, moves::Move::new(sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
                     }
                 }
