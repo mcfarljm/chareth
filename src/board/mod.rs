@@ -433,6 +433,7 @@ impl Board {
         debug_assert!(validate::side_valid(side));
         debug_assert!(self.check());
         
+        let sq64 = SQUARE_120_TO_64[sq as usize];
         let mut piece;
 
         // pawns
@@ -446,15 +447,13 @@ impl Board {
         let mut t_sq: Square;
 
         // knights
-        for dir in &KNIGHT_DIR {
-            t_sq = sq + *dir;
-            if ! square_on_board(t_sq) {
-                continue;
-            }
-            piece = self.pieces[t_sq as usize];
-            if piece.is_knight() && piece.color() == side {
-                return true;
-            }
+        piece = match side {
+            WHITE => Piece::WN,
+            BLACK => Piece::BN,
+            _ => unreachable!(),
+        };
+        if KNIGHT_MOVES[sq64].0 & self.bitboards[piece as usize].0 != 0 {
+            return true;
         }
 
         // rooks, queens
@@ -486,15 +485,13 @@ impl Board {
         }
 
         // kings
-        for dir in &KING_DIR {
-            t_sq = sq + *dir;
-            if ! square_on_board(t_sq) {
-                continue;
-            }
-            piece = self.pieces[t_sq as usize];
-            if piece.is_king() && piece.color() == side {
-                return true;
-            }
+        piece = match side {
+            WHITE => Piece::WK,
+            BLACK => Piece::BK,
+            _ => unreachable!(),
+        };
+        if KING_MOVES[sq64].0 & self.bitboards[piece as usize].0 != 0 {
+            return true;
         }
 
         false
