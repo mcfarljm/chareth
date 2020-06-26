@@ -183,10 +183,8 @@ pub const WHITE: usize = 0;
 pub const BLACK: usize = 1;
 pub const BOTH: usize = 2;
 
-pub const KNIGHT_DIR: [i8; 8] = [-8, -19, -21, -12, 8, 19, 21, 12];
 pub const ROOK_DIR: [i8; 4] = [-1, -10, 1, 10];
 pub const BISHOP_DIR: [i8; 4] = [-9, -11, 11, 9];
-pub const KING_DIR: [i8; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
 
 // SLIDERS[color] produces an array that can be iterated through
 pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
