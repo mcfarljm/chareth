@@ -438,10 +438,14 @@ impl Board {
 
         // pawns
         if side == WHITE {
-            if self.pieces[(sq-11) as usize] == Piece::WP || self.pieces[(sq-9) as usize] == Piece::WP { return true; }
+            if self.bitboards[Piece::WP as usize].0 & BLACK_PAWN_MOVES[sq64].0 != 0 {
+                return true;
+            }
         }
         else {
-            if self.pieces[(sq+11) as usize] == Piece::BP || self.pieces[(sq+9) as usize] == Piece::BP { return true; }
+            if self.bitboards[Piece::BP as usize].0 & WHITE_PAWN_MOVES[sq64].0 != 0 {
+                return true;
+            }
         }
 
         let mut t_sq: Square;

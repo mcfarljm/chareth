@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::bitboard::Bitboard;
+use crate::bitboard::{self,Bitboard};
 
 pub const PAWN_VAL: i32 = 100;
 pub const KNIGHT_VAL: i32 = 325;
@@ -196,11 +196,15 @@ pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Pi
 lazy_static! {
     pub static ref KING_MOVES: [Bitboard; 64] = get_king_moves();
     pub static ref KNIGHT_MOVES: [Bitboard; 64] = get_knight_moves();
+    pub static ref WHITE_PAWN_MOVES: [Bitboard; 64] = get_white_pawn_moves();
+    pub static ref BLACK_PAWN_MOVES: [Bitboard; 64] = get_black_pawn_moves();
 }
 
 pub fn init_move_tables() {
     lazy_static::initialize(&KING_MOVES);
     lazy_static::initialize(&KNIGHT_MOVES);
+    lazy_static::initialize(&WHITE_PAWN_MOVES);
+    lazy_static::initialize(&BLACK_PAWN_MOVES);
 }
 
 fn get_king_moves() -> [Bitboard; 64] {
@@ -288,6 +292,46 @@ fn get_knight_moves() -> [Bitboard; 64] {
         }
     }
     
+    bitboards
+}
+
+fn get_white_pawn_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+    let mut bb: Bitboard = Bitboard::new();
+    for sq in 0..64 {
+        // Left captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_A) << 7;
+        bitboards[sq].0 |= bb.0;
+        
+        // Right captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_H) << 9;
+        bitboards[sq].0 |= bb.0;
+    }
+
+    bitboards
+}
+
+fn get_black_pawn_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+    let mut bb: Bitboard = Bitboard::new();
+    for sq in 0..64 {
+        // Left captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_A) >> 9;
+        bitboards[sq].0 |= bb.0;
+        
+        // Right captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_H) >> 7;
+        bitboards[sq].0 |= bb.0;
+    }
+
     bitboards
 }
 
