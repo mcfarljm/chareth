@@ -216,13 +216,6 @@ impl Board {
         self.bitboards[piece as usize].clear_bit(sq64);
         self.bb_sides[color].clear_bit(sq64);
         self.bb_sides[BOTH].clear_bit(sq64);
-
-        // Remove from piece list
-        let i_piece = self.piece_lists[piece as usize]
-            .iter()
-            .position(|x| *x == sq)
-            .expect("piece must exist in piece list");
-        self.piece_lists[piece as usize].swap_remove(i_piece);
     }
 
     fn add_piece(&mut self, piece: Piece, sq: Square) {
@@ -249,7 +242,6 @@ impl Board {
         self.bb_sides[BOTH].set_bit(sq64);
 
         self.material[color] += piece.value();
-        self.piece_lists[piece as usize].push(sq);
     }
 
     fn move_piece(&mut self, from: Square, to: Square) {
@@ -272,12 +264,6 @@ impl Board {
         self.bb_sides[color].set_bit(to64);
         self.bb_sides[BOTH].clear_bit(from64);
         self.bb_sides[BOTH].set_bit(to64);
-
-        let sq = self.piece_lists[piece as usize]
-            .iter_mut()
-            .find(|sq| **sq == from)
-            .expect("from square must have a piece");
-        *sq = to;
     }
 
     fn hash_piece(&mut self, piece: Piece, sq: Square) {

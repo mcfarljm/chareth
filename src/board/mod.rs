@@ -90,10 +90,6 @@ pub struct Board {
     num_minor_piece: [i32; 2],
     material: [i32; 2],
 
-    // piece_lists[piece] produces a vector of squares for that piece
-    pub piece_lists: Vec<Vec<Square>>,
-
-    // Redundant with piece_lists
     king_sq: [Square; 2],
 
     pub side: usize,
@@ -126,11 +122,6 @@ pub struct Board {
 
 impl Board {
     pub fn new() -> Board {
-        let mut piece_lists: Vec<Vec<Square>> = Vec::new();
-        for _i in 0..NUM_PIECE_TYPES_BOTH {
-            piece_lists.push(Vec::new());
-        }
-        
         let mut board = Board{
             pieces: [Piece::Offboard; BOARD_SQ_NUM],
 
@@ -141,8 +132,6 @@ impl Board {
             num_major_piece: [0; 2],
             num_minor_piece: [0; 2],
             material: [0; 2],
-
-            piece_lists: piece_lists,
 
             king_sq: [Position::NONE as Square; 2],
 
@@ -335,7 +324,6 @@ impl Board {
                     self.num_major_piece[color] += 1;
                 }
                 self.material[color] += piece.value();
-                self.piece_lists[piece as usize].push(sq120);
                 if piece.is_king() {
                     self.king_sq[color] = sq120;
                 }
@@ -352,13 +340,6 @@ impl Board {
         let mut num_major_piece = [0; 2];
         let mut num_minor_piece = [0; 2];
         let mut material = [0; 2];
-
-        // Check piece lists:
-        for piece in 0..NUM_PIECE_TYPES_BOTH {
-            for sq in &self.piece_lists[piece as usize] {
-                assert_eq!(self.pieces[*sq as usize] as usize, piece);
-            }
-        }
 
         // Check counts
         let mut sq120;
@@ -384,7 +365,7 @@ impl Board {
         }
 
         for piece in 0..NUM_PIECE_TYPES_BOTH {
-            assert_eq!(piece_count[piece as usize] as usize, self.piece_lists[piece as usize].len());
+            assert_eq!(piece_count[piece as usize], self.bitboards[piece as usize].count());
         }
 
         // Check pawn bitboards:
@@ -509,12 +490,12 @@ impl Board {
     // Checks whether the position is a draw because neither side can
     // give mate
     fn is_draw_by_material(&self) -> bool {
-        if self.piece_lists[Piece::WP as usize].len() > 0 || self.piece_lists[Piece::BP as usize].len() > 0 { return false; }
-        if self.piece_lists[Piece::WQ as usize].len() > 0 || self.piece_lists[Piece::BQ as usize].len() > 0 || self.piece_lists[Piece::WR as usize].len() > 0 || self.piece_lists[Piece::BR as usize].len() > 0 { return false; }
-        if self.piece_lists[Piece::WB as usize].len() > 1 || self.piece_lists[Piece::BB as usize].len() > 1 { return false; }
-        if self.piece_lists[Piece::WN as usize].len() > 1 || self.piece_lists[Piece::BN as usize].len() > 1 { return false; }
-        if self.piece_lists[Piece::WN as usize].len() > 0 && self.piece_lists[Piece::WB as usize].len() > 0 { return false; }
-        if self.piece_lists[Piece::BN as usize].len() > 0 && self.piece_lists[Piece::BB as usize].len() > 0 { return false; }
+        if self.bitboards[Piece::WP as usize].count() > 0 || self.bitboards[Piece::BP as usize].count() > 0 { return false; }
+        if self.bitboards[Piece::WQ as usize].count() > 0 || self.bitboards[Piece::BQ as usize].count() > 0 || self.bitboards[Piece::WR as usize].count() > 0 || self.bitboards[Piece::BR as usize].count() > 0 { return false; }
+        if self.bitboards[Piece::WB as usize].count() > 1 || self.bitboards[Piece::BB as usize].count() > 1 { return false; }
+        if self.bitboards[Piece::WN as usize].count() > 1 || self.bitboards[Piece::BN as usize].count() > 1 { return false; }
+        if self.bitboards[Piece::WN as usize].count() > 0 && self.bitboards[Piece::WB as usize].count() > 0 { return false; }
+        if self.bitboards[Piece::BN as usize].count() > 0 && self.bitboards[Piece::BB as usize].count() > 0 { return false; }
         // Otherwise, it must be a draw:
         true
     }
