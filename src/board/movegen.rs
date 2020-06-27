@@ -2,7 +2,7 @@ use crate::moves;
 use crate::board::{self,SQUARE_64_TO_120,SQUARE_120_TO_64,WHITE,BLACK,BOTH};
 use crate::board::{Castling,Square};
 use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH,KNIGHT_MOVES,KING_MOVES};
-use crate::bitboard::{Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H};
+use crate::bitboard::{Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H,get_rook_attacks};
 
 // Could be a method of Piece, but nice to have it here for
 // organizational purposes
@@ -288,6 +288,29 @@ impl board::Board {
         }
 
         let mut t_sq: Square;
+
+        // Rook
+        let piece = match self.side {
+            WHITE => Piece::WR,
+            BLACK => Piece::BR,
+            _ => unreachable!(),
+        };
+        for sq64 in self.bitboards[piece as usize] {
+            let attacks = get_rook_attacks(sq64, self.bb_sides[BOTH].0) & !self.bb_sides[self.side].0;
+            // Todo: once sq64 representation is adopted, would it be
+            // faster to use bitwise operations to first find captures
+            // and non_captures, and then iterate over those?
+            for t_sq64 in Bitboard(attacks).into_iter() { 
+                t_sq = SQUARE_64_TO_120[t_sq64];
+                let t_piece = self.pieces[t_sq as usize];
+                if t_piece != Piece::Empty {
+                    move_list.add_capture_move(self, moves::Move::new(SQUARE_64_TO_120[sq64], t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
+                } else if non_captures {
+                    move_list.add_quiet_move(self, moves::Move::new(SQUARE_64_TO_120[sq64], t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
+                }
+              
+            }
+        }
 
         // Sliders
         for piece in pieces::SLIDERS[self.side].iter() {

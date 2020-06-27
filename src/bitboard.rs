@@ -1,8 +1,14 @@
 use std::fmt;
-use bitintr::{Tzcnt,Popcnt};
+use bitintr::{Tzcnt,Popcnt,Lzcnt};
+use std::num::Wrapping;
 
 use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
 use crate::pieces::WHITE;
+
+pub const BB_RANK_4: u64 = 0x00000000FF000000;
+pub const BB_RANK_5: u64 = 0x000000FF00000000;
+pub const BB_FILE_A: u64 = 0x0101010101010101;
+pub const BB_FILE_H: u64 = 0x8080808080808080;
 
 // A return value to facilitate a single function that initializes
 // multiple bitboard arrays
@@ -22,12 +28,10 @@ lazy_static! {
     static ref WHITE_PASSED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.2;
     static ref BLACK_PASSED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.3;
     static ref ISOLATED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.4;
+
+    static ref OBS_DIFF_MASKS: [[ObsDiffMask; 64]; 4] = get_obstruction_diff_masks();
 }
 
-pub const BB_RANK_4: u64 = 0x00000000FF000000;
-pub const BB_RANK_5: u64 = 0x000000FF00000000;
-pub const BB_FILE_A: u64 = 0x0101010101010101;
-pub const BB_FILE_H: u64 = 0x8080808080808080;
 
 #[derive(Clone)]
 #[derive(Copy)]
@@ -231,6 +235,118 @@ fn get_eval_masks() -> BitboardArrays {
     // }
 
     BitboardArrays(file_bb_masks, rank_bb_masks, white_passed_mask, black_passed_mask, isolated_mask)
+}
+
+
+// Slide piece masks:
+
+// See: https://www.chessprogramming.org/On_an_empty_Board
+
+fn rank_mask(sq: usize) -> u64 {
+    0xff << (sq & 56)
+}
+
+fn file_mask(sq: usize) -> u64 {
+    0x0101010101010101 << (sq & 7)
+}
+
+fn diagonal_mask(sq: i32) -> u64 {
+    let main_diag: u64 = 0x8040201008040201;
+    let diag: i32 = 8*(sq & 7) - (sq & 56);
+    let north = -diag & (diag >> 31);
+    let south = diag & (-diag >> 31);
+    (main_diag >> south) << north
+}
+
+fn anti_diagonal_mask(sq: i32) -> u64 {
+    let main_diag: u64 = 0x0102040810204080;
+    let diag: i32 = 56 - 8*(sq & 7) - (sq & 56);
+    let north = -diag & (diag >> 31);
+    let south = diag & (-diag >> 31);
+    (main_diag >> south) << north
+}
+
+fn positive_ray(sq: usize, line: u64) -> u64 {
+    line & (Wrapping(0u64) - (Wrapping(2u64) << sq)).0
+}
+
+fn negative_ray(sq: usize, line: u64) -> u64 {
+    line & ((1 << sq) - 1)
+}
+
+// Obstruction difference:
+
+#[derive(Copy,Clone)]
+struct ObsDiffMask {
+    lower: u64,
+    upper: u64,
+    line_exc: u64, // lower | upper
+}
+
+impl ObsDiffMask {
+    fn new(lower: u64, upper: u64) -> ObsDiffMask {
+        ObsDiffMask{
+            lower: lower,
+            upper: upper,
+            line_exc: lower | upper,
+        }
+    }
+}
+
+impl Default for ObsDiffMask {
+    fn default() -> ObsDiffMask {
+        ObsDiffMask::new(0, 0)
+    }
+}
+
+fn get_obstruction_diff_masks() -> [[ObsDiffMask; 64]; 4] {
+    let mut os_masks = [[Default::default(); 64]; 4];
+    let mut lower: u64;
+    let mut upper: u64;
+    let mut line: u64;
+    for sq in 0..64 {
+        // Rank masks:
+        line = rank_mask(sq);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[0][sq] = ObsDiffMask::new(lower, upper);
+
+        // File masks:
+        line = file_mask(sq);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[1][sq] = ObsDiffMask::new(lower, upper);
+
+        // Diagonal masks:
+        line = diagonal_mask(sq as i32);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[2][sq] = ObsDiffMask::new(lower, upper);
+
+        // Anti-diagonal masks:
+        line = anti_diagonal_mask(sq as i32);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[3][sq] = ObsDiffMask::new(lower, upper);
+    }
+    os_masks
+}
+
+pub fn init_obs_diff_masks() {
+    lazy_static::initialize(&OBS_DIFF_MASKS);
+}
+
+fn get_line_attacks(occ: u64, os_mask: ObsDiffMask) -> u64 {
+    let lower = os_mask.lower & occ;
+    let upper = os_mask.upper & occ;
+    let ms1b = 0x8000000000000000 >> (lower | 1).lzcnt();
+    let ls1b = upper & (-Wrapping(upper)).0;
+    let odiff = Wrapping(2*ls1b) - Wrapping(ms1b);
+    os_mask.line_exc & odiff.0
+}
+
+pub fn get_rook_attacks(sq: usize, occ: u64) -> u64 {
+    get_line_attacks(occ, OBS_DIFF_MASKS[0][sq]) | get_line_attacks(occ, OBS_DIFF_MASKS[1][sq])
 }
 
 #[cfg(test)]
