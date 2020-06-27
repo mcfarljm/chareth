@@ -341,12 +341,20 @@ fn get_line_attacks(occ: u64, os_mask: ObsDiffMask) -> u64 {
     let upper = os_mask.upper & occ;
     let ms1b = 0x8000000000000000 >> (lower | 1).lzcnt();
     let ls1b = upper & (-Wrapping(upper)).0;
-    let odiff = Wrapping(2*ls1b) - Wrapping(ms1b);
+    let odiff = Wrapping(2)*Wrapping(ls1b) - Wrapping(ms1b);
     os_mask.line_exc & odiff.0
 }
 
 pub fn get_rook_attacks(sq: usize, occ: u64) -> u64 {
     get_line_attacks(occ, OBS_DIFF_MASKS[0][sq]) | get_line_attacks(occ, OBS_DIFF_MASKS[1][sq])
+}
+
+pub fn get_bishop_attacks(sq: usize, occ: u64) -> u64 {
+    get_line_attacks(occ, OBS_DIFF_MASKS[2][sq]) | get_line_attacks(occ, OBS_DIFF_MASKS[3][sq])
+}
+
+pub fn get_queen_attacks(sq: usize, occ: u64) -> u64 {
+    get_rook_attacks(sq, occ) | get_bishop_attacks(sq, occ)
 }
 
 #[cfg(test)]

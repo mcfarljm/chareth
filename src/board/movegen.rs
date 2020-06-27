@@ -2,7 +2,7 @@ use crate::moves;
 use crate::board::{self,SQUARE_64_TO_120,SQUARE_120_TO_64,WHITE,BLACK,BOTH};
 use crate::board::{Castling,Square};
 use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH,KNIGHT_MOVES,KING_MOVES};
-use crate::bitboard::{Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H,get_rook_attacks};
+use crate::bitboard::{Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H,get_rook_attacks,get_bishop_attacks,get_queen_attacks};
 
 // Could be a method of Piece, but nice to have it here for
 // organizational purposes
@@ -289,50 +289,28 @@ impl board::Board {
 
         let mut t_sq: Square;
 
-        // Rook
-        let piece = match self.side {
-            WHITE => Piece::WR,
-            BLACK => Piece::BR,
-            _ => unreachable!(),
-        };
-        for sq64 in self.bitboards[piece as usize] {
-            let attacks = get_rook_attacks(sq64, self.bb_sides[BOTH].0) & !self.bb_sides[self.side].0;
-            // Todo: once sq64 representation is adopted, would it be
-            // faster to use bitwise operations to first find captures
-            // and non_captures, and then iterate over those?
-            for t_sq64 in Bitboard(attacks).into_iter() { 
-                t_sq = SQUARE_64_TO_120[t_sq64];
-                let t_piece = self.pieces[t_sq as usize];
-                if t_piece != Piece::Empty {
-                    move_list.add_capture_move(self, moves::Move::new(SQUARE_64_TO_120[sq64], t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
-                } else if non_captures {
-                    move_list.add_quiet_move(self, moves::Move::new(SQUARE_64_TO_120[sq64], t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
-                }
-              
-            }
-        }
-
         // Sliders
-        for piece in pieces::SLIDERS[self.side].iter() {
-            for sq in &self.piece_lists[*piece as usize] {
-
-                for dir in piece.directions() {
-                    t_sq = *sq + dir;
-
-                    while board::square_on_board(t_sq) {
-                        // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
-                        let t_piece = self.pieces[t_sq as usize];
-                        if t_piece != Piece::Empty {
-                            if t_piece.color() == self.side ^ 1 {
-                                move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
-                            }
-                            break;
-                        }
-                        if non_captures {
-                            move_list.add_quiet_move(self, moves::Move::new(*sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
-                        }
-                        t_sq += dir;
+        for piece in &pieces::SLIDERS[self.side] {
+            for sq64 in self.bitboards[*piece as usize] {
+                let mut attacks = match piece {
+                    Piece::WR | Piece::BR => get_rook_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WB | Piece::BB => get_bishop_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WQ | Piece::BQ => get_queen_attacks(sq64, self.bb_sides[BOTH].0),
+                    _ => unreachable!(),
+                };
+                attacks &= !self.bb_sides[self.side].0;
+                // Todo: once sq64 representation is adopted, would it be
+                // faster to use bitwise operations to first find captures
+                // and non_captures, and then iterate over those?
+                for t_sq64 in Bitboard(attacks).into_iter() { 
+                    t_sq = SQUARE_64_TO_120[t_sq64];
+                    let t_piece = self.pieces[t_sq as usize];
+                    if t_piece != Piece::Empty {
+                        move_list.add_capture_move(self, moves::Move::new(SQUARE_64_TO_120[sq64], t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
+                    } else if non_captures {
+                        move_list.add_quiet_move(self, moves::Move::new(SQUARE_64_TO_120[sq64], t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
                     }
+                    
                 }
             }
         }
