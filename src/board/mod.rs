@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fmt;
 
 use crate::pieces::*;
-use crate::bitboard::Bitboard;
+use crate::bitboard::{self,Bitboard};
 use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
@@ -448,8 +448,6 @@ impl Board {
             }
         }
 
-        let mut t_sq: Square;
-
         // knights
         piece = match side {
             WHITE => Piece::WN,
@@ -460,33 +458,30 @@ impl Board {
             return true;
         }
 
-        // rooks, queens
-        for dir in &ROOK_DIR {
-            t_sq = sq + *dir;
-            piece = self.pieces[t_sq as usize];
-            while piece != Piece::Offboard {
-                if piece.exists() {
-                    if piece.is_rook_or_queen() && piece.color() == side { return true; }
-                    break;
-                }
-                t_sq += *dir;
-                piece = self.pieces[t_sq as usize];
-            }
+        let mut sq_bb = Bitboard::new();
+        sq_bb.set_bit(sq64);
+        let occ = self.bb_sides[BOTH].0;
+
+        // bishops or queens
+        let bishop_queens = match side {
+            WHITE => self.bitboards[Piece::WB as usize].0 | self.bitboards[Piece::WQ as usize].0,
+            BLACK => self.bitboards[Piece::BB as usize].0 | self.bitboards[Piece::BQ as usize].0,
+            _ => unreachable!(),
+        };
+        if bitboard::get_bishop_attacks(sq64, occ) & bishop_queens != 0 {
+            return true;
         }
 
-        // bishops, queens
-        for dir in &BISHOP_DIR {
-            t_sq = sq + *dir;
-            piece = self.pieces[t_sq as usize];
-            while piece != Piece::Offboard {
-                if piece.exists() {
-                    if piece.is_bishop_or_queen() && piece.color() == side { return true; }
-                    break;
-                }
-                t_sq += *dir;
-                piece = self.pieces[t_sq as usize];
-            }
+        // rooks or queens
+        let rooks_queens = match side {
+            WHITE => self.bitboards[Piece::WR as usize].0 | self.bitboards[Piece::WQ as usize].0,
+            BLACK => self.bitboards[Piece::BR as usize].0 | self.bitboards[Piece::BQ as usize].0,
+            _ => unreachable!(),
+        };
+        if bitboard::get_rook_attacks(sq64, occ) & rooks_queens != 0 {
+            return true;
         }
+
 
         // kings
         piece = match side {
