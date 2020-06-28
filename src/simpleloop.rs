@@ -1,6 +1,6 @@
-use crate::board::{Board,START_FEN,SearchInfo,GameMode};
-
 use std::io::{self, Write};
+
+use crate::board::{Board,START_FEN,SearchInfo,GameMode};
 
 // A simple io loop for text based moves and searches
 pub fn simple_loop() {

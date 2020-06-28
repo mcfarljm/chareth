@@ -15,8 +15,8 @@ use crate::bitboard::{self,Bitboard};
 use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
-
 use evaluate::MIRROR64;
+
 pub use search::{SearchInfo,GameMode,benchmark_search};
 pub use uci::uci_loop;
 pub use movegen::init_mvv_lva;

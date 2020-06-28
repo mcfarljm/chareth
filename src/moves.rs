@@ -1,7 +1,7 @@
+use std::fmt;
+
 use crate::board::Square;
 use crate::pieces::Piece;
-
-use std::fmt;
 
 pub fn square_string(sq: Square) -> String {
     String::from(format!("{}{}",

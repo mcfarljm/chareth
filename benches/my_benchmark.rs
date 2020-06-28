@@ -1,4 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
+
 use chareth::board;
 
 pub fn benchmark_move_gen(c: &mut Criterion) {

@@ -2,7 +2,7 @@ use crate::moves;
 use crate::board::{self,WHITE,BLACK,BOTH};
 use crate::board::{Castling,Square};
 use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH,KNIGHT_MOVES,KING_MOVES};
-use crate::bitboard::{Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H,get_rook_attacks,get_bishop_attacks,get_queen_attacks};
+use crate::bitboard::{self,Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H};
 
 // Could be a method of Piece, but nice to have it here for
 // organizational purposes
@@ -287,9 +287,9 @@ impl board::Board {
         for piece in &pieces::SLIDERS[self.side] {
             for sq64 in self.bitboards[*piece as usize] {
                 let mut attacks = match piece {
-                    Piece::WR | Piece::BR => get_rook_attacks(sq64, self.bb_sides[BOTH].0),
-                    Piece::WB | Piece::BB => get_bishop_attacks(sq64, self.bb_sides[BOTH].0),
-                    Piece::WQ | Piece::BQ => get_queen_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WR | Piece::BR => bitboard::get_rook_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WB | Piece::BB => bitboard::get_bishop_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WQ | Piece::BQ => bitboard::get_queen_attacks(sq64, self.bb_sides[BOTH].0),
                     _ => unreachable!(),
                 };
                 attacks &= !self.bb_sides[self.side].0;

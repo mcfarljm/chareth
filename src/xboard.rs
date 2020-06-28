@@ -1,11 +1,10 @@
+use std::thread;
+use std::sync::mpsc;
+use std::io::{self, Write};
+
 use crate::board::*;
 use crate::pieces::{BLACK,BOTH};
 use crate::version::PROGRAM_NAME;
-
-use std::thread;
-use std::sync::mpsc;
-
-use std::io::{self, Write};
 
 pub fn xboard_loop() {
 

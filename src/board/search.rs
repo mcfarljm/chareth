@@ -1,9 +1,10 @@
+use std::time::{Duration, Instant};
+use std::sync::mpsc::Receiver;
+
 use crate::board::*;
 use crate::moves;
 use self::movegen::MoveList;
 
-use std::time::{Duration, Instant};
-use std::sync::mpsc::Receiver;
 
 const MATE: i32 = 29000;
 

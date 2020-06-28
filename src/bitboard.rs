@@ -1,8 +1,8 @@
 use std::fmt;
-use bitintr::{Tzcnt,Popcnt,Lzcnt};
 use std::num::Wrapping;
+use bitintr::{Tzcnt,Popcnt,Lzcnt};
 
-use crate::board::{self,RANKS_ITER,FILES_ITER,fr_to_sq,Square};
+use crate::board::{self,RANKS_ITER,FILES_ITER,Square};
 use crate::pieces::WHITE;
 
 pub const BB_RANK_4: u64 = 0x00000000FF000000;
@@ -105,7 +105,7 @@ impl fmt::Display for Bitboard {
 
         for rank in RANKS_ITER.rev() {
             for file in FILES_ITER {
-                sq = fr_to_sq(file, rank);
+                sq = board::fr_to_sq(file, rank);
                 if (1 << sq) & self.0 != 0 {
                     write!(f, "x")?;
                 } else {
@@ -163,7 +163,7 @@ fn get_eval_masks() -> BitboardArrays {
     let mut sq;
     for rank in RANKS_ITER.rev() {
         for file in FILES_ITER {
-            sq = fr_to_sq(file, rank);
+            sq = board::fr_to_sq(file, rank);
             file_bb_masks[file as usize] |= 1 << sq;
             rank_bb_masks[rank as usize] |= 1 << sq;
         }
