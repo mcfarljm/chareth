@@ -65,15 +65,15 @@ impl Board {
         }
 
         if self.material[BLACK] <= ENDGAME_MATERIAL {
-            score += KING_END_TABLE[SQUARE_120_TO_64[self.king_sq[WHITE] as usize]];
+            score += KING_END_TABLE[self.king_sq[WHITE]];
         } else {
-            score += KING_OPEN_TABLE[SQUARE_120_TO_64[self.king_sq[WHITE] as usize]];
+            score += KING_OPEN_TABLE[self.king_sq[WHITE]];
         }
 
         if self.material[WHITE] <= ENDGAME_MATERIAL {
-            score -= KING_END_TABLE[MIRROR64[SQUARE_120_TO_64[self.king_sq[BLACK] as usize]]];
+            score -= KING_END_TABLE[MIRROR64[self.king_sq[BLACK]]];
         } else {
-            score -= KING_OPEN_TABLE[MIRROR64[SQUARE_120_TO_64[self.king_sq[BLACK] as usize]]];
+            score -= KING_OPEN_TABLE[MIRROR64[self.king_sq[BLACK]]];
         }
 
         if self.side == WHITE {

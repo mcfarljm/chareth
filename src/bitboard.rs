@@ -2,7 +2,7 @@ use std::fmt;
 use bitintr::{Tzcnt,Popcnt,Lzcnt};
 use std::num::Wrapping;
 
-use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
+use crate::board::{self,RANKS_ITER,FILES_ITER,fr_to_sq};
 use crate::pieces::WHITE;
 
 pub const BB_RANK_4: u64 = 0x00000000FF000000;
@@ -102,13 +102,11 @@ impl Default for Bitboard {
 impl fmt::Display for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut sq;
-        let mut sq64: usize;
 
         for rank in RANKS_ITER.rev() {
             for file in FILES_ITER {
                 sq = fr_to_sq(file, rank);
-                sq64 = SQUARE_120_TO_64[sq as usize];
-                if (1 << sq64) & self.0 != 0 {
+                if (1 << sq) & self.0 != 0 {
                     write!(f, "x")?;
                 } else {
                     write!(f, "-")?;
@@ -163,13 +161,11 @@ fn get_eval_masks() -> BitboardArrays {
     let mut isolated_mask: [u64; 64] = [0; 64];
     
     let mut sq;
-    let mut sq64: usize;
     for rank in RANKS_ITER.rev() {
         for file in FILES_ITER {
             sq = fr_to_sq(file, rank);
-            sq64 = SQUARE_120_TO_64[sq as usize];
-            file_bb_masks[file as usize] |= 1 << sq64;
-            rank_bb_masks[rank as usize] |= 1 << sq64;
+            file_bb_masks[file as usize] |= 1 << sq;
+            rank_bb_masks[rank as usize] |= 1 << sq;
         }
     }
 
@@ -187,8 +183,8 @@ fn get_eval_masks() -> BitboardArrays {
             tsq -= 8;
         }
 
-        if FILES[SQUARE_64_TO_120[sq64] as usize] > board::FILE_A {
-            isolated_mask[sq64] |= file_bb_masks[(FILES[SQUARE_64_TO_120[sq64] as usize] - 1) as usize];
+        if sq64%8 > board::FILE_A {
+            isolated_mask[sq64] |= file_bb_masks[sq64%8 - 1];
 
             tsq = sq64 as i32 + 7;
             while tsq < 64 {
@@ -203,8 +199,8 @@ fn get_eval_masks() -> BitboardArrays {
             }
         }
 
-        if FILES[SQUARE_64_TO_120[sq64] as usize] < board::FILE_H {
-            isolated_mask[sq64] |= file_bb_masks[(FILES[SQUARE_64_TO_120[sq64] as usize] + 1) as usize];
+        if sq64%8 < board::FILE_H {
+            isolated_mask[sq64] |= file_bb_masks[sq64%8 + 1];
 
             tsq = sq64 as i32 + 9;
             while tsq < 64 {

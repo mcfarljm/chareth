@@ -14,15 +14,16 @@ impl Board {
         debug_assert!(square_on_board(from));
         debug_assert!(square_on_board(to));
         debug_assert!(side_valid(side));
-        debug_assert!(self.pieces[from as usize].exists());
+        debug_assert!(self.pieces[from].exists());
 
         let prev_hash = self.hash;
 
         if mv.is_en_pas() {
             if side == WHITE {
-                self.clear_piece(to - 10);
+                // Todo: use a NORTH constant
+                self.clear_piece(to - 8);
             } else {
-                self.clear_piece(to + 10);
+                self.clear_piece(to + 8);
             }
         }
         else if mv.is_castle() {
@@ -60,8 +61,8 @@ impl Board {
         // Todo: verify this can just go at the end...
         self.history.push(undo);
 
-        self.castle_perm &= CASTLE_PERM[from as usize];
-        self.castle_perm &= CASTLE_PERM[to as usize];
+        self.castle_perm &= CASTLE_PERM[from];
+        self.castle_perm &= CASTLE_PERM[to];
         self.en_pas = Position::NONE as Square;
             
         // Hash in new state of castling permission
@@ -77,15 +78,16 @@ impl Board {
         self.ply += 1;
         self.hist_ply += 1;
 
-        if self.pieces[from as usize].is_pawn() {
+        if self.pieces[from].is_pawn() {
             self.fifty_move = 0;
             if mv.is_pawn_start() {
                 if side == WHITE {
-                    self.en_pas = from + 10;
-                    debug_assert!(RANKS[self.en_pas as usize] == RANK_3);
+                    // Todo: use a NORTH constant here
+                    self.en_pas = from + 8;
+                    debug_assert!(self.en_pas/8 == RANK_3);
                 } else {
-                    self.en_pas = from - 10;
-                    debug_assert!(RANKS[self.en_pas as usize] == RANK_6);
+                    self.en_pas = from - 8;
+                    debug_assert!(self.en_pas/8 == RANK_6);
                 }
                 self.hash_en_pas();
             }
@@ -99,7 +101,7 @@ impl Board {
             self.add_piece(mv.promote, to);
         }
 
-        if self.pieces[to as usize].is_king() {
+        if self.pieces[to].is_king() {
             self.king_sq[self.side] = to;
         }
 
@@ -149,9 +151,10 @@ impl Board {
 
         if mv.is_en_pas() {
             if self.side == WHITE {
-                self.add_piece(Piece::BP, to-10);
+                // Todo: Use a NORTH constant
+                self.add_piece(Piece::BP, to-8);
             } else {
-                self.add_piece(Piece::WP, to+10);
+                self.add_piece(Piece::WP, to+8);
             }
         } else if mv.is_castle() {
             if to == Position::C1 as Square {
@@ -173,7 +176,7 @@ impl Board {
 
         self.move_piece(to, from);
 
-        if self.pieces[from as usize].is_king() {
+        if self.pieces[from].is_king() {
             self.king_sq[self.side] = from;
         }
 
@@ -192,14 +195,14 @@ impl Board {
     
     fn clear_piece(&mut self, sq: Square) {
         debug_assert!(square_on_board(sq));
-        let piece = self.pieces[sq as usize];
+        let piece = self.pieces[sq];
         debug_assert!(piece.exists());
 
         let color = piece.color();
 
         self.hash_piece(piece, sq);
 
-        self.pieces[sq as usize] = Piece::Empty;
+        self.pieces[sq] = Piece::Empty;
         self.material[color] -= piece.value();
 
 
@@ -212,10 +215,9 @@ impl Board {
             }
         }
 
-        let sq64 = SQUARE_120_TO_64[sq as usize];
-        self.bitboards[piece as usize].clear_bit(sq64);
-        self.bb_sides[color].clear_bit(sq64);
-        self.bb_sides[BOTH].clear_bit(sq64);
+        self.bitboards[piece as usize].clear_bit(sq);
+        self.bb_sides[color].clear_bit(sq);
+        self.bb_sides[BOTH].clear_bit(sq);
     }
 
     fn add_piece(&mut self, piece: Piece, sq: Square) {
@@ -225,7 +227,7 @@ impl Board {
         let color = piece.color();
 
         self.hash_piece(piece, sq);
-        self.pieces[sq as usize] = piece;
+        self.pieces[sq] = piece;
 
         if piece.is_big() {
             self.num_big_piece[color] += 1;
@@ -236,10 +238,9 @@ impl Board {
             }
         }
 
-        let sq64 = SQUARE_120_TO_64[sq as usize];
-        self.bitboards[piece as usize].set_bit(sq64);
-        self.bb_sides[color].set_bit(sq64);
-        self.bb_sides[BOTH].set_bit(sq64);
+        self.bitboards[piece as usize].set_bit(sq);
+        self.bb_sides[color].set_bit(sq);
+        self.bb_sides[BOTH].set_bit(sq);
 
         self.material[color] += piece.value();
     }
@@ -247,27 +248,25 @@ impl Board {
     fn move_piece(&mut self, from: Square, to: Square) {
         debug_assert!(square_on_board(from));
         debug_assert!(square_on_board(to));
-        let piece = self.pieces[from as usize];
+        let piece = self.pieces[from];
         let color = piece.color();
 
         self.hash_piece(piece, from);
-        self.pieces[from as usize] = Piece::Empty;
+        self.pieces[from] = Piece::Empty;
 
         self.hash_piece(piece, to);
-        self.pieces[to as usize] = piece;
+        self.pieces[to] = piece;
 
-        let from64 = SQUARE_120_TO_64[from as usize];
-        let to64 = SQUARE_120_TO_64[to as usize];
-        self.bitboards[piece as usize].clear_bit(from64);
-        self.bitboards[piece as usize].set_bit(to64);
-        self.bb_sides[color].clear_bit(from64);
-        self.bb_sides[color].set_bit(to64);
-        self.bb_sides[BOTH].clear_bit(from64);
-        self.bb_sides[BOTH].set_bit(to64);
+        self.bitboards[piece as usize].clear_bit(from);
+        self.bitboards[piece as usize].set_bit(to);
+        self.bb_sides[color].clear_bit(from);
+        self.bb_sides[color].set_bit(to);
+        self.bb_sides[BOTH].clear_bit(from);
+        self.bb_sides[BOTH].set_bit(to);
     }
 
     fn hash_piece(&mut self, piece: Piece, sq: Square) {
-        self.hash ^= self.hash_keys.piece_keys[piece as usize][sq as usize];
+        self.hash ^= self.hash_keys.piece_keys[piece as usize][sq];
     }
 
     fn hash_side(&mut self) {
@@ -283,17 +282,13 @@ impl Board {
     }
 }
 
-const CASTLE_PERM: [u8; 120] = [
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 13, 15, 15, 15, 12, 15, 15, 14, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15,  7, 15, 15, 15,  3, 15, 15, 11, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15
+const CASTLE_PERM: [u8; BOARD_SQ_NUM] = [
+    13, 15, 15, 15, 12, 15, 15, 14,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+     7, 15, 15, 15,  3, 15, 15, 11,
 ];

@@ -21,13 +21,11 @@ pub use search::{SearchInfo,GameMode,benchmark_search};
 pub use uci::uci_loop;
 pub use movegen::init_mvv_lva;
 
-// Signed integer is used instead of unsigned in order to avoid need
-// to cast when adding with signed directions.  i8 goes up to 128,
-// which is enough to cover the entire board.
-pub type Square = i8;
+// usize is used to avoid need for conversion with array access
+pub type Square = usize;
 type FileRank = Square;
 
-const BOARD_SQ_NUM: usize = 120;
+const BOARD_SQ_NUM: usize = 64;
 pub const MAX_DEPTH: u32 = 64;
 
 pub const FILE_A: FileRank = 0;
@@ -60,14 +58,15 @@ impl Castling {
 pub const START_FEN: &'static str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 pub fn fr_to_sq(file: FileRank, rank: FileRank) -> Square {
-    21 + file + rank * 10
+    file + rank * 8
 }
 
 pub const RANKS_ITER: std::ops::Range<FileRank> = RANK_1..RANK_8+1;
 pub const FILES_ITER: std::ops::Range<FileRank> = FILE_A..FILE_H+1;
 
 pub fn square_on_board(sq: Square) -> bool {
-    SQUARE_120_TO_64[sq as usize] <= 63
+    // Type limits enforce sq>=0
+    sq <= 63
 }
 
 pub struct Undo {
@@ -162,7 +161,7 @@ impl Board {
         };
 
         for i in 0..64 {
-            board.pieces[SQUARE_64_TO_120[i] as usize] = Piece::Empty;
+            board.pieces[i] = Piece::Empty;
         }
 
         board
@@ -175,11 +174,13 @@ impl Board {
         let mut file = FILE_A;
         let mut piece;
         let mut count;
-        let mut sq120: Square;
+        let mut sq: Square;
 
         let mut fen_iter = fen.chars();
         let mut c;
 
+        // This is essentially just a while(true) loop that must be
+        // broken out off
         while rank >= RANK_1 {
             c = fen_iter.next().unwrap();
             count = 1;
@@ -204,8 +205,11 @@ impl Board {
                 }, 
 
                 '/' | ' ' => {
-                    rank -= 1;
                     file = FILE_A;
+                    if rank <= RANK_1 {
+                        break;
+                    }
+                    rank -= 1;
                     continue;
                 },
                 
@@ -214,8 +218,8 @@ impl Board {
 
             for _i in 0..count {
                 if piece.exists() {
-                    sq120 = fr_to_sq(file, rank);
-                    board.pieces[sq120 as usize] = piece;
+                    sq = fr_to_sq(file, rank);
+                    board.pieces[sq] = piece;
                 }
                 file += 1;
             }
@@ -306,12 +310,10 @@ impl Board {
     }
 
     fn update_lists_and_material(&mut self) {
-        let mut sq120;
         let mut color;
         let mut piece;
         for sq in 0..64 {
-           sq120 = SQUARE_64_TO_120[sq]; 
-            piece = self.pieces[sq120 as usize];
+            piece = self.pieces[sq as usize];
             if piece.exists() {
                 color = piece.color();
                 if piece.is_big() {
@@ -325,7 +327,7 @@ impl Board {
                 }
                 self.material[color] += piece.value();
                 if piece.is_king() {
-                    self.king_sq[color] = sq120;
+                    self.king_sq[color] = sq;
                 }
                 self.bitboards[piece as usize].set_bit(sq);
                 self.bb_sides[color].set_bit(sq);
@@ -342,12 +344,10 @@ impl Board {
         let mut material = [0; 2];
 
         // Check counts
-        let mut sq120;
         let mut piece;
         let mut color;
-        for sq64 in 0..64 {
-            sq120 = SQUARE_64_TO_120[sq64]; 
-            piece = self.pieces[sq120 as usize];
+        for sq in 0..64 {
+            piece = self.pieces[sq as usize];
             if piece.exists() {
                 piece_count[piece as usize] += 1;
                 color = piece.color();
@@ -374,11 +374,11 @@ impl Board {
 
         // Check pawn bitboard squares:
         let bitboards = self.bitboards.clone();
-        for sq64 in bitboards[Piece::WP as usize].into_iter() {
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::WP);
+        for sq in bitboards[Piece::WP as usize].into_iter() {
+            assert_eq!(self.pieces[sq], Piece::WP);
         }
-        for sq64 in bitboards[Piece::BP as usize].into_iter() {
-            assert_eq!(self.pieces[SQUARE_64_TO_120[sq64] as usize], Piece::BP);
+        for sq in bitboards[Piece::BP as usize].into_iter() {
+            assert_eq!(self.pieces[sq], Piece::BP);
         }
         
         fn checker(a1: [i32; 2], a2: [i32; 2]) {
@@ -394,13 +394,13 @@ impl Board {
         assert_eq!(self.hash, self.get_position_hash());
 
         assert!(self.en_pas == Position::NONE as Square ||
-                (RANKS[self.en_pas as usize] == RANK_6 && self.side == WHITE) ||
-                (RANKS[self.en_pas as usize] == RANK_3 && self.side == BLACK));
+                (self.en_pas/8 == RANK_6 && self.side == WHITE) ||
+                (self.en_pas/8 == RANK_3 && self.side == BLACK));
 
-        assert_eq!(self.pieces[self.king_sq[WHITE] as usize], Piece::WK);
-        assert_eq!(self.pieces[self.king_sq[BLACK] as usize], Piece::BK);
-        assert_eq!(SQUARE_120_TO_64[self.king_sq[WHITE] as usize], self.bitboards[Piece::WK as usize].clone().pop_bit());
-        assert_eq!(SQUARE_120_TO_64[self.king_sq[BLACK] as usize], self.bitboards[Piece::BK as usize].clone().pop_bit());
+        assert_eq!(self.pieces[self.king_sq[WHITE]], Piece::WK);
+        assert_eq!(self.pieces[self.king_sq[BLACK]], Piece::BK);
+        assert_eq!(self.king_sq[WHITE], self.bitboards[Piece::WK as usize].clone().pop_bit());
+        assert_eq!(self.king_sq[BLACK], self.bitboards[Piece::BK as usize].clone().pop_bit());
 
         // Check side piece bitboards:
         assert_eq!(self.bb_sides[WHITE].count(), PIECE_TYPES.iter().filter(|p| p.color()==WHITE).map(|&p| self.bitboards[p as usize].count()).sum());
@@ -414,17 +414,16 @@ impl Board {
         debug_assert!(validate::side_valid(side));
         debug_assert!(self.check());
         
-        let sq64 = SQUARE_120_TO_64[sq as usize];
         let mut piece;
 
         // pawns
         if side == WHITE {
-            if self.bitboards[Piece::WP as usize].0 & BLACK_PAWN_MOVES[sq64].0 != 0 {
+            if self.bitboards[Piece::WP as usize].0 & BLACK_PAWN_MOVES[sq].0 != 0 {
                 return true;
             }
         }
         else {
-            if self.bitboards[Piece::BP as usize].0 & WHITE_PAWN_MOVES[sq64].0 != 0 {
+            if self.bitboards[Piece::BP as usize].0 & WHITE_PAWN_MOVES[sq].0 != 0 {
                 return true;
             }
         }
@@ -435,12 +434,12 @@ impl Board {
             BLACK => Piece::BN,
             _ => unreachable!(),
         };
-        if KNIGHT_MOVES[sq64].0 & self.bitboards[piece as usize].0 != 0 {
+        if KNIGHT_MOVES[sq].0 & self.bitboards[piece as usize].0 != 0 {
             return true;
         }
 
         let mut sq_bb = Bitboard::new();
-        sq_bb.set_bit(sq64);
+        sq_bb.set_bit(sq);
         let occ = self.bb_sides[BOTH].0;
 
         // bishops or queens
@@ -449,7 +448,7 @@ impl Board {
             BLACK => self.bitboards[Piece::BB as usize].0 | self.bitboards[Piece::BQ as usize].0,
             _ => unreachable!(),
         };
-        if bitboard::get_bishop_attacks(sq64, occ) & bishop_queens != 0 {
+        if bitboard::get_bishop_attacks(sq, occ) & bishop_queens != 0 {
             return true;
         }
 
@@ -459,7 +458,7 @@ impl Board {
             BLACK => self.bitboards[Piece::BR as usize].0 | self.bitboards[Piece::BQ as usize].0,
             _ => unreachable!(),
         };
-        if bitboard::get_rook_attacks(sq64, occ) & rooks_queens != 0 {
+        if bitboard::get_rook_attacks(sq, occ) & rooks_queens != 0 {
             return true;
         }
 
@@ -470,7 +469,7 @@ impl Board {
             BLACK => Piece::BK,
             _ => unreachable!(),
         };
-        if KING_MOVES[sq64].0 & self.bitboards[piece as usize].0 != 0 {
+        if KING_MOVES[sq].0 & self.bitboards[piece as usize].0 != 0 {
             return true;
         }
 
@@ -569,11 +568,11 @@ impl Board {
         }
 
         if self.en_pas != Position::NONE as Square {
-            board.en_pas = SQUARE_64_TO_120[MIRROR64[SQUARE_120_TO_64[self.en_pas as usize]]];
+            board.en_pas = MIRROR64[self.en_pas];
         }
 
-        for sq64 in 0..64 {
-            board.pieces[SQUARE_64_TO_120[sq64] as usize] = self.pieces[SQUARE_64_TO_120[MIRROR64[sq64]] as usize].swap();
+        for sq in 0..64 {
+            board.pieces[sq] = self.pieces[MIRROR64[sq]].swap();
         }
 
         board.side = self.side^1;
@@ -625,7 +624,7 @@ impl fmt::Display for Board {
 
 struct HashKeys {
     // Hashing also includes EMPTY pieces
-    piece_keys: [[u64; 120]; NUM_PIECE_TYPES_BOTH+1],
+    piece_keys: [[u64; BOARD_SQ_NUM]; NUM_PIECE_TYPES_BOTH+1],
     side_key: u64,
     castle_keys: [u64; 16],
 }
@@ -633,14 +632,14 @@ struct HashKeys {
 impl HashKeys {
     fn new() -> HashKeys {
         let mut hasher = HashKeys {
-            piece_keys: [[0; 120]; NUM_PIECE_TYPES_BOTH+1],
+            piece_keys: [[0; BOARD_SQ_NUM]; NUM_PIECE_TYPES_BOTH+1],
             side_key: 0,
             castle_keys: [0; 16],
         };
 
         hasher.side_key = rand::thread_rng().gen::<u64>();
         for i in 0..NUM_PIECE_TYPES_BOTH+1 {
-            for j in 0..120 {
+            for j in 0..64 {
                 hasher.piece_keys[i][j] = rand::thread_rng().gen::<u64>();
             }
         }
@@ -654,75 +653,16 @@ impl HashKeys {
 
 #[allow(dead_code)]
 pub enum Position {
-    A1 = 21, B1, C1, D1, E1, F1, G1, H1,
-    A2 = 31, B2, C2, D2, E2, F2, G2, H2,
-    A3 = 41, B3, C3, D3, E3, F3, G3, H3,
-    A4 = 51, B4, C4, D4, E4, F4, G4, H4,
-    A5 = 61, B5, C5, D5, E5, F5, G5, H5,
-    A6 = 71, B6, C6, D6, E6, F6, G6, H6,
-    A7 = 81, B7, C7, D7, E7, F7, G7, H7,
-    A8 = 91, B8, C8, D8, E8, F8, G8, H8,
+    A1 = 0, B1, C1, D1, E1, F1, G1, H1,
+    A2 = 8, B2, C2, D2, E2, F2, G2, H2,
+    A3 = 16, B3, C3, D3, E3, F3, G3, H3,
+    A4 = 24, B4, C4, D4, E4, F4, G4, H4,
+    A5 = 32, B5, C5, D5, E5, F5, G5, H5,
+    A6 = 40, B6, C6, D6, E6, F6, G6, H6,
+    A7 = 48, B7, C7, D7, E7, F7, G7, H7,
+    A8 = 56, B8, C8, D8, E8, F8, G8, H8,
     NONE, OFFBOARD
 }
-
-pub const SQUARE_120_TO_64: [usize; BOARD_SQ_NUM] = [
-    65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
-    65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
-    65,  0,  1,  2,  3,  4,  5,  6,  7, 65,
-    65,  8,  9, 10, 11, 12, 13, 14, 15, 65,
-    65, 16, 17, 18, 19, 20, 21, 22, 23, 65,
-    65, 24, 25, 26, 27, 28, 29, 30, 31, 65,
-    65, 32, 33, 34, 35, 36, 37, 38, 39, 65,
-    65, 40, 41, 42, 43, 44, 45, 46, 47, 65,
-    65, 48, 49, 50, 51, 52, 53, 54, 55, 65,
-    65, 56, 57, 58, 59, 60, 61, 62, 63, 65,
-    65, 65, 65, 65, 65, 65, 65, 65, 65, 65,
-    65, 65, 65, 65, 65, 65, 65, 65, 65, 65
-];
-
-pub const SQUARE_64_TO_120: [Square; 64] = [
-    21, 22, 23, 24, 25, 26, 27, 28,
-    31, 32, 33, 34, 35, 36, 37, 38,
-    41, 42, 43, 44, 45, 46, 47, 48,
-    51, 52, 53, 54, 55, 56, 57, 58,
-    61, 62, 63, 64, 65, 66, 67, 68,
-    71, 72, 73, 74, 75, 76, 77, 78,
-    81, 82, 83, 84, 85, 86, 87, 88,
-    91, 92, 93, 94, 95, 96, 97, 98
-];
-
-
-pub const FILES: [FileRank; BOARD_SQ_NUM] = [
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 0, 1, 2, 3, 4, 5, 6, 7, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100
-];
-
-pub const RANKS: [FileRank; BOARD_SQ_NUM] = [
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-    100, 0, 0, 0, 0, 0, 0, 0, 0, 100,
-    100, 1, 1, 1, 1, 1, 1, 1, 1, 100,
-    100, 2, 2, 2, 2, 2, 2, 2, 2, 100,
-    100, 3, 3, 3, 3, 3, 3, 3, 3, 100,
-    100, 4, 4, 4, 4, 4, 4, 4, 4, 100,
-    100, 5, 5, 5, 5, 5, 5, 5, 5, 100,
-    100, 6, 6, 6, 6, 6, 6, 6, 6, 100,
-    100, 7, 7, 7, 7, 7, 7, 7, 7, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
-    100, 100, 100, 100, 100, 100, 100, 100, 100, 100
-];
-
-
 
 
 #[cfg(test)]
@@ -743,8 +683,9 @@ mod tests {
                  \n      \
                        a  b  c  d  e  f  g  h  \n\
                  side: w\n\
-                 enPas: 99\n\
+                 enPas: 64\n\
                  castle: KQkq\n";
+        println!("Board:\n{}", board);
         assert_eq!(board.to_string(), s);
         assert!(board.check());
     }
