@@ -211,35 +211,35 @@ fn get_king_moves() -> [Bitboard; 64] {
 
         // N
         if rank<7 {
-            bitboards[sq].set_bit(sq+8);
+            bitboards[sq as usize].set_bit(sq+8);
         }
         // NE
         if rank<7 && file<7 {
-            bitboards[sq].set_bit(sq+9);
+            bitboards[sq as usize].set_bit(sq+9);
         }
         // E
         if file<7 {
-            bitboards[sq].set_bit(sq+1);
+            bitboards[sq as usize].set_bit(sq+1);
         }
         // SE
         if file<7 && rank>0 {
-            bitboards[sq].set_bit(sq-7);
+            bitboards[sq as usize].set_bit(sq-7);
         }
         // S
         if rank>0 {
-            bitboards[sq].set_bit(sq-8);
+            bitboards[sq as usize].set_bit(sq-8);
         }
         // SW
         if rank>0 && file>0 {
-            bitboards[sq].set_bit(sq-9);
+            bitboards[sq as usize].set_bit(sq-9);
         }
         // W
         if file>0 {
-            bitboards[sq].set_bit(sq-1);
+            bitboards[sq as usize].set_bit(sq-1);
         }
         // NW
         if file>0 && rank<7 {
-            bitboards[sq].set_bit(sq+7);
+            bitboards[sq as usize].set_bit(sq+7);
         }
     }
     
@@ -255,35 +255,35 @@ fn get_knight_moves() -> [Bitboard; 64] {
 
         // NNE
         if rank<6 && file<7 {
-            bitboards[sq].set_bit(sq+17);
+            bitboards[sq as usize].set_bit(sq+17);
         }
         // ENE
         if rank<7 && file<6 {
-            bitboards[sq].set_bit(sq+10);
+            bitboards[sq as usize].set_bit(sq+10);
         }
         // ESE
         if rank>0 && file<6 {
-            bitboards[sq].set_bit(sq-6);
+            bitboards[sq as usize].set_bit(sq-6);
         }
         // SSE
         if rank>1 && file<7 {
-            bitboards[sq].set_bit(sq-15);
+            bitboards[sq as usize].set_bit(sq-15);
         }
         // SSW
         if rank>1 && file>0 {
-            bitboards[sq].set_bit(sq-17);
+            bitboards[sq as usize].set_bit(sq-17);
         }
         // WSW
         if rank>0 && file>1 {
-            bitboards[sq].set_bit(sq-10);
+            bitboards[sq as usize].set_bit(sq-10);
         }
         // WNW
         if rank<7 && file>1 {
-            bitboards[sq].set_bit(sq+6);
+            bitboards[sq as usize].set_bit(sq+6);
         }
         // NNW
         if rank<6 && file>0 {
-            bitboards[sq].set_bit(sq+15);
+            bitboards[sq as usize].set_bit(sq+15);
         }
     }
     
@@ -298,13 +298,13 @@ fn get_white_pawn_moves() -> [Bitboard; 64] {
         bb.0 = 0;
         bb.set_bit(sq);
         bb.0 = (bb.0 & ! bitboard::BB_FILE_A) << 7;
-        bitboards[sq].0 |= bb.0;
+        bitboards[sq as usize].0 |= bb.0;
         
         // Right captures
         bb.0 = 0;
         bb.set_bit(sq);
         bb.0 = (bb.0 & ! bitboard::BB_FILE_H) << 9;
-        bitboards[sq].0 |= bb.0;
+        bitboards[sq as usize].0 |= bb.0;
     }
 
     bitboards
@@ -318,13 +318,13 @@ fn get_black_pawn_moves() -> [Bitboard; 64] {
         bb.0 = 0;
         bb.set_bit(sq);
         bb.0 = (bb.0 & ! bitboard::BB_FILE_A) >> 9;
-        bitboards[sq].0 |= bb.0;
+        bitboards[sq as usize].0 |= bb.0;
         
         // Right captures
         bb.0 = 0;
         bb.set_bit(sq);
         bb.0 = (bb.0 & ! bitboard::BB_FILE_H) >> 7;
-        bitboards[sq].0 |= bb.0;
+        bitboards[sq as usize].0 |= bb.0;
     }
 
     bitboards

@@ -22,7 +22,7 @@ pub use uci::uci_loop;
 pub use movegen::init_mvv_lva;
 
 // usize is used to avoid need for conversion with array access
-pub type Square = usize;
+pub type Square = u8;
 type FileRank = Square;
 
 const BOARD_SQ_NUM: usize = 64;
@@ -219,7 +219,7 @@ impl Board {
             for _i in 0..count {
                 if piece.exists() {
                     sq = fr_to_sq(file, rank);
-                    board.pieces[sq] = piece;
+                    board.pieces[sq as usize] = piece;
                 }
                 file += 1;
             }
@@ -285,9 +285,9 @@ impl Board {
 
         let mut piece;
         for sq in 0..BOARD_SQ_NUM {
-            piece = self.pieces[sq];
+            piece = self.pieces[sq as usize];
             if piece.exists() {
-                hash ^= self.hash_keys.piece_keys[piece as usize][sq];
+                hash ^= self.hash_keys.piece_keys[piece as usize][sq as usize];
             }
         }
 
@@ -375,10 +375,10 @@ impl Board {
         // Check pawn bitboard squares:
         let bitboards = self.bitboards.clone();
         for sq in bitboards[Piece::WP as usize].into_iter() {
-            assert_eq!(self.pieces[sq], Piece::WP);
+            assert_eq!(self.pieces[sq as usize], Piece::WP);
         }
         for sq in bitboards[Piece::BP as usize].into_iter() {
-            assert_eq!(self.pieces[sq], Piece::BP);
+            assert_eq!(self.pieces[sq as usize], Piece::BP);
         }
         
         fn checker(a1: [i32; 2], a2: [i32; 2]) {
@@ -397,8 +397,8 @@ impl Board {
                 (self.en_pas/8 == RANK_6 && self.side == WHITE) ||
                 (self.en_pas/8 == RANK_3 && self.side == BLACK));
 
-        assert_eq!(self.pieces[self.king_sq[WHITE]], Piece::WK);
-        assert_eq!(self.pieces[self.king_sq[BLACK]], Piece::BK);
+        assert_eq!(self.pieces[self.king_sq[WHITE] as usize], Piece::WK);
+        assert_eq!(self.pieces[self.king_sq[BLACK] as usize], Piece::BK);
         assert_eq!(self.king_sq[WHITE], self.bitboards[Piece::WK as usize].clone().pop_bit());
         assert_eq!(self.king_sq[BLACK], self.bitboards[Piece::BK as usize].clone().pop_bit());
 
@@ -418,12 +418,12 @@ impl Board {
 
         // pawns
         if side == WHITE {
-            if self.bitboards[Piece::WP as usize].0 & BLACK_PAWN_MOVES[sq].0 != 0 {
+            if self.bitboards[Piece::WP as usize].0 & BLACK_PAWN_MOVES[sq as usize].0 != 0 {
                 return true;
             }
         }
         else {
-            if self.bitboards[Piece::BP as usize].0 & WHITE_PAWN_MOVES[sq].0 != 0 {
+            if self.bitboards[Piece::BP as usize].0 & WHITE_PAWN_MOVES[sq as usize].0 != 0 {
                 return true;
             }
         }
@@ -434,7 +434,7 @@ impl Board {
             BLACK => Piece::BN,
             _ => unreachable!(),
         };
-        if KNIGHT_MOVES[sq].0 & self.bitboards[piece as usize].0 != 0 {
+        if KNIGHT_MOVES[sq as usize].0 & self.bitboards[piece as usize].0 != 0 {
             return true;
         }
 
@@ -469,7 +469,7 @@ impl Board {
             BLACK => Piece::BK,
             _ => unreachable!(),
         };
-        if KING_MOVES[sq].0 & self.bitboards[piece as usize].0 != 0 {
+        if KING_MOVES[sq as usize].0 & self.bitboards[piece as usize].0 != 0 {
             return true;
         }
 
@@ -568,11 +568,11 @@ impl Board {
         }
 
         if self.en_pas != Position::NONE as Square {
-            board.en_pas = MIRROR64[self.en_pas];
+            board.en_pas = MIRROR64[self.en_pas as usize] as Square;
         }
 
         for sq in 0..64 {
-            board.pieces[sq] = self.pieces[MIRROR64[sq]].swap();
+            board.pieces[sq as usize] = self.pieces[MIRROR64[sq as usize]].swap();
         }
 
         board.side = self.side^1;

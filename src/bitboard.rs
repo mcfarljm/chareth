@@ -2,7 +2,7 @@ use std::fmt;
 use bitintr::{Tzcnt,Popcnt,Lzcnt};
 use std::num::Wrapping;
 
-use crate::board::{self,RANKS_ITER,FILES_ITER,fr_to_sq};
+use crate::board::{self,RANKS_ITER,FILES_ITER,fr_to_sq,Square};
 use crate::pieces::WHITE;
 
 pub const BB_RANK_4: u64 = 0x00000000FF000000;
@@ -46,12 +46,12 @@ impl Bitboard {
         self.0 != 0
     }
 
-    pub fn set_bit(&mut self, index: usize) {
+    pub fn set_bit(&mut self, index: Square) {
         let mask: u64 = 1 << index;
         self.0 |= mask;
     }
 
-    pub fn clear_bit(&mut self, index: usize) {
+    pub fn clear_bit(&mut self, index: Square) {
         let mask: u64 = !(1 << index);
         self.0 &= mask;
     }
@@ -60,14 +60,14 @@ impl Bitboard {
         self.0.popcnt() as i32
     }
 
-    pub fn pop_bit(&mut self) -> usize {
+    pub fn pop_bit(&mut self) -> Square {
         let sq = self.0.tzcnt();
         self.0 &= self.0 - 1;
-        sq as usize
+        sq as Square
     }
 
-    pub fn isolated_pawn(&self, sq64: usize) -> bool {
-        if ISOLATED_MASK[sq64] & self.0 == 0 {
+    pub fn isolated_pawn(&self, sq64: Square) -> bool {
+        if ISOLATED_MASK[sq64 as usize] & self.0 == 0 {
             return true;
         } else {
             return false;
@@ -76,15 +76,15 @@ impl Bitboard {
 
     // Checks whether side's pawn at square is passed using the
     // opposing side's pawn bitboard (self)
-    pub fn passed_pawn(&self, sq64: usize, side: usize) -> bool {
+    pub fn passed_pawn(&self, sq64: Square, side: usize) -> bool {
         if side == WHITE {
-            if WHITE_PASSED_MASK[sq64] & self.0 == 0 {
+            if WHITE_PASSED_MASK[sq64 as usize] & self.0 == 0 {
                 return true;
             } else {
                 return false;
             }
         } else {
-            if BLACK_PASSED_MASK[sq64] & self.0 == 0 {
+            if BLACK_PASSED_MASK[sq64 as usize] & self.0 == 0 {
                 return true;
             } else {
                 return false;
@@ -119,7 +119,7 @@ impl fmt::Display for Bitboard {
 }
 
 impl IntoIterator for Bitboard {
-    type Item = usize;
+    type Item = Square;
     type IntoIter = BitboardIterator;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -134,9 +134,9 @@ pub struct BitboardIterator {
 }
 
 impl Iterator for BitboardIterator {
-    type Item = usize;
+    type Item = Square;
 
-    fn next(&mut self) -> Option<usize> {
+    fn next(&mut self) -> Option<Square> {
         if self.bitboard.nonzero() {
             Some(self.bitboard.pop_bit())
         } else {
@@ -170,47 +170,47 @@ fn get_eval_masks() -> BitboardArrays {
     }
 
     let mut tsq: i32;
-    for sq64 in 0..64 as usize {
+    for sq64 in 0..64 {
         tsq = sq64 as i32 + 8;
         while tsq < 64 {
-            white_passed_mask[sq64] |= 1 << tsq;
+            white_passed_mask[sq64 as usize] |= 1 << tsq;
             tsq += 8;
         }
 
         tsq = sq64 as i32 - 8;
         while tsq >= 0 {
-            black_passed_mask[sq64] |= 1 << tsq;
+            black_passed_mask[sq64 as usize] |= 1 << tsq;
             tsq -= 8;
         }
 
         if sq64%8 > board::FILE_A {
-            isolated_mask[sq64] |= file_bb_masks[sq64%8 - 1];
+            isolated_mask[sq64 as usize] |= file_bb_masks[(sq64%8 - 1) as usize];
 
             tsq = sq64 as i32 + 7;
             while tsq < 64 {
-                white_passed_mask[sq64] |= 1 << tsq;
+                white_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq += 8;
             }
 
             tsq = sq64 as i32 - 9;
             while tsq >= 0 {
-                black_passed_mask[sq64] |= 1 << tsq;
+                black_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq -= 8;
             }
         }
 
         if sq64%8 < board::FILE_H {
-            isolated_mask[sq64] |= file_bb_masks[sq64%8 + 1];
+            isolated_mask[sq64 as usize] |= file_bb_masks[(sq64%8 + 1) as usize];
 
             tsq = sq64 as i32 + 9;
             while tsq < 64 {
-                white_passed_mask[sq64] |= 1 << tsq;
+                white_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq += 8;
             }
 
             tsq = sq64 as i32 - 7;
             while tsq >= 0 {
-                black_passed_mask[sq64] |= 1 << tsq;
+                black_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq -= 8;
             }
         }
@@ -341,15 +341,15 @@ fn get_line_attacks(occ: u64, os_mask: ObsDiffMask) -> u64 {
     os_mask.line_exc & odiff.0
 }
 
-pub fn get_rook_attacks(sq: usize, occ: u64) -> u64 {
-    get_line_attacks(occ, OBS_DIFF_MASKS[0][sq]) | get_line_attacks(occ, OBS_DIFF_MASKS[1][sq])
+pub fn get_rook_attacks(sq: Square, occ: u64) -> u64 {
+    get_line_attacks(occ, OBS_DIFF_MASKS[0][sq as usize]) | get_line_attacks(occ, OBS_DIFF_MASKS[1][sq as usize])
 }
 
-pub fn get_bishop_attacks(sq: usize, occ: u64) -> u64 {
-    get_line_attacks(occ, OBS_DIFF_MASKS[2][sq]) | get_line_attacks(occ, OBS_DIFF_MASKS[3][sq])
+pub fn get_bishop_attacks(sq: Square, occ: u64) -> u64 {
+    get_line_attacks(occ, OBS_DIFF_MASKS[2][sq as usize]) | get_line_attacks(occ, OBS_DIFF_MASKS[3][sq as usize])
 }
 
-pub fn get_queen_attacks(sq: usize, occ: u64) -> u64 {
+pub fn get_queen_attacks(sq: Square, occ: u64) -> u64 {
     get_rook_attacks(sq, occ) | get_bishop_attacks(sq, occ)
 }
 

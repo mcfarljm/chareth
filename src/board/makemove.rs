@@ -14,7 +14,7 @@ impl Board {
         debug_assert!(square_on_board(from));
         debug_assert!(square_on_board(to));
         debug_assert!(side_valid(side));
-        debug_assert!(self.pieces[from].exists());
+        debug_assert!(self.pieces[from as usize].exists());
 
         let prev_hash = self.hash;
 
@@ -61,8 +61,8 @@ impl Board {
         // Todo: verify this can just go at the end...
         self.history.push(undo);
 
-        self.castle_perm &= CASTLE_PERM[from];
-        self.castle_perm &= CASTLE_PERM[to];
+        self.castle_perm &= CASTLE_PERM[from as usize];
+        self.castle_perm &= CASTLE_PERM[to as usize];
         self.en_pas = Position::NONE as Square;
             
         // Hash in new state of castling permission
@@ -78,7 +78,7 @@ impl Board {
         self.ply += 1;
         self.hist_ply += 1;
 
-        if self.pieces[from].is_pawn() {
+        if self.pieces[from as usize].is_pawn() {
             self.fifty_move = 0;
             if mv.is_pawn_start() {
                 if side == WHITE {
@@ -101,7 +101,7 @@ impl Board {
             self.add_piece(mv.promote, to);
         }
 
-        if self.pieces[to].is_king() {
+        if self.pieces[to as usize].is_king() {
             self.king_sq[self.side] = to;
         }
 
@@ -176,7 +176,7 @@ impl Board {
 
         self.move_piece(to, from);
 
-        if self.pieces[from].is_king() {
+        if self.pieces[from as usize].is_king() {
             self.king_sq[self.side] = from;
         }
 
@@ -195,14 +195,14 @@ impl Board {
     
     fn clear_piece(&mut self, sq: Square) {
         debug_assert!(square_on_board(sq));
-        let piece = self.pieces[sq];
+        let piece = self.pieces[sq as usize];
         debug_assert!(piece.exists());
 
         let color = piece.color();
 
         self.hash_piece(piece, sq);
 
-        self.pieces[sq] = Piece::Empty;
+        self.pieces[sq as usize] = Piece::Empty;
         self.material[color] -= piece.value();
 
 
@@ -227,7 +227,7 @@ impl Board {
         let color = piece.color();
 
         self.hash_piece(piece, sq);
-        self.pieces[sq] = piece;
+        self.pieces[sq as usize] = piece;
 
         if piece.is_big() {
             self.num_big_piece[color] += 1;
@@ -248,14 +248,14 @@ impl Board {
     fn move_piece(&mut self, from: Square, to: Square) {
         debug_assert!(square_on_board(from));
         debug_assert!(square_on_board(to));
-        let piece = self.pieces[from];
+        let piece = self.pieces[from as usize];
         let color = piece.color();
 
         self.hash_piece(piece, from);
-        self.pieces[from] = Piece::Empty;
+        self.pieces[from as usize] = Piece::Empty;
 
         self.hash_piece(piece, to);
-        self.pieces[to] = piece;
+        self.pieces[to as usize] = piece;
 
         self.bitboards[piece as usize].clear_bit(from);
         self.bitboards[piece as usize].set_bit(to);
@@ -266,7 +266,7 @@ impl Board {
     }
 
     fn hash_piece(&mut self, piece: Piece, sq: Square) {
-        self.hash ^= self.hash_keys.piece_keys[piece as usize][sq];
+        self.hash ^= self.hash_keys.piece_keys[piece as usize][sq as usize];
     }
 
     fn hash_side(&mut self) {
