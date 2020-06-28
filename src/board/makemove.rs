@@ -1,6 +1,5 @@
 use crate::board::*;
 use crate::moves::Move;
-use crate::validate;
 
 impl Board {
     // Return false if in check after making the move
@@ -13,7 +12,7 @@ impl Board {
 
         debug_assert!(square_on_board(from));
         debug_assert!(square_on_board(to));
-        debug_assert!(validate::side_valid(side));
+        debug_assert!(side_valid(side));
         debug_assert!(self.pieces[from as usize].exists());
 
         let prev_hash = self.hash;

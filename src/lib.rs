@@ -6,7 +6,6 @@ pub mod benchmarks;
 mod pieces;
 mod bitboard;
 mod moves;
-mod validate;
 mod version;
 
 #[macro_use]

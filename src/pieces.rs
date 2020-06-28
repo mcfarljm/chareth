@@ -12,6 +12,25 @@ pub const KING_VAL: i32 = 50000;
 pub const NUM_PIECE_TYPES_BOTH: usize = 12;
 pub const PIECE_TYPES: [Piece; NUM_PIECE_TYPES_BOTH] = [Piece::WP, Piece::WN, Piece::WB, Piece::WR, Piece::WQ, Piece::WK, Piece::BP, Piece::BN, Piece::BB, Piece::BR, Piece::BQ, Piece::BK];
 
+pub const WHITE: usize = 0;
+pub const BLACK: usize = 1;
+pub const BOTH: usize = 2;
+
+// SLIDERS[color] produces an array that can be iterated through
+pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
+pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Piece::BK]];
+
+lazy_static! {
+    pub static ref KING_MOVES: [Bitboard; 64] = get_king_moves();
+    pub static ref KNIGHT_MOVES: [Bitboard; 64] = get_knight_moves();
+    pub static ref WHITE_PAWN_MOVES: [Bitboard; 64] = get_white_pawn_moves();
+    pub static ref BLACK_PAWN_MOVES: [Bitboard; 64] = get_black_pawn_moves();
+}
+
+pub fn side_valid(side: usize) -> bool {
+    side == WHITE || side == BLACK
+}
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
@@ -177,22 +196,6 @@ impl fmt::Display for Piece {
             _ => { Err(fmt::Error) }
         }
     }
-}
-
-pub const WHITE: usize = 0;
-pub const BLACK: usize = 1;
-pub const BOTH: usize = 2;
-
-// SLIDERS[color] produces an array that can be iterated through
-pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
-pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Piece::BK]];
-
-
-lazy_static! {
-    pub static ref KING_MOVES: [Bitboard; 64] = get_king_moves();
-    pub static ref KNIGHT_MOVES: [Bitboard; 64] = get_knight_moves();
-    pub static ref WHITE_PAWN_MOVES: [Bitboard; 64] = get_white_pawn_moves();
-    pub static ref BLACK_PAWN_MOVES: [Bitboard; 64] = get_black_pawn_moves();
 }
 
 pub fn init_move_tables() {

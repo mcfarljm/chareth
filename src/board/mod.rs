@@ -12,7 +12,6 @@ use std::fmt;
 
 use crate::pieces::*;
 use crate::bitboard::{self,Bitboard};
-use crate::validate;
 use crate::moves;
 use crate::version::PROGRAM_NAME;
 use evaluate::MIRROR64;
@@ -411,7 +410,7 @@ impl Board {
 
     pub fn square_attacked(&self, sq: Square, side: usize) -> bool {
         debug_assert!(square_on_board(sq));
-        debug_assert!(validate::side_valid(side));
+        debug_assert!(side_valid(side));
         debug_assert!(self.check());
         
         let mut piece;
