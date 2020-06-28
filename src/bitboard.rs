@@ -1,9 +1,14 @@
 use std::fmt;
+use std::num::Wrapping;
+use bitintr::{Tzcnt,Popcnt,Lzcnt};
 
-use crate::board::{self,RANKS_ITER,FILES_ITER,FILES,fr_to_sq,SQUARE_120_TO_64,SQUARE_64_TO_120};
+use crate::board::{self,RANKS_ITER,FILES_ITER,Square};
 use crate::pieces::WHITE;
 
-const BIT_TABLE: [usize; 64] = [63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2, 51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35, 62, 31, 40, 4, 49, 5, 52, 26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28, 58, 20, 37, 17, 36, 8];
+pub const BB_RANK_4: u64 = 0x00000000FF000000;
+pub const BB_RANK_5: u64 = 0x000000FF00000000;
+pub const BB_FILE_A: u64 = 0x0101010101010101;
+pub const BB_FILE_H: u64 = 0x8080808080808080;
 
 // A return value to facilitate a single function that initializes
 // multiple bitboard arrays
@@ -23,52 +28,46 @@ lazy_static! {
     static ref WHITE_PASSED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.2;
     static ref BLACK_PASSED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.3;
     static ref ISOLATED_MASK: &'static[u64; 64] = &BITBOARD_ARRAYS.4;
+
+    static ref OBS_DIFF_MASKS: [[ObsDiffMask; 64]; 4] = get_obstruction_diff_masks();
 }
 
+
 #[derive(Clone)]
-pub struct Bitboard {
-    val: u64,
-}
+#[derive(Copy)]
+pub struct Bitboard(pub u64);
 
 impl Bitboard {
     pub fn new() -> Bitboard {
-        Bitboard{ val: 0 }
+        Bitboard(0)
     }
 
     pub fn nonzero(&self) -> bool {
-        self.val != 0
+        self.0 != 0
     }
 
-    pub fn set_bit(&mut self, index: usize) {
+    pub fn set_bit(&mut self, index: Square) {
         let mask: u64 = 1 << index;
-        self.val |= mask;
+        self.0 |= mask;
     }
 
-    pub fn clear_bit(&mut self, index: usize) {
+    pub fn clear_bit(&mut self, index: Square) {
         let mask: u64 = !(1 << index);
-        self.val &= mask;
+        self.0 &= mask;
     }
 
     pub fn count(&self) -> i32 {
-        let mut b = self.val;
-        let mut r = 0;
-        while b != 0 {
-            r += 1;
-            b &= b - 1;
-        }
-        r
+        self.0.popcnt() as i32
     }
 
-    pub fn pop_bit(&mut self) -> usize {
-        let b: u64 = self.val ^ (self.val-1);
-        let fold: u32 = ((b & 0xffffffff) ^ (b >> 32)) as u32;
-        self.val &= self.val - 1;
-        let i: usize = (fold.wrapping_mul(0x783a9b23) >> 26) as usize;
-        BIT_TABLE[i]
+    pub fn pop_bit(&mut self) -> Square {
+        let sq = self.0.tzcnt();
+        self.0 &= self.0 - 1;
+        sq as Square
     }
 
-    pub fn isolated_pawn(&self, sq64: usize) -> bool {
-        if ISOLATED_MASK[sq64] & self.val == 0 {
+    pub fn isolated_pawn(&self, sq64: Square) -> bool {
+        if ISOLATED_MASK[sq64 as usize] & self.0 == 0 {
             return true;
         } else {
             return false;
@@ -77,15 +76,15 @@ impl Bitboard {
 
     // Checks whether side's pawn at square is passed using the
     // opposing side's pawn bitboard (self)
-    pub fn passed_pawn(&self, sq64: usize, side: usize) -> bool {
+    pub fn passed_pawn(&self, sq64: Square, side: usize) -> bool {
         if side == WHITE {
-            if WHITE_PASSED_MASK[sq64] & self.val == 0 {
+            if WHITE_PASSED_MASK[sq64 as usize] & self.0 == 0 {
                 return true;
             } else {
                 return false;
             }
         } else {
-            if BLACK_PASSED_MASK[sq64] & self.val == 0 {
+            if BLACK_PASSED_MASK[sq64 as usize] & self.0 == 0 {
                 return true;
             } else {
                 return false;
@@ -94,16 +93,20 @@ impl Bitboard {
     }
 }
 
+impl Default for Bitboard {
+    fn default() -> Self {
+        Bitboard::new()
+    }
+}
+
 impl fmt::Display for Bitboard {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut sq;
-        let mut sq64: usize;
 
         for rank in RANKS_ITER.rev() {
             for file in FILES_ITER {
-                sq = fr_to_sq(file, rank);
-                sq64 = SQUARE_120_TO_64[sq as usize];
-                if (1 << sq64) & self.val != 0 {
+                sq = board::fr_to_sq(file, rank);
+                if (1 << sq) & self.0 != 0 {
                     write!(f, "x")?;
                 } else {
                     write!(f, "-")?;
@@ -112,6 +115,33 @@ impl fmt::Display for Bitboard {
             write!(f, "\n")?;
         }
         Ok(())
+    }
+}
+
+impl IntoIterator for Bitboard {
+    type Item = Square;
+    type IntoIter = BitboardIterator;
+
+    fn into_iter(self) -> Self::IntoIter {
+        BitboardIterator {
+            bitboard: self,
+        }
+    }
+}
+
+pub struct BitboardIterator {
+    bitboard : Bitboard,
+}
+
+impl Iterator for BitboardIterator {
+    type Item = Square;
+
+    fn next(&mut self) -> Option<Square> {
+        if self.bitboard.nonzero() {
+            Some(self.bitboard.pop_bit())
+        } else {
+            None
+        }
     }
 }
 
@@ -131,58 +161,56 @@ fn get_eval_masks() -> BitboardArrays {
     let mut isolated_mask: [u64; 64] = [0; 64];
     
     let mut sq;
-    let mut sq64: usize;
     for rank in RANKS_ITER.rev() {
         for file in FILES_ITER {
-            sq = fr_to_sq(file, rank);
-            sq64 = SQUARE_120_TO_64[sq as usize];
-            file_bb_masks[file as usize] |= 1 << sq64;
-            rank_bb_masks[rank as usize] |= 1 << sq64;
+            sq = board::fr_to_sq(file, rank);
+            file_bb_masks[file as usize] |= 1 << sq;
+            rank_bb_masks[rank as usize] |= 1 << sq;
         }
     }
 
     let mut tsq: i32;
-    for sq64 in 0..64 as usize {
+    for sq64 in 0..64 {
         tsq = sq64 as i32 + 8;
         while tsq < 64 {
-            white_passed_mask[sq64] |= 1 << tsq;
+            white_passed_mask[sq64 as usize] |= 1 << tsq;
             tsq += 8;
         }
 
         tsq = sq64 as i32 - 8;
         while tsq >= 0 {
-            black_passed_mask[sq64] |= 1 << tsq;
+            black_passed_mask[sq64 as usize] |= 1 << tsq;
             tsq -= 8;
         }
 
-        if FILES[SQUARE_64_TO_120[sq64] as usize] > board::FILE_A {
-            isolated_mask[sq64] |= file_bb_masks[(FILES[SQUARE_64_TO_120[sq64] as usize] - 1) as usize];
+        if sq64%8 > board::FILE_A {
+            isolated_mask[sq64 as usize] |= file_bb_masks[(sq64%8 - 1) as usize];
 
             tsq = sq64 as i32 + 7;
             while tsq < 64 {
-                white_passed_mask[sq64] |= 1 << tsq;
+                white_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq += 8;
             }
 
             tsq = sq64 as i32 - 9;
             while tsq >= 0 {
-                black_passed_mask[sq64] |= 1 << tsq;
+                black_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq -= 8;
             }
         }
 
-        if FILES[SQUARE_64_TO_120[sq64] as usize] < board::FILE_H {
-            isolated_mask[sq64] |= file_bb_masks[(FILES[SQUARE_64_TO_120[sq64] as usize] + 1) as usize];
+        if sq64%8 < board::FILE_H {
+            isolated_mask[sq64 as usize] |= file_bb_masks[(sq64%8 + 1) as usize];
 
             tsq = sq64 as i32 + 9;
             while tsq < 64 {
-                white_passed_mask[sq64] |= 1 << tsq;
+                white_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq += 8;
             }
 
             tsq = sq64 as i32 - 7;
             while tsq >= 0 {
-                black_passed_mask[sq64] |= 1 << tsq;
+                black_passed_mask[sq64 as usize] |= 1 << tsq;
                 tsq -= 8;
             }
         }
@@ -191,18 +219,138 @@ fn get_eval_masks() -> BitboardArrays {
     // let mut bb = Bitboard::new();
     // for sq64 in 0..64 as usize {
     //     unsafe {
-    //         bb.val = isolated_mask[sq64];
+    //         bb.0 = isolated_mask[sq64];
     //     }
     //     println!("{}", bb);
     // }
 
     // let mut bb = Bitboard::new();
     // unsafe {
-    //     bb.val = rank_bb_masks[1];
+    //     bb.0 = rank_bb_masks[1];
     //     println!("{}", bb);
     // }
 
     BitboardArrays(file_bb_masks, rank_bb_masks, white_passed_mask, black_passed_mask, isolated_mask)
+}
+
+
+// Slide piece masks:
+
+// See: https://www.chessprogramming.org/On_an_empty_Board
+
+fn rank_mask(sq: usize) -> u64 {
+    0xff << (sq & 56)
+}
+
+fn file_mask(sq: usize) -> u64 {
+    0x0101010101010101 << (sq & 7)
+}
+
+fn diagonal_mask(sq: i32) -> u64 {
+    let main_diag: u64 = 0x8040201008040201;
+    let diag: i32 = 8*(sq & 7) - (sq & 56);
+    let north = -diag & (diag >> 31);
+    let south = diag & (-diag >> 31);
+    (main_diag >> south) << north
+}
+
+fn anti_diagonal_mask(sq: i32) -> u64 {
+    let main_diag: u64 = 0x0102040810204080;
+    let diag: i32 = 56 - 8*(sq & 7) - (sq & 56);
+    let north = -diag & (diag >> 31);
+    let south = diag & (-diag >> 31);
+    (main_diag >> south) << north
+}
+
+fn positive_ray(sq: usize, line: u64) -> u64 {
+    line & (Wrapping(0u64) - (Wrapping(2u64) << sq)).0
+}
+
+fn negative_ray(sq: usize, line: u64) -> u64 {
+    line & ((1 << sq) - 1)
+}
+
+// Obstruction difference:
+
+#[derive(Copy,Clone)]
+struct ObsDiffMask {
+    lower: u64,
+    upper: u64,
+    line_exc: u64, // lower | upper
+}
+
+impl ObsDiffMask {
+    fn new(lower: u64, upper: u64) -> ObsDiffMask {
+        ObsDiffMask{
+            lower: lower,
+            upper: upper,
+            line_exc: lower | upper,
+        }
+    }
+}
+
+impl Default for ObsDiffMask {
+    fn default() -> ObsDiffMask {
+        ObsDiffMask::new(0, 0)
+    }
+}
+
+fn get_obstruction_diff_masks() -> [[ObsDiffMask; 64]; 4] {
+    let mut os_masks = [[Default::default(); 64]; 4];
+    let mut lower: u64;
+    let mut upper: u64;
+    let mut line: u64;
+    for sq in 0..64 {
+        // Rank masks:
+        line = rank_mask(sq);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[0][sq] = ObsDiffMask::new(lower, upper);
+
+        // File masks:
+        line = file_mask(sq);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[1][sq] = ObsDiffMask::new(lower, upper);
+
+        // Diagonal masks:
+        line = diagonal_mask(sq as i32);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[2][sq] = ObsDiffMask::new(lower, upper);
+
+        // Anti-diagonal masks:
+        line = anti_diagonal_mask(sq as i32);
+        upper = positive_ray(sq, line);
+        lower = negative_ray(sq, line);
+        os_masks[3][sq] = ObsDiffMask::new(lower, upper);
+    }
+    os_masks
+}
+
+pub fn init_obs_diff_masks() {
+    lazy_static::initialize(&OBS_DIFF_MASKS);
+}
+
+fn get_line_attacks(occ: u64, os_mask: ObsDiffMask) -> u64 {
+    let lower = os_mask.lower & occ;
+    let upper = os_mask.upper & occ;
+    let ms1b = 0x8000000000000000 >> (lower | 1).lzcnt();
+    let ls1b = upper & (-Wrapping(upper)).0;
+    let odiff = Wrapping(2)*Wrapping(ls1b) - Wrapping(ms1b);
+    os_mask.line_exc & odiff.0
+}
+
+pub fn get_rook_attacks(sq: Square, occ: u64) -> u64 {
+    get_line_attacks(occ, OBS_DIFF_MASKS[0][sq as usize]) | get_line_attacks(occ, OBS_DIFF_MASKS[1][sq as usize])
+}
+
+pub fn get_bishop_attacks(sq: Square, occ: u64) -> u64 {
+    get_line_attacks(occ, OBS_DIFF_MASKS[2][sq as usize]) | get_line_attacks(occ, OBS_DIFF_MASKS[3][sq as usize])
+}
+
+pub fn get_queen_attacks(sq: Square, occ: u64) -> u64 {
+    get_rook_attacks(sq, occ) | get_bishop_attacks(sq, occ)
 }
 
 #[cfg(test)]
@@ -300,46 +448,64 @@ mod tests {
     #[test]
     fn file_bb_masks() {
         let mut bb = Bitboard::new();
-        bb.val = FILE_BB_MASKS[1];
-        assert_eq!(bb.val, 0x202020202020202);        
-        bb.val = FILE_BB_MASKS[7];
-        assert_eq!(bb.val, 0x8080808080808080);
+        bb.0 = FILE_BB_MASKS[1];
+        assert_eq!(bb.0, 0x202020202020202);        
+        bb.0 = FILE_BB_MASKS[7];
+        assert_eq!(bb.0, 0x8080808080808080);
         // println!("{}", bb);
-        // println!("{:x}", bb.val);
+        // println!("{:x}", bb.0);
     }
 
     #[test]
     fn rank_bb_masks() {
         let mut bb = Bitboard::new();
-        bb.val = RANK_BB_MASKS[1];
-        assert_eq!(bb.val, 0xff00);
-        bb.val = RANK_BB_MASKS[7];
-        assert_eq!(bb.val, 0xff00000000000000);        
+        bb.0 = RANK_BB_MASKS[1];
+        assert_eq!(bb.0, 0xff00);
+        bb.0 = RANK_BB_MASKS[7];
+        assert_eq!(bb.0, 0xff00000000000000);        
     }
 
     #[test]
     fn white_pawn_passed() {
         let mut bb = Bitboard::new();
-        bb.val = WHITE_PASSED_MASK[0];
-        assert_eq!(bb.val, 0x303030303030300);
-        bb.val = WHITE_PASSED_MASK[37];
-        assert_eq!(bb.val, 0x7070700000000000);        
+        bb.0 = WHITE_PASSED_MASK[0];
+        assert_eq!(bb.0, 0x303030303030300);
+        bb.0 = WHITE_PASSED_MASK[37];
+        assert_eq!(bb.0, 0x7070700000000000);        
     }
 
     #[test]
     fn black_pawn_passed() {
         let mut bb = Bitboard::new();
-        bb.val = BLACK_PASSED_MASK[63];
-        assert_eq!(bb.val, 0xc0c0c0c0c0c0c0);        
+        bb.0 = BLACK_PASSED_MASK[63];
+        assert_eq!(bb.0, 0xc0c0c0c0c0c0c0);        
     }
 
     #[test]
     fn isolated_pawn() {
         let mut bb = Bitboard::new();
-        bb.val = ISOLATED_MASK[0];
-        assert_eq!(bb.val, 0x202020202020202);
-        bb.val = ISOLATED_MASK[55];
-        assert_eq!(bb.val, 0x4040404040404040);
-    }        
+        bb.0 = ISOLATED_MASK[0];
+        assert_eq!(bb.0, 0x202020202020202);
+        bb.0 = ISOLATED_MASK[55];
+        assert_eq!(bb.0, 0x4040404040404040);
+    }
+
+    #[test]
+    fn empty_iter() {
+        let bb = Bitboard::new();
+        let squares: Vec<_> = bb.into_iter().collect();
+        assert_eq!(squares.len(), 0);
+    }
+
+    #[test]
+    fn iter() {
+        let mut bb = Bitboard::new();
+        bb.set_bit(9);
+        bb.set_bit(25);
+        bb.set_bit(44);
+        let mut squares: Vec<_> = bb.into_iter().collect();
+        squares.sort();
+        assert_eq!(squares, &[9, 25, 44]);
+    }
 
 }

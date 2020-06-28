@@ -1,10 +1,9 @@
-use crate::board::*;
-use crate::version::PROGRAM_NAME;
-
 use std::thread;
 use std::sync::mpsc;
-
 use std::io::{self, Write};
+
+use crate::board::*;
+use crate::version::PROGRAM_NAME;
 
 impl Board {
     // go depth <> wtime <> btime <> binc <> winc <> movetime <> movestogo <>

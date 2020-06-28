@@ -1,8 +1,9 @@
+use std::io::{self, Write};
+use std::env;
+
 use chareth::{board,xboard,simpleloop};
 // use chareth::benchmarks;
 
-use std::io::{self, Write};
-use std::env;
 
 fn main() {
 

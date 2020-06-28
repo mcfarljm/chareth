@@ -1,6 +1,5 @@
 use crate::board::*;
 use crate::moves::Move;
-use crate::validate::side_valid;
 
 impl Board {
     // Return false if in check after making the move
@@ -20,9 +19,10 @@ impl Board {
 
         if mv.is_en_pas() {
             if side == WHITE {
-                self.clear_piece(to - 10);
+                // Todo: use a NORTH constant
+                self.clear_piece(to - 8);
             } else {
-                self.clear_piece(to + 10);
+                self.clear_piece(to + 8);
             }
         }
         else if mv.is_castle() {
@@ -81,11 +81,12 @@ impl Board {
             self.fifty_move = 0;
             if mv.is_pawn_start() {
                 if side == WHITE {
-                    self.en_pas = from + 10;
-                    debug_assert!(RANKS[self.en_pas as usize] == RANK_3);
+                    // Todo: use a NORTH constant here
+                    self.en_pas = from + 8;
+                    debug_assert!(self.en_pas/8 == RANK_3);
                 } else {
-                    self.en_pas = from - 10;
-                    debug_assert!(RANKS[self.en_pas as usize] == RANK_6);
+                    self.en_pas = from - 8;
+                    debug_assert!(self.en_pas/8 == RANK_6);
                 }
                 self.hash_en_pas();
             }
@@ -149,9 +150,10 @@ impl Board {
 
         if mv.is_en_pas() {
             if self.side == WHITE {
-                self.add_piece(Piece::BP, to-10);
+                // Todo: Use a NORTH constant
+                self.add_piece(Piece::BP, to-8);
             } else {
-                self.add_piece(Piece::WP, to+10);
+                self.add_piece(Piece::WP, to+8);
             }
         } else if mv.is_castle() {
             if to == Position::C1 as Square {
@@ -210,18 +212,11 @@ impl Board {
             } else {
                 self.num_minor_piece[color] -= 1;
             }
-        } else {
-            let sq64 = SQUARE_120_TO_64[sq as usize];
-            self.pawns[color].clear_bit(sq64);
-            self.pawns[BOTH].clear_bit(sq64);
         }
 
-        // Remove from piece list
-        let i_piece = self.piece_lists[piece as usize]
-            .iter()
-            .position(|x| *x == sq)
-            .expect("piece must exist in piece list");
-        self.piece_lists[piece as usize].swap_remove(i_piece);
+        self.bitboards[piece as usize].clear_bit(sq);
+        self.bb_sides[color].clear_bit(sq);
+        self.bb_sides[BOTH].clear_bit(sq);
     }
 
     fn add_piece(&mut self, piece: Piece, sq: Square) {
@@ -240,14 +235,13 @@ impl Board {
             } else {
                 self.num_minor_piece[color] += 1;
             }
-        } else {
-            let sq64 = SQUARE_120_TO_64[sq as usize];
-            self.pawns[color].set_bit(sq64);
-            self.pawns[BOTH].set_bit(sq64);
         }
 
+        self.bitboards[piece as usize].set_bit(sq);
+        self.bb_sides[color].set_bit(sq);
+        self.bb_sides[BOTH].set_bit(sq);
+
         self.material[color] += piece.value();
-        self.piece_lists[piece as usize].push(sq);
     }
 
     fn move_piece(&mut self, from: Square, to: Square) {
@@ -262,20 +256,12 @@ impl Board {
         self.hash_piece(piece, to);
         self.pieces[to as usize] = piece;
 
-        if ! piece.is_big() {
-            let from64 = SQUARE_120_TO_64[from as usize];
-            let to64 = SQUARE_120_TO_64[to as usize];
-            self.pawns[color].clear_bit(from64);
-            self.pawns[BOTH].clear_bit(from64);
-            self.pawns[color].set_bit(to64);
-            self.pawns[BOTH].set_bit(to64);
-        }
-
-        let sq = self.piece_lists[piece as usize]
-            .iter_mut()
-            .find(|sq| **sq == from)
-            .expect("from square must have a piece");
-        *sq = to;
+        self.bitboards[piece as usize].clear_bit(from);
+        self.bitboards[piece as usize].set_bit(to);
+        self.bb_sides[color].clear_bit(from);
+        self.bb_sides[color].set_bit(to);
+        self.bb_sides[BOTH].clear_bit(from);
+        self.bb_sides[BOTH].set_bit(to);
     }
 
     fn hash_piece(&mut self, piece: Piece, sq: Square) {
@@ -295,17 +281,13 @@ impl Board {
     }
 }
 
-const CASTLE_PERM: [u8; 120] = [
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 13, 15, 15, 15, 12, 15, 15, 14, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15,  7, 15, 15, 15,  3, 15, 15, 11, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15,
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15
+const CASTLE_PERM: [u8; BOARD_SQ_NUM] = [
+    13, 15, 15, 15, 12, 15, 15, 14,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+    15, 15, 15, 15, 15, 15, 15, 15,
+     7, 15, 15, 15,  3, 15, 15, 11,
 ];

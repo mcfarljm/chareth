@@ -1,13 +1,12 @@
-use crate::board;
+use std::fmt;
+
 use crate::board::Square;
 use crate::pieces::Piece;
 
-use std::fmt;
-
 pub fn square_string(sq: Square) -> String {
     String::from(format!("{}{}",
-                         ('a' as u8 + board::FILES[sq as usize] as u8) as char,
-                         ('1' as u8 + board::RANKS[sq as usize] as u8) as char))
+                         ('a' as u8 + (sq%8) as u8) as char,
+                         ('1' as u8 + (sq/8) as u8) as char))
 }
 
 #[derive(Clone)]
@@ -112,6 +111,7 @@ impl fmt::Display for Move {
 #[cfg(test)]
 mod tests {
     use crate::moves::*;
+    use crate::board;
     
     #[test]
     fn move_string() {

@@ -14,76 +14,66 @@ impl Board {
         // black is to move
         let mut score = self.material[WHITE] - self.material[BLACK];
 
-        let mut piece;
+        for sq64 in self.bitboards[Piece::WP as usize].into_iter() {
+            score += PAWN_TABLE[sq64 as usize];
 
-        piece = Piece::WP;
-        for sq in &self.piece_lists[piece as usize] {
-            let sq64 = SQUARE_120_TO_64[*sq as usize];
-            score += PAWN_TABLE[sq64];
-
-            if self.pawns[WHITE].isolated_pawn(sq64) {
+            if self.bitboards[Piece::WP as usize].isolated_pawn(sq64) {
                 score += PAWN_ISOLATED_SCORE;
             }
 
-            if self.pawns[BLACK].passed_pawn(sq64, WHITE) {
-                score += PAWN_PASSED_SCORE[RANKS[*sq as usize] as usize];
+            if self.bitboards[Piece::BP as usize].passed_pawn(sq64, WHITE) {
+                // Todo: formalize RANKS for sq64
+                score += PAWN_PASSED_SCORE[(sq64/8) as usize];
             }
         }
 
-        piece = Piece::BP;
-        for sq in &self.piece_lists[piece as usize] {
-            let sq64 = SQUARE_120_TO_64[*sq as usize];
-            score -= PAWN_TABLE[MIRROR64[sq64]];
+        for sq64 in self.bitboards[Piece::BP as usize].into_iter() {
+            score -= PAWN_TABLE[MIRROR64[sq64 as usize]];
 
-            if self.pawns[BLACK].isolated_pawn(sq64) {
+            if self.bitboards[Piece::BP as usize].isolated_pawn(sq64) {
                 score -= PAWN_ISOLATED_SCORE;
             }
 
-            if self.pawns[WHITE].passed_pawn(sq64, BLACK) {
-                score -= PAWN_PASSED_SCORE[7 - RANKS[*sq as usize] as usize];
+            if self.bitboards[Piece::WP as usize].passed_pawn(sq64, BLACK) {
+                // Todo: formalize RANKS for sq64
+                score -= PAWN_PASSED_SCORE[(7 - sq64/8) as usize];
             }
         }
 
-        piece = Piece::WN;
-        for sq in &self.piece_lists[piece as usize] {
-            score += KNIGHT_TABLE[SQUARE_120_TO_64[*sq as usize]];
+        for sq64 in self.bitboards[Piece::WN as usize].into_iter() {
+            score += KNIGHT_TABLE[sq64 as usize];
         }
 
-        piece = Piece::BN;
-        for sq in &self.piece_lists[piece as usize] {
-            score -= KNIGHT_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
+        for sq64 in self.bitboards[Piece::BN as usize].into_iter() {
+            score -= KNIGHT_TABLE[MIRROR64[sq64 as usize]];
         }
 
-        piece = Piece::WB;
-        for sq in &self.piece_lists[piece as usize] {
-            score += BISHOP_TABLE[SQUARE_120_TO_64[*sq as usize]];
+        for sq64 in self.bitboards[Piece::WB as usize].into_iter() {
+            score += BISHOP_TABLE[sq64 as usize];
         }
 
-        piece = Piece::BB;
-        for sq in &self.piece_lists[piece as usize] {
-            score -= BISHOP_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
+        for sq64 in self.bitboards[Piece::BB as usize].into_iter() {
+            score -= BISHOP_TABLE[MIRROR64[sq64 as usize]];
         }
 
-        piece = Piece::WR;
-        for sq in &self.piece_lists[piece as usize] {
-            score += ROOK_TABLE[SQUARE_120_TO_64[*sq as usize]];
+        for sq64 in self.bitboards[Piece::WR as usize].into_iter() {
+            score += ROOK_TABLE[sq64 as usize];
         }
 
-        piece = Piece::BR;
-        for sq in &self.piece_lists[piece as usize] {
-            score -= ROOK_TABLE[MIRROR64[SQUARE_120_TO_64[*sq as usize]]];
+        for sq64 in self.bitboards[Piece::BR as usize].into_iter() {
+            score -= ROOK_TABLE[MIRROR64[sq64 as usize]];
         }
 
         if self.material[BLACK] <= ENDGAME_MATERIAL {
-            score += KING_END_TABLE[SQUARE_120_TO_64[self.king_sq[WHITE] as usize]];
+            score += KING_END_TABLE[self.king_sq[WHITE] as usize];
         } else {
-            score += KING_OPEN_TABLE[SQUARE_120_TO_64[self.king_sq[WHITE] as usize]];
+            score += KING_OPEN_TABLE[self.king_sq[WHITE] as usize];
         }
 
         if self.material[WHITE] <= ENDGAME_MATERIAL {
-            score -= KING_END_TABLE[MIRROR64[SQUARE_120_TO_64[self.king_sq[BLACK] as usize]]];
+            score -= KING_END_TABLE[MIRROR64[self.king_sq[BLACK] as usize]];
         } else {
-            score -= KING_OPEN_TABLE[MIRROR64[SQUARE_120_TO_64[self.king_sq[BLACK] as usize]]];
+            score -= KING_OPEN_TABLE[MIRROR64[self.king_sq[BLACK] as usize]];
         }
 
         if self.side == WHITE {

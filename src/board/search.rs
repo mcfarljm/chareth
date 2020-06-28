@@ -1,9 +1,10 @@
+use std::time::{Duration, Instant};
+use std::sync::mpsc::Receiver;
+
 use crate::board::*;
 use crate::moves;
 use self::movegen::MoveList;
 
-use std::time::{Duration, Instant};
-use std::sync::mpsc::Receiver;
 
 const MATE: i32 = 29000;
 
@@ -248,7 +249,7 @@ impl Board {
     }
 
     pub fn clear_for_search(&mut self, info: &mut SearchInfo) {
-        self.search_history = [[0; BOARD_SQ_NUM]; 13];
+        self.search_history = [[0; BOARD_SQ_NUM]; NUM_PIECE_TYPES_BOTH];
         self.search_killers = [[None, None]; MAX_DEPTH as usize];
 
         self.pv_table.clear();
@@ -497,7 +498,7 @@ mod tests {
         let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "d2d4");
-        assert_eq!(info.nodes, 664);
+        assert_eq!(info.nodes, 657);
     }
 
     #[test]
@@ -507,6 +508,6 @@ mod tests {
         let mut info = SearchInfo::new(3, GameMode::None); 
         board.search(&mut info);
         assert_eq!(board.pv_array[0].to_string(), "f1c4");
-        assert_eq!(info.nodes, 7804);
+        assert_eq!(info.nodes, 8048);
     }
 }

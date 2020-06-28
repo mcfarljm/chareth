@@ -1,11 +1,10 @@
-use crate::board::*;
-use crate::pieces::{BLACK,BOTH};
-use crate::version::PROGRAM_NAME;
-
 use std::thread;
 use std::sync::mpsc;
-
 use std::io::{self, Write};
+
+use crate::board::{Board,SearchInfo,GameMode,MAX_DEPTH,START_FEN};
+use crate::pieces::{BLACK,BOTH};
+use crate::version::PROGRAM_NAME;
 
 pub fn xboard_loop() {
 

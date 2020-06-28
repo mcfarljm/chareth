@@ -1,3 +1,7 @@
+use std::fmt;
+
+use crate::bitboard::{self,Bitboard};
+
 pub const PAWN_VAL: i32 = 100;
 pub const KNIGHT_VAL: i32 = 325;
 pub const BISHOP_VAL: i32 = 325;
@@ -5,14 +9,36 @@ pub const ROOK_VAL: i32 = 550;
 pub const QUEEN_VAL: i32 = 1000;
 pub const KING_VAL: i32 = 50000;
 
+pub const NUM_PIECE_TYPES_BOTH: usize = 12;
+pub const PIECE_TYPES: [Piece; NUM_PIECE_TYPES_BOTH] = [Piece::WP, Piece::WN, Piece::WB, Piece::WR, Piece::WQ, Piece::WK, Piece::BP, Piece::BN, Piece::BB, Piece::BR, Piece::BQ, Piece::BK];
+
+pub const WHITE: usize = 0;
+pub const BLACK: usize = 1;
+pub const BOTH: usize = 2;
+
+// SLIDERS[color] produces an array that can be iterated through
+pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
+pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Piece::BK]];
+
+lazy_static! {
+    pub static ref KING_MOVES: [Bitboard; 64] = get_king_moves();
+    pub static ref KNIGHT_MOVES: [Bitboard; 64] = get_knight_moves();
+    pub static ref WHITE_PAWN_MOVES: [Bitboard; 64] = get_white_pawn_moves();
+    pub static ref BLACK_PAWN_MOVES: [Bitboard; 64] = get_black_pawn_moves();
+}
+
+pub fn side_valid(side: usize) -> bool {
+    side == WHITE || side == BLACK
+}
+
 #[derive(PartialEq)]
 #[derive(Debug)]
 #[derive(Clone)]
 #[derive(Copy)]
 pub enum Piece {
-    Empty,
     WP, WN, WB, WR, WQ, WK,
     BP, BN, BB, BR, BQ, BK,
+    Empty,
     Offboard,
 }
 
@@ -116,39 +142,214 @@ impl Piece {
             Piece::Empty | Piece::Offboard => 0,
         }
     }
+
+    pub fn swap(&self) -> Piece {
+        match *self {
+            Piece::WP => Piece::BP,
+            Piece::WN => Piece::BN,
+            Piece::WB => Piece::BB,
+            Piece::WR => Piece::BR,
+            Piece::WQ => Piece::BQ,
+            Piece::WK => Piece::BK,
+
+            Piece::BP => Piece::WP,
+            Piece::BN => Piece::WN,
+            Piece::BB => Piece::WB,
+            Piece::BR => Piece::WR,
+            Piece::BQ => Piece::WQ,
+            Piece::BK => Piece::WK,
+
+            Piece::Empty => Piece::Empty,
+            Piece::Offboard => Piece::Offboard,
+        }
+    }
+
+    // Move directions, not including pawns
+    pub fn directions(&self) -> &'static [i8] {
+        match * self {
+            Piece::WN | Piece::BN => &[-8, -19, -21, -12, 8, 19, 21, 12],
+            Piece::WB | Piece::BB => &[-9, -11, 11, 9],
+            Piece::WR | Piece::BR => &[-1, -10, 1, 10],
+            Piece::WQ | Piece::BQ => &[-1, -10, 1, 10, -9, -11, 11, 9],
+            Piece::WK | Piece::BK => &[-1, -10, 1, 10, -9, -11, 11, 9],
+            _ => &[],
+        }
+    }
 }
 
-pub const WHITE: usize = 0;
-pub const BLACK: usize = 1;
-pub const BOTH: usize = 2;
+impl fmt::Display for Piece {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Piece::WP => { write!(f, "P") }
+            Piece::WN => { write!(f, "N") }
+            Piece::WB => { write!(f, "B") }
+            Piece::WR => { write!(f, "R") }
+            Piece::WQ => { write!(f, "Q") }
+            Piece::WK => { write!(f, "K") }
+            Piece::BP => { write!(f, "p") }
+            Piece::BN => { write!(f, "n") }
+            Piece::BB => { write!(f, "b") }
+            Piece::BR => { write!(f, "r") }
+            Piece::BQ => { write!(f, "q") }
+            Piece::BK => { write!(f, "k") }
+            Piece::Empty => { write!(f, ".") }
+            _ => { Err(fmt::Error) }
+        }
+    }
+}
 
-pub const KNIGHT_DIR: [i8; 8] = [-8, -19, -21, -12, 8, 19, 21, 12];
-pub const ROOK_DIR: [i8; 4] = [-1, -10, 1, 10];
-pub const BISHOP_DIR: [i8; 4] = [-9, -11, 11, 9];
-pub const KING_DIR: [i8; 8] = [-1, -10, 1, 10, -9, -11, 11, 9];
+pub fn init_move_tables() {
+    lazy_static::initialize(&KING_MOVES);
+    lazy_static::initialize(&KNIGHT_MOVES);
+    lazy_static::initialize(&WHITE_PAWN_MOVES);
+    lazy_static::initialize(&BLACK_PAWN_MOVES);
+}
 
-// SLIDERS[color] produces an array that can be iterated through
-pub const SLIDERS: [[Piece; 3]; 2] = [[Piece::WB, Piece::WR, Piece::WQ], [Piece::BB, Piece::BR, Piece::BQ]];
-pub const NON_SLIDERS: [[Piece; 2]; 2] = [[Piece::WN, Piece::WK], [Piece::BN, Piece::BK]];
+fn get_king_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
 
-// Todo: replace DIRECTIONS array with methods
+    for sq in 0..64 {
+        let rank = sq/8;
+        let file = sq%8;
 
-// PIECE_DIRS[piece] will give an array of move directions for that
-// piece.  A zero value is used to indicate the end, since the counts
-// are not the same.  Pawns are not included.  Storing with vectors
-// would make more sense but can't be statically allocated.
-pub const DIRECTIONS: [[i8; 9]; 13] =
-    [ [0; 9],
-       [0; 9],
-       [ -8, -19, -21, -12, 8, 19, 21, 12, 0 ],
-       [ -9, -11, 11, 9, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ],
-       [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-       [ -8, -19, -21, -12, 8, 19, 21, 12, 0 ],
-       [ -9, -11, 11, 9, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, 0, 0, 0, 0, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ],
-       [ -1, -10, 1, 10, -9, -11, 11, 9, 0 ]
-    ];
+        // N
+        if rank<7 {
+            bitboards[sq as usize].set_bit(sq+8);
+        }
+        // NE
+        if rank<7 && file<7 {
+            bitboards[sq as usize].set_bit(sq+9);
+        }
+        // E
+        if file<7 {
+            bitboards[sq as usize].set_bit(sq+1);
+        }
+        // SE
+        if file<7 && rank>0 {
+            bitboards[sq as usize].set_bit(sq-7);
+        }
+        // S
+        if rank>0 {
+            bitboards[sq as usize].set_bit(sq-8);
+        }
+        // SW
+        if rank>0 && file>0 {
+            bitboards[sq as usize].set_bit(sq-9);
+        }
+        // W
+        if file>0 {
+            bitboards[sq as usize].set_bit(sq-1);
+        }
+        // NW
+        if file>0 && rank<7 {
+            bitboards[sq as usize].set_bit(sq+7);
+        }
+    }
+    
+    bitboards
+}
+
+fn get_knight_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+
+    for sq in 0..64 {
+        let rank = sq/8;
+        let file = sq%8;
+
+        // NNE
+        if rank<6 && file<7 {
+            bitboards[sq as usize].set_bit(sq+17);
+        }
+        // ENE
+        if rank<7 && file<6 {
+            bitboards[sq as usize].set_bit(sq+10);
+        }
+        // ESE
+        if rank>0 && file<6 {
+            bitboards[sq as usize].set_bit(sq-6);
+        }
+        // SSE
+        if rank>1 && file<7 {
+            bitboards[sq as usize].set_bit(sq-15);
+        }
+        // SSW
+        if rank>1 && file>0 {
+            bitboards[sq as usize].set_bit(sq-17);
+        }
+        // WSW
+        if rank>0 && file>1 {
+            bitboards[sq as usize].set_bit(sq-10);
+        }
+        // WNW
+        if rank<7 && file>1 {
+            bitboards[sq as usize].set_bit(sq+6);
+        }
+        // NNW
+        if rank<6 && file>0 {
+            bitboards[sq as usize].set_bit(sq+15);
+        }
+    }
+    
+    bitboards
+}
+
+fn get_white_pawn_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+    let mut bb: Bitboard = Bitboard::new();
+    for sq in 0..64 {
+        // Left captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_A) << 7;
+        bitboards[sq as usize].0 |= bb.0;
+        
+        // Right captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_H) << 9;
+        bitboards[sq as usize].0 |= bb.0;
+    }
+
+    bitboards
+}
+
+fn get_black_pawn_moves() -> [Bitboard; 64] {
+    let mut bitboards: [Bitboard; 64] = [Bitboard::new(); 64];
+    let mut bb: Bitboard = Bitboard::new();
+    for sq in 0..64 {
+        // Left captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_A) >> 9;
+        bitboards[sq as usize].0 |= bb.0;
+        
+        // Right captures
+        bb.0 = 0;
+        bb.set_bit(sq);
+        bb.0 = (bb.0 & ! bitboard::BB_FILE_H) >> 7;
+        bitboards[sq as usize].0 |= bb.0;
+    }
+
+    bitboards
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn king_moves() {
+        let mut m9: Vec<_> = KING_MOVES[9].clone().into_iter().collect();
+        m9.sort();
+        assert_eq!(m9, &[0, 1, 2, 8, 10, 16, 17, 18]);
+
+        let mut m0: Vec<_> = KING_MOVES[0].clone().into_iter().collect();
+        m0.sort();
+        assert_eq!(m0, &[1, 8, 9]);
+        
+        let mut m63: Vec<_> = KING_MOVES[63].clone().into_iter().collect();
+        m63.sort();
+        assert_eq!(m63, &[54, 55, 62]);
+    }
+
+}

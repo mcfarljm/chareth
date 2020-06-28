@@ -1,13 +1,25 @@
 use crate::moves;
-use crate::board;
+use crate::board::{self,WHITE,BLACK,BOTH};
 use crate::board::{Castling,Square};
-use crate::pieces;
-use crate::pieces::Piece;
+use crate::pieces::{self,Piece,PIECE_TYPES,NUM_PIECE_TYPES_BOTH,KNIGHT_MOVES,KING_MOVES};
+use crate::bitboard::{self,Bitboard,BB_RANK_4,BB_RANK_5,BB_FILE_A,BB_FILE_H};
 
-const VICTIM_SCORE: [i32; 13] = [0, 100, 200, 300, 400, 500, 600, 100, 200, 300, 400, 500, 600];
+// Could be a method of Piece, but nice to have it here for
+// organizational purposes
+fn victim_score(piece: &Piece) -> i32 {
+    match piece {
+        Piece::WP | Piece::BP => 100,
+        Piece::WN | Piece::BN => 200,
+        Piece::WB | Piece::BB => 300,
+        Piece::WR | Piece::BR => 400,
+        Piece::WQ | Piece::BQ => 500,
+        Piece::WK | Piece::BK => 600,
+        _ => 0,
+    }
+}
 
 lazy_static! {
-    static ref MVV_LVA_SCORES: [[i32; 13]; 13] = get_mvv_lva();
+    static ref MVV_LVA_SCORES: [[i32; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH] = get_mvv_lva();
 }
 
 pub struct ScoredMove {
@@ -76,7 +88,7 @@ impl MoveList {
 
     fn add_white_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         
-        if board::RANKS[from as usize] == board::RANK_7 {
+        if from/8 == board::RANK_7 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::WN, Piece::WB, Piece::WR, Piece::WQ] {
                 self.add_quiet_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
@@ -90,7 +102,7 @@ impl MoveList {
     
     fn add_white_pawn_capture_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         
-        if board::RANKS[from as usize] == board::RANK_7 {
+        if from/8 == board::RANK_7 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::WN, Piece::WB, Piece::WR, Piece::WQ] {
                 self.add_capture_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
@@ -103,7 +115,7 @@ impl MoveList {
 
     fn add_black_pawn_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         
-        if board::RANKS[from as usize] == board::RANK_2 {
+        if from/8 == board::RANK_2 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::BN, Piece::BB, Piece::BR, Piece::BQ] {
                 self.add_quiet_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
@@ -117,7 +129,7 @@ impl MoveList {
     
     fn add_black_pawn_capture_move(&mut self, b: &board::Board, from: Square, to: Square, capture: Piece) {
         
-        if board::RANKS[from as usize] == board::RANK_2 {
+        if from/8 == board::RANK_2 {
             // Add a version of the move with each possible promotion
             for promote in &[Piece::BN, Piece::BB, Piece::BR, Piece::BQ] {
                 self.add_capture_move(b, moves::Move::new(from, to, capture, *promote, moves::MoveFlag::None));
@@ -153,40 +165,47 @@ impl board::Board {
 
         let mut move_list = MoveList::new();
 
-        let mut t_sq: Square;
-
         if self.side == pieces::WHITE {
-            for sq in &self.piece_lists[Piece::WP as usize] {
 
-                if non_captures && self.pieces[(sq+10) as usize] == Piece::Empty {
-                    // pawn forward one square
-                    move_list.add_white_pawn_move(self, *sq, sq+10, Piece::Empty);
-                    if board::RANKS[*sq as usize] == board::RANK_2 && self.pieces[(sq+20) as usize] == Piece::Empty {
-                        // pawn forward two squares
-                        move_list.add_quiet_move(self, moves::Move::new(*sq, sq+20, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
-                    }
+            // Pawn non-captures:
+            if non_captures {
+
+                let to_step1 = (self.bitboards[Piece::WP as usize].0 << 8) & (!self.bb_sides[BOTH].0);
+                let to_step2 = (to_step1 << 8) & BB_RANK_4 & (!self.bb_sides[BOTH].0);
+
+                for to64 in Bitboard(to_step1).into_iter() {
+                    move_list.add_white_pawn_move(self, to64 - 8, to64, Piece::Empty); 
                 }
-
-                // Check pawn captures in both directions
-                let dirs: [i8; 2] = [9, 11];
-                for dir in &dirs {
-                    t_sq = sq + dir;
-                    let t_piece = self.pieces[t_sq as usize];
-                    if board::square_on_board(t_sq) && t_piece.color() == pieces::BLACK {
-                        move_list.add_white_pawn_capture_move(self, *sq, t_sq, t_piece);
-                    }
-                }
-
-                // Check en passant captures
-                if self.en_pas != board::Position::NONE as Square {
-                    if sq + 9 == self.en_pas {
-                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq+9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                    }
-                    if sq + 11 == self.en_pas {
-                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq+11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                    }
+                for to64 in Bitboard(to_step2).into_iter() {
+                    move_list.add_quiet_move(self, moves::Move::new(to64 - 2*8, to64, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
                 }
             }
+
+            // Pawn captures:
+            let to_cap_left = ((self.bitboards[Piece::WP as usize].0 & !BB_FILE_A) << 7) & self.bb_sides[BLACK].0;
+            let to_cap_right = ((self.bitboards[Piece::WP as usize].0 & !BB_FILE_H) << 9) & self.bb_sides[BLACK].0;
+
+            for to64 in Bitboard(to_cap_left).into_iter() {
+                move_list.add_white_pawn_capture_move(self, to64 - 7, to64, self.pieces[to64 as usize]); 
+            }
+            for to64 in Bitboard(to_cap_right).into_iter() {
+                move_list.add_white_pawn_capture_move(self, to64 - 9, to64, self.pieces[to64 as usize]); 
+            }
+
+            // Check en passant captures
+            if self.en_pas != board::Position::NONE as Square {
+                let ep_bb = Bitboard(1 << self.en_pas);
+                let ep_to_left = ((self.bitboards[Piece::WP as usize].0 & ! BB_FILE_A) << 7) & ep_bb.0;
+                let ep_to_right = ((self.bitboards[Piece::WP as usize].0 & ! BB_FILE_H) << 9) & ep_bb.0;
+
+                for to64 in Bitboard(ep_to_left).into_iter() {
+                    move_list.add_en_passant_move(self, moves::Move::new(to64-7, to64, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                }
+                for to64 in Bitboard(ep_to_right).into_iter() {
+                    move_list.add_en_passant_move(self, moves::Move::new(to64-9, to64, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                }
+            }
+
 
             // Castling
             if non_captures && self.castle_perm & Castling::WK != 0 {
@@ -206,35 +225,43 @@ impl board::Board {
             }
         }
         else {
-            for sq in &self.piece_lists[Piece::BP as usize] {
 
-                if non_captures && self.pieces[(sq-10) as usize] == Piece::Empty {
-                    // pawn forward one square
-                    move_list.add_black_pawn_move(self, *sq, sq-10, Piece::Empty);
-                    if board::RANKS[*sq as usize] == board::RANK_7 && self.pieces[(sq-20) as usize] == Piece::Empty {
-                        // pawn forward two squares
-                        move_list.add_quiet_move(self, moves::Move::new(*sq, sq-20, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
-                    }
+            // Pawn non-captures:
+            if non_captures {
+
+                let to_step1 = (self.bitboards[Piece::BP as usize].0 >> 8) & (!self.bb_sides[BOTH].0);
+                let to_step2 = (to_step1 >> 8) & BB_RANK_5 & (!self.bb_sides[BOTH].0);
+
+                for to64 in Bitboard(to_step1).into_iter() {
+                    move_list.add_black_pawn_move(self, to64 + 8, to64, Piece::Empty); 
                 }
-
-                // Check pawn captures in both directions
-                let dirs: [i8; 2] = [9, 11];
-                for dir in &dirs {
-                    t_sq = sq - dir;
-                    let t_piece = self.pieces[t_sq as usize];
-                    if board::square_on_board(t_sq) && t_piece.color() == pieces::WHITE {
-                        move_list.add_black_pawn_capture_move(self, *sq, t_sq, t_piece);
-                    }
+                for to64 in Bitboard(to_step2).into_iter() {
+                    move_list.add_quiet_move(self, moves::Move::new(to64 + 2*8, to64, Piece::Empty, Piece::Empty, moves::MoveFlag::PawnStart));
                 }
+            }
 
-                // Check en passant captures
-                if self.en_pas != board::Position::NONE as Square {
-                    if sq - 9 == self.en_pas {
-                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq-9, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                    }
-                    if sq - 11 == self.en_pas {
-                        move_list.add_en_passant_move(self, moves::Move::new(*sq, sq-11, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
-                    }
+            // Pawn captures:
+            let to_cap_left = ((self.bitboards[Piece::BP as usize].0 & !BB_FILE_A) >> 9) & self.bb_sides[WHITE].0;
+            let to_cap_right = ((self.bitboards[Piece::BP as usize].0 & !BB_FILE_H) >> 7) & self.bb_sides[WHITE].0;
+
+            for to64 in Bitboard(to_cap_left).into_iter() {
+                move_list.add_black_pawn_capture_move(self, to64 + 9, to64, self.pieces[to64 as usize]); 
+            }
+            for to64 in Bitboard(to_cap_right).into_iter() {
+                move_list.add_black_pawn_capture_move(self, to64 + 7, to64, self.pieces[to64 as usize]); 
+            }
+
+            // Check en passant captures
+            if self.en_pas != board::Position::NONE as Square {
+                let ep_bb = Bitboard(1 << self.en_pas);
+                let ep_to_left = ((self.bitboards[Piece::BP as usize].0 & ! BB_FILE_A) >> 9) & ep_bb.0;
+                let ep_to_right = ((self.bitboards[Piece::BP as usize].0 & ! BB_FILE_H) >> 7) & ep_bb.0;
+
+                for to64 in Bitboard(ep_to_left).into_iter() {
+                    move_list.add_en_passant_move(self, moves::Move::new(to64+9, to64, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
+                }
+                for to64 in Bitboard(ep_to_right).into_iter() {
+                    move_list.add_en_passant_move(self, moves::Move::new(to64+7, to64, Piece::Empty, Piece::Empty, moves::MoveFlag::EnPas));
                 }
             }
 
@@ -256,61 +283,48 @@ impl board::Board {
             }
         }
 
-        let mut t_sq: Square;
-
         // Sliders
-        for piece in pieces::SLIDERS[self.side].iter() {
-            for sq in &self.piece_lists[*piece as usize] {
-
-                for dir in &pieces::DIRECTIONS[*piece as usize] {
-                    if *dir == 0 {
-                        // dir==0 indicates end of list
-                        break;
+        for piece in &pieces::SLIDERS[self.side] {
+            for sq64 in self.bitboards[*piece as usize] {
+                let mut attacks = match piece {
+                    Piece::WR | Piece::BR => bitboard::get_rook_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WB | Piece::BB => bitboard::get_bishop_attacks(sq64, self.bb_sides[BOTH].0),
+                    Piece::WQ | Piece::BQ => bitboard::get_queen_attacks(sq64, self.bb_sides[BOTH].0),
+                    _ => unreachable!(),
+                };
+                attacks &= !self.bb_sides[self.side].0;
+                // Todo: once sq64 representation is adopted, would it be
+                // faster to use bitwise operations to first find captures
+                // and non_captures, and then iterate over those?
+                for t_sq in Bitboard(attacks).into_iter() { 
+                    let t_piece = self.pieces[t_sq as usize];
+                    if t_piece != Piece::Empty {
+                        move_list.add_capture_move(self, moves::Move::new(sq64, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
+                    } else if non_captures {
+                        move_list.add_quiet_move(self, moves::Move::new(sq64, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
                     }
-                    t_sq = *sq + dir;
-
-                    while board::square_on_board(t_sq) {
-                        // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
-                        let t_piece = self.pieces[t_sq as usize];
-                        if t_piece != Piece::Empty {
-                            if t_piece.color() == self.side ^ 1 {
-                                move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
-                            }
-                            break;
-                        }
-                        if non_captures {
-                            move_list.add_quiet_move(self, moves::Move::new(*sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
-                        }
-                        t_sq += dir;
-                    }
+                    
                 }
             }
         }
 
         // Non-sliders
         for piece in &pieces::NON_SLIDERS[self.side] {
-            for sq in &self.piece_lists[*piece as usize] {
-
-                for dir in &pieces::DIRECTIONS[*piece as usize] {
-                    if *dir == 0 {
-                        // dir==0 indicates end of list
-                        break;
-                    }
-                    t_sq = *sq + dir;
-                    if ! board::square_on_board(t_sq) {
-                        continue;
-                    }
-
-                    // BLACK ^ 1 == WHITE;  WHITE ^ 1 == BLACK
+            for sq64 in self.bitboards[*piece as usize].into_iter() {
+                let bb = match *piece {
+                    Piece::WN | Piece::BN => KNIGHT_MOVES[sq64 as usize],
+                    Piece::WK | Piece::BK => KING_MOVES[sq64 as usize],
+                    _ => { unreachable!() },
+                };
+                // Take moves bitboard and filter out side's pieces
+                let iterator = Bitboard(bb.0 & !self.bb_sides[self.side].0).into_iter();
+                for t_sq in iterator {
                     let t_piece = self.pieces[t_sq as usize];
                     if t_piece != Piece::Empty {
-                        if t_piece.color() == self.side ^ 1 {
-                            move_list.add_capture_move(self, moves::Move::new(*sq, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
-                        }
-                        continue;
-                    }
-                    if non_captures {
-                        move_list.add_quiet_move(self, moves::Move::new(*sq, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
+                        // Have already filtered out own side's pieces on target square
+                        move_list.add_capture_move(self, moves::Move::new(sq64, t_sq, t_piece, Piece::Empty, moves::MoveFlag::None));
+                    } else if non_captures {
+                        move_list.add_quiet_move(self, moves::Move::new(sq64, t_sq, Piece::Empty, Piece::Empty, moves::MoveFlag::None));
                     }
                 }
             }
@@ -326,11 +340,11 @@ pub fn init_mvv_lva() {
 }
 
 // Initialize most valuable victim, least valuable attacker array
-fn get_mvv_lva() -> [[i32; 13]; 13] {
-    let mut mvv_lva_scores: [[i32; 13]; 13] = [[0; 13]; 13];
-    for attacker in Piece::WP as usize..=Piece::BK as usize {
-        for victim in Piece::WP as usize..=Piece::BK as usize {
-            mvv_lva_scores[victim][attacker] = VICTIM_SCORE[victim] + 6 - VICTIM_SCORE[attacker]/100;
+fn get_mvv_lva() -> [[i32; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH] {
+    let mut mvv_lva_scores: [[i32; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH] = [[0; NUM_PIECE_TYPES_BOTH]; NUM_PIECE_TYPES_BOTH];
+    for attacker in &PIECE_TYPES {
+        for victim in &PIECE_TYPES {
+            mvv_lva_scores[*victim as usize][*attacker as usize] = victim_score(victim) + 6 - victim_score(attacker)/100;
         }
     }
     mvv_lva_scores
